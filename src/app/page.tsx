@@ -3,30 +3,41 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import Cookies from "js-cookie";
 import Loading from "./loading";
+import { getUserDetails } from "@/services/Common/Auth/authServices";
 
 export default function Home() {
   const router = useRouter();
-  //   const authToken = Cookies.get("authToken");
 
   const redirectAccToUserRole = (userRole: string) => {
     switch (userRole) {
       case "superadmin":
         router.push("/superadmin/dashboard");
         break;
-      case "admin":
-        router.push("/admin/dashboard");
+      case "broker":
+        router.push("/broker/dashboard");
         break;
+    }
+  };
+
+  const getUserDetailsFn = async () => {
+    try {
+      const response = await getUserDetails();
+      Cookies.set("currentRole", response.role.name);
+      if(response.profile){
+        redirectAccToUserRole(response.role.name);
+      } else {
+        router.push(`/auth/onboarding`)
+      }
+    } catch (error) {
+      console.log(error);
     }
   };
 
   useEffect(() => {
     const authToken = Cookies.get("authToken");
     if (authToken) {
-      // fetchIpAddress(userEmail, provider);
-      const currentRole = Cookies.get("role");
-      if (currentRole) redirectAccToUserRole(currentRole.toString());
+      getUserDetailsFn();
     } else {
-      // the user will be redirected to the login page after 1000 millisecound.
       Cookies.remove("authToken");
       router.push("/auth/login");
     }

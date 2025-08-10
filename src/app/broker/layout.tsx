@@ -8,7 +8,7 @@ import {
 import { ThemeModeToggle } from "@/components/Common/Providers/ThemeModeToggle";
 
 export const metadata: Metadata = {
-  title: "Rich Harbor | Super Admin",
+  title: "Rich Harbor | Broker",
 };
 
 export default function SuperAdminLayout({

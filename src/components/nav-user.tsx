@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/sidebar";
 import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
+import { postLogout } from "@/services/Common/Auth/authServices";
 
 export function NavUser({
   user,
@@ -40,9 +41,19 @@ export function NavUser({
   const { isMobile } = useSidebar();
   const router = useRouter();
 
+  const postLogoutFn = async () => {
+    try {
+      await postLogout();
+      Cookies.remove("authToken");
+      Cookies.remove("currentRole");
+      router.push("/auth/login");
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   const logOut = () => {
-    Cookies.remove("authToken");
-    router.push("/auth/login");
+    postLogoutFn();
   };
 
   return (
