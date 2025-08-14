@@ -1,49 +1,68 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useEffect, useMemo, useRef, useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent } from "@/components/ui/card"
-import { Progress } from "@/components/ui/progress"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Check, Download, Upload } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Check, Download, Upload } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
+import Cookies from "js-cookie";
 
-type DocsKey = "cmlCopy" | "panCard" | "cancelCheque" | "signature" | "agreement"
+type DocsKey =
+  | "cmlCopy"
+  | "panCard"
+  | "cancelCheque"
+  | "signature"
+  | "agreement";
 
 type FormDataState = {
-  accountType: string
-  name: string
-  state: string
-  aadharCard: string
-  panCard: string
-  email: string
-  mobile: string
-  bankName: string
-  accountNumber: string
-  ifscCode: string
-  country: string
-  addressState: string
-  addressLine1: string
-  addressLine2: string
-  city: string
-  zipCode: string
-  documents: Record<DocsKey, File | null>
-}
+  accountType: string;
+  name: string;
+  state: string;
+  aadharCard: string;
+  panCard: string;
+  email: string;
+  mobile: string;
+  bankName: string;
+  accountNumber: string;
+  ifscCode: string;
+  country: string;
+  addressState: string;
+  addressLine1: string;
+  addressLine2: string;
+  city: string;
+  zipCode: string;
+  documents: Record<DocsKey, File | null>;
+};
 
-const DEFAULT_STEPS = ["Account Type", "Account Info", "Upload Documents", "Franchise Agreement", "Completed"]
+const DEFAULT_STEPS = [
+  "Account Type",
+  "Account Info",
+  "Upload Documents",
+  "Franchise Agreement",
+  "Completed",
+];
 
 export default function Onboarding() {
+  const router = useRouter();
+  const steps = DEFAULT_STEPS;
+  const stepsSafe = steps && steps.length > 0 ? steps : DEFAULT_STEPS;
 
-  const steps = DEFAULT_STEPS
-  const stepsSafe = steps && steps.length > 0 ? steps : DEFAULT_STEPS
-
-  const [currentStep, setCurrentStep] = useState<number>(1)
-  const [maxStepVisited, setMaxStepVisited] = useState<number>(1)
-  const scrollRef = useRef<HTMLDivElement | null>(null)
+  const [currentStep, setCurrentStep] = useState<number>(1);
+  const [maxStepVisited, setMaxStepVisited] = useState<number>(1);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
 
   const [formData, setFormData] = useState<FormDataState>({
     accountType: "",
@@ -69,30 +88,33 @@ export default function Onboarding() {
       signature: null,
       agreement: null,
     },
-  })
+  });
 
-  const progress = useMemo(() => (currentStep / stepsSafe.length) * 100, [currentStep, stepsSafe.length])
+  const progress = useMemo(
+    () => (currentStep / stepsSafe.length) * 100,
+    [currentStep, stepsSafe.length]
+  );
 
   useEffect(() => {
     // Smoothly scroll content back to top on step change
     if (scrollRef.current) {
-      scrollRef.current.scrollTo({ top: 0, behavior: "smooth" })
+      scrollRef.current.scrollTo({ top: 0, behavior: "smooth" });
     }
-  }, [currentStep])
+  }, [currentStep]);
 
   const handleNext = () => {
     if (currentStep < stepsSafe.length && isStepValid(currentStep)) {
-      const next = currentStep + 1
-      setCurrentStep(next)
-      setMaxStepVisited((prev) => Math.max(prev, next))
+      const next = currentStep + 1;
+      setCurrentStep(next);
+      setMaxStepVisited((prev) => Math.max(prev, next));
     }
-  }
+  };
 
   const handlePrevious = () => {
     if (currentStep > 1) {
-      setCurrentStep(currentStep - 1)
+      setCurrentStep(currentStep - 1);
     }
-  }
+  };
 
   const handleFileUpload = (field: DocsKey, file: File | null) => {
     setFormData((prev) => ({
@@ -101,18 +123,19 @@ export default function Onboarding() {
         ...prev.documents,
         [field]: file,
       },
-    }))
-  }
+    }));
+  };
 
-  const isEmail = (val: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)
-  const isIFSC = (val: string) => /^[A-Za-z]{4}0[A-Za-z0-9]{6}$/.test(val) // Common IFSC format
-  const isAadhar = (val: string) => /^\d{12}$/.test(val.replace(/\s/g, ""))
-  const isPAN = (val: string) => /^[A-Z]{5}\d{4}[A-Z]{1}$/.test(val.toUpperCase())
-  const isMobile = (val: string) => /^\d{10}$/.test(val)
+  const isEmail = (val: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
+  const isIFSC = (val: string) => /^[A-Za-z]{4}0[A-Za-z0-9]{6}$/.test(val); // Common IFSC format
+  const isAadhar = (val: string) => /^\d{12}$/.test(val.replace(/\s/g, ""));
+  const isPAN = (val: string) =>
+    /^[A-Z]{5}\d{4}[A-Z]{1}$/.test(val.toUpperCase());
+  const isMobile = (val: string) => /^\d{10}$/.test(val);
 
   function isStepValid(step: number): boolean {
     if (step === 1) {
-      return formData.accountType.length > 0
+      return formData.accountType.length > 0;
     }
     if (step === 2) {
       return (
@@ -130,29 +153,29 @@ export default function Onboarding() {
         formData.addressLine1.trim().length > 0 &&
         formData.city.trim().length > 0 &&
         formData.zipCode.trim().length >= 4
-      )
+      );
     }
     if (step === 3) {
       return Boolean(
         formData.documents.cmlCopy &&
           formData.documents.panCard &&
           formData.documents.cancelCheque &&
-          formData.documents.signature,
-      )
+          formData.documents.signature
+      );
     }
     if (step === 4) {
-      return Boolean(formData.documents.agreement)
+      return Boolean(formData.documents.agreement);
     }
-    return true
+    return true;
   }
 
-  const canGoNext = isStepValid(currentStep)
+  const canGoNext = isStepValid(currentStep);
 
   const stepBadge = (index: number) => {
-    const stepNumber = index + 1
-    const isDone = stepNumber < currentStep
-    const isActive = stepNumber === currentStep
-    const isClickable = stepNumber <= maxStepVisited
+    const stepNumber = index + 1;
+    const isDone = stepNumber < currentStep;
+    const isActive = stepNumber === currentStep;
+    const isClickable = stepNumber <= maxStepVisited;
 
     return (
       <button
@@ -162,9 +185,11 @@ export default function Onboarding() {
         className={cn(
           "flex items-center gap-2 px-3 py-2 rounded-full text-sm whitespace-nowrap transition-colors",
           isActive && "bg-emerald-100 text-emerald-700",
-          !isActive && isDone && "bg-emerald-50 text-emerald-600 hover:bg-emerald-100",
+          !isActive &&
+            isDone &&
+            "bg-emerald-50 text-emerald-600 hover:bg-emerald-100",
           !isActive && !isDone && "bg-muted text-muted-foreground",
-          !isClickable && "cursor-not-allowed opacity-60",
+          !isClickable && "cursor-not-allowed opacity-60"
         )}
         aria-current={isActive ? "step" : undefined}
         aria-disabled={!isClickable}
@@ -174,15 +199,19 @@ export default function Onboarding() {
             "inline-flex h-5 w-5 items-center justify-center rounded-full border text-[11px]",
             isActive && "border-emerald-600 text-emerald-700",
             isDone && "border-emerald-500 text-emerald-600",
-            !isActive && !isDone && "border-transparent bg-background",
+            !isActive && !isDone && "border-transparent bg-background"
           )}
         >
-          {isDone ? <Check className="h-3.5 w-3.5" aria-hidden="true" /> : stepNumber}
+          {isDone ? (
+            <Check className="h-3.5 w-3.5" aria-hidden="true" />
+          ) : (
+            stepNumber
+          )}
         </span>
         <span>{stepsSafe[index]}</span>
       </button>
-    )
-  }
+    );
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
@@ -190,7 +219,9 @@ export default function Onboarding() {
       <header className="sticky top-0 z-40 border-b bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/60">
         <div className="mx-auto w-full max-w-5xl px-4 py-4">
           <div className="flex items-center justify-between">
-            <h1 className="text-lg md:text-xl font-semibold">Partner Registration</h1>
+            <h1 className="text-lg md:text-xl font-semibold">
+              Partner Registration
+            </h1>
             <div className="text-xs md:text-sm text-muted-foreground">
               {"Step "}
               {currentStep}
@@ -206,7 +237,10 @@ export default function Onboarding() {
 
           {/* Stepper */}
           <div className="mt-3 -mb-2">
-            <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar" aria-label="Registration steps">
+            <div
+              className="flex gap-2 overflow-x-auto pb-2 no-scrollbar"
+              aria-label="Registration steps"
+            >
               {stepsSafe.map((_, i) => stepBadge(i))}
             </div>
           </div>
@@ -228,12 +262,28 @@ export default function Onboarding() {
               {/* Navigation */}
               {currentStep < stepsSafe.length && (
                 <div className="mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <Button variant="outline" onClick={handlePrevious} disabled={currentStep === 1}>
+                  <Button
+                    variant="outline"
+                    onClick={handlePrevious}
+                    disabled={currentStep === 1}
+                  >
                     Previous
                   </Button>
-                  <Button onClick={handleNext} disabled={!canGoNext}>
-                    {currentStep === stepsSafe.length - 1 ? "Complete Registration" : "Next"}
-                  </Button>
+                  <div className="flex items-center gap-5">
+                    <Button
+                      onClick={() =>
+                        router.push(`/${Cookies.get("currentRole")}/dashboard`)
+                      }
+                    >
+                      Skip
+                    </Button>
+
+                    <Button onClick={handleNext} disabled={!canGoNext}>
+                      {currentStep === stepsSafe.length - 1
+                        ? "Complete Registration"
+                        : "Next"}
+                    </Button>
+                  </div>
                 </div>
               )}
             </CardContent>
@@ -241,7 +291,7 @@ export default function Onboarding() {
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 function StepView({
@@ -250,10 +300,10 @@ function StepView({
   setFormData,
   handleFileUpload,
 }: {
-  step?: number
-  formData: FormDataState
-  setFormData: React.Dispatch<React.SetStateAction<FormDataState>>
-  handleFileUpload: (field: DocsKey, file: File | null) => void
+  step?: number;
+  formData: FormDataState;
+  setFormData: React.Dispatch<React.SetStateAction<FormDataState>>;
+  handleFileUpload: (field: DocsKey, file: File | null) => void;
 }) {
   if (step === 1) {
     return (
@@ -262,7 +312,9 @@ function StepView({
           <Label htmlFor="accountType">Select Account Type</Label>
           <Select
             value={formData.accountType}
-            onValueChange={(value) => setFormData((prev) => ({ ...prev, accountType: value }))}
+            onValueChange={(value) =>
+              setFormData((prev) => ({ ...prev, accountType: value }))
+            }
           >
             <SelectTrigger id="accountType" className="mt-2">
               <SelectValue placeholder="Choose account type" />
@@ -275,7 +327,7 @@ function StepView({
           </Select>
         </div>
       </div>
-    )
+    );
   }
 
   if (step === 2) {
@@ -287,7 +339,9 @@ function StepView({
             <Input
               id="name"
               value={formData.name}
-              onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, name: e.target.value }))
+              }
               placeholder="Enter full name"
               className="mt-2"
             />
@@ -297,7 +351,9 @@ function StepView({
             <Input
               id="state"
               value={formData.state}
-              onChange={(e) => setFormData((prev) => ({ ...prev, state: e.target.value }))}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, state: e.target.value }))
+              }
               placeholder="Enter state"
               className="mt-2"
             />
@@ -311,7 +367,9 @@ function StepView({
               id="aadhar"
               inputMode="numeric"
               value={formData.aadharCard}
-              onChange={(e) => setFormData((prev) => ({ ...prev, aadharCard: e.target.value }))}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, aadharCard: e.target.value }))
+              }
               placeholder="Enter Aadhar number"
               className="mt-2"
             />
@@ -321,7 +379,9 @@ function StepView({
             <Input
               id="pan"
               value={formData.panCard}
-              onChange={(e) => setFormData((prev) => ({ ...prev, panCard: e.target.value }))}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, panCard: e.target.value }))
+              }
               placeholder="Enter PAN number"
               className="mt-2"
             />
@@ -335,7 +395,9 @@ function StepView({
               id="email"
               type="email"
               value={formData.email}
-              onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, email: e.target.value }))
+              }
               placeholder="Enter email address"
               className="mt-2"
             />
@@ -346,7 +408,9 @@ function StepView({
               id="mobile"
               inputMode="tel"
               value={formData.mobile}
-              onChange={(e) => setFormData((prev) => ({ ...prev, mobile: e.target.value }))}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, mobile: e.target.value }))
+              }
               placeholder="Enter mobile number"
               className="mt-2"
             />
@@ -359,7 +423,9 @@ function StepView({
             <Input
               id="bankName"
               value={formData.bankName}
-              onChange={(e) => setFormData((prev) => ({ ...prev, bankName: e.target.value }))}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, bankName: e.target.value }))
+              }
               placeholder="Enter bank name"
               className="mt-2"
             />
@@ -385,7 +451,9 @@ function StepView({
             <Input
               id="ifsc"
               value={formData.ifscCode}
-              onChange={(e) => setFormData((prev) => ({ ...prev, ifscCode: e.target.value }))}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, ifscCode: e.target.value }))
+              }
               placeholder="Enter IFSC code"
               className="mt-2"
             />
@@ -400,7 +468,9 @@ function StepView({
               <Input
                 id="country"
                 value={formData.country}
-                onChange={(e) => setFormData((prev) => ({ ...prev, country: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, country: e.target.value }))
+                }
                 className="mt-2"
               />
             </div>
@@ -458,7 +528,9 @@ function StepView({
               <Input
                 id="city"
                 value={formData.city}
-                onChange={(e) => setFormData((prev) => ({ ...prev, city: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, city: e.target.value }))
+                }
                 placeholder="Enter city"
                 className="mt-2"
               />
@@ -469,7 +541,9 @@ function StepView({
                 id="zipCode"
                 inputMode="numeric"
                 value={formData.zipCode}
-                onChange={(e) => setFormData((prev) => ({ ...prev, zipCode: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, zipCode: e.target.value }))
+                }
                 placeholder="Enter zip code"
                 className="mt-2"
               />
@@ -477,31 +551,53 @@ function StepView({
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   if (step === 3) {
     const docs = [
-      { key: "cmlCopy" as const, label: "CML Copy", formats: ".pdf,.png,.jpeg,.jpg" },
-      { key: "panCard" as const, label: "PAN Card", formats: ".pdf,.png,.jpeg,.jpg" },
-      { key: "cancelCheque" as const, label: "Cancel Cheque", formats: ".pdf,.png,.jpeg,.jpg" },
-      { key: "signature" as const, label: "Signature", formats: ".png,.jpeg,.jpg" },
-    ]
+      {
+        key: "cmlCopy" as const,
+        label: "CML Copy",
+        formats: ".pdf,.png,.jpeg,.jpg",
+      },
+      {
+        key: "panCard" as const,
+        label: "PAN Card",
+        formats: ".pdf,.png,.jpeg,.jpg",
+      },
+      {
+        key: "cancelCheque" as const,
+        label: "Cancel Cheque",
+        formats: ".pdf,.png,.jpeg,.jpg",
+      },
+      {
+        key: "signature" as const,
+        label: "Signature",
+        formats: ".png,.jpeg,.jpg",
+      },
+    ];
 
     return (
       <div className="space-y-6">
-        <p className="text-sm text-muted-foreground">{"If you need more info, please contact at +91 9211265558"}</p>
+        <p className="text-sm text-muted-foreground">
+          {"If you need more info, please contact at +91 9211265558"}
+        </p>
         {docs.map((doc) => (
           <div key={doc.key} className="rounded-lg border p-4">
             <div className="mb-2 flex items-center justify-between">
               <Label className="font-medium">{doc.label}</Label>
-              <span className="text-xs sm:text-sm text-muted-foreground">Allowed ({doc.formats}) file-types only</span>
+              <span className="text-xs sm:text-sm text-muted-foreground">
+                Allowed ({doc.formats}) file-types only
+              </span>
             </div>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
               <Input
                 type="file"
                 accept={doc.formats}
-                onChange={(e) => handleFileUpload(doc.key, e.target.files?.[0] || null)}
+                onChange={(e) =>
+                  handleFileUpload(doc.key, e.target.files?.[0] || null)
+                }
                 className="flex-1"
                 aria-label={`Upload ${doc.label}`}
               />
@@ -519,7 +615,7 @@ function StepView({
           </div>
         ))}
       </div>
-    )
+    );
   }
 
   if (step === 4) {
@@ -528,7 +624,9 @@ function StepView({
         <div>
           <h3 className="mb-2 text-lg font-medium">Franchise Agreement</h3>
           <p className="text-muted-foreground">
-            {"Download the franchise agreement, sign it, and upload the signed document."}
+            {
+              "Download the franchise agreement, sign it, and upload the signed document."
+            }
           </p>
         </div>
 
@@ -549,7 +647,9 @@ function StepView({
               <Input
                 type="file"
                 accept=".pdf"
-                onChange={(e) => handleFileUpload("agreement", e.target.files?.[0] || null)}
+                onChange={(e) =>
+                  handleFileUpload("agreement", e.target.files?.[0] || null)
+                }
                 className="flex-1"
                 aria-label="Upload signed franchise agreement"
               />
@@ -567,7 +667,7 @@ function StepView({
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   if (step === 5) {
@@ -577,17 +677,24 @@ function StepView({
           <Check className="h-8 w-8 text-emerald-600" aria-hidden="true" />
         </div>
         <div>
-          <h3 className="mb-2 text-xl font-bold text-emerald-600">Registration Completed!</h3>
+          <h3 className="mb-2 text-xl font-bold text-emerald-600">
+            Registration Completed!
+          </h3>
           <p className="text-muted-foreground">
-            {"Your partner account has been created successfully. You will receive a confirmation email shortly."}
+            {
+              "Your partner account has been created successfully. You will receive a confirmation email shortly."
+            }
           </p>
         </div>
-        <Button type="button" onClick={() => (window.location.href = "/dashboard")}>
+        <Button
+          type="button"
+          onClick={() => (window.location.href = "/dashboard")}
+        >
           Go to Dashboard
         </Button>
       </div>
-    )
+    );
   }
 
-  return null
+  return null;
 }

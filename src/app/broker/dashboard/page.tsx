@@ -1,5 +1,7 @@
 "use client";
 
+import Dashboard from "@/pages/Broker/Dashboard/Dashboard";
+
 export default function Page() {
-  return <div className="p-10">Hey Admin</div>;
+  return <Dashboard />;
 }

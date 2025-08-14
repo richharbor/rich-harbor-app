@@ -54,3 +54,13 @@ export const postLogout = async () => {
     throw error;
   }
 };
+
+export const getNewAccessToken = async (requestBody: any) => {
+  try {
+    const response = await PrivateAxios.post(`${API_URL}/auth/refresh`, requestBody);
+    return response.data;
+  } catch (error) {
+    console.error("Login failed", error);
+    throw error;
+  }
+};

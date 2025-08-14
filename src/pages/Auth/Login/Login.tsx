@@ -37,8 +37,7 @@ export function Login({ className, ...props }: React.ComponentProps<"div">) {
     try {
       const response = await postLogin(requestBody);
       Cookies.set("authToken", response.accessToken);
-      console.log("m here at loginSchema, navigating to main page");
-      
+      Cookies.set("refreshToken", response.refreshToken);
       router.push("/");
     } catch (error) {
       console.log(error);

@@ -43,6 +43,7 @@ export function Signup({ className, ...props }: React.ComponentProps<"div">) {
     try {
       const response = await postRegister(requestBody);
       Cookies.set("authToken", response.accessToken);
+      Cookies.set("refreshToken", response.refreshToken);
       router.push("/")
     } catch (error) {
       console.log(error);

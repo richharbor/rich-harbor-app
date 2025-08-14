@@ -1,17 +1,17 @@
 import type { Metadata } from "next";
-import { AppSidebar } from "@/components/app-sidebar";
 import {
   SidebarProvider,
   SidebarInset,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { ThemeModeToggle } from "@/components/Common/Providers/ThemeModeToggle";
+import { BrokerSidebar } from "@/components/Common/Broker/Navigation/BrokerSidebar";
 
 export const metadata: Metadata = {
   title: "Rich Harbor | Broker",
 };
 
-export default function SuperAdminLayout({
+export default function BrokerLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
@@ -19,7 +19,7 @@ export default function SuperAdminLayout({
   return (
     <main className="flex min-h-screen w-full flex-col">
       <SidebarProvider>
-        <AppSidebar />
+        <BrokerSidebar />
         <SidebarInset>
           <header className="flex bg-sidebar h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
             <div className="flex items-center justify-between px-4 w-full">

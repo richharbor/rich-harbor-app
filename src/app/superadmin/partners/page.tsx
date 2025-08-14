@@ -1,4 +1,4 @@
-import Partners from '@/components/SuperAdmin/Partners/Partners'
+import Partners from '@/pages/SuperAdmin/Partners/Partners'
 import React from 'react'
 
 const page = () => {

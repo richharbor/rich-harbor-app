@@ -1,5 +1,7 @@
 "use client";
 
+import Dashboard from "@/pages/SuperAdmin/Dashboard/Dashboard";
+
 export default function Page() {
-  return <div className="p-10">Hey Super admin</div>;
+  return <Dashboard/>;
 }
