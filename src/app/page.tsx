@@ -3,63 +3,59 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import Cookies from "js-cookie";
 import Loading from "./loading";
-import {
-  getNewAccessToken,
-  getUserDetails,
-} from "@/services/Common/Auth/authServices";
+import { getUserDetails } from "@/services/Auth/authServices";
+
+import useAuthStore from "@/helpers/authStore";
 
 export default function Home() {
   const router = useRouter();
   const authToken = Cookies.get("authToken");
-  const refreshToken = Cookies.get("refreshToken");
-
-  const redirectAccToUserRole = (userRole: string) => {
-    switch (userRole) {
-      case "superadmin":
-        router.push("/superadmin/dashboard");
-        break;
-      case "broker":
-        router.push("/broker/dashboard");
-        break;
-    }
-  };
 
   const getUserDetailsFn = async () => {
     try {
-      let response = await getUserDetails();
+      const response = await getUserDetails();
+      console.log("User details:", response);
 
-      Cookies.set("currentRole", response.currentRole.name);
+      const setAuth = useAuthStore.getState().setAuth;
+      const setOnboardingStatus = useAuthStore.getState().setOnboardingStatus;
 
-      if (response.profile) {
-        redirectAccToUserRole(response.currentRole.name);
-      } else {
-        router.push(`/auth/onboarding`);
+      //  Onboarding redirect
+      if (response.onboarding?.required || !response.user?.emailVerified) {
+        setOnboardingStatus(response.onboarding);
+        router.push("/auth/onboarding");
+        return;
       }
-    } catch (error: any) {
-      // Check if it's a 403 and token invalid
-      if (error.response?.status === 403) {
-        console.log("Access token expired, trying refresh...");
 
-        try {
-          const refreshRes = await getNewAccessToken({ refreshToken });
-          Cookies.set("authToken", refreshRes.accessToken);
+      if (response.user) {
+        const roles = response.user.roles || [];
 
-          // Retry after getting new token
-          const response = await getUserDetails();
-          Cookies.set("currentRole", response.currentRole.name);
+        // Save user + roles in store
+        setAuth(response.user, Cookies.get("authToken") || "", roles);
 
-          if (response.profile) {
-            redirectAccToUserRole(response.currentRole.name);
-          } else {
-            router.push(`/auth/onboarding`);
-          }
-        } catch (refreshError) {
-          console.error("Token refresh failed", refreshError);
-          router.push(`/auth/login`); // fallback to login
+        // Set currentRole in store
+        if (response.user.currentRole) {
+          useAuthStore.getState().setCurrentRole(response.user.currentRole.id);
         }
-      } else {
-        console.error("Unexpected error", error);
+
+        // Redirect based on role
+        if (
+          response.user.isSuperAdmin &&
+          response.user.currentRole?.name.toLowerCase() === "superadmin"
+        ) {
+          router.push("/superadmin/dashboard");
+        } else if (response.user.currentRole) {
+          router.push(
+            `/${response.user.currentRole.name.toLowerCase()}/dashboard`
+          );
+        } else {
+          // fallback: no role → login
+          router.push("/auth/login");
+        }
       }
+    } catch (error) {
+      console.error("Failed to fetch user details:", error);
+      useAuthStore.getState().clearAuth();
+      router.push("/auth/login");
     }
   };
 

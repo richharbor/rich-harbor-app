@@ -1,4 +1,4 @@
-import { Login } from "@/pages/Auth/Login/Login";
+import Login from "@/pages/Auth/Login/Login";
 
 export default function LoginPage() {
   return (
@@ -7,5 +7,5 @@ export default function LoginPage() {
         <Login />
       </div>
     </div>
-  )
+  );
 }

@@ -25,7 +25,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Shield, Plus, MoreVertical, UserPlus, Settings } from "lucide-react"
 import { useState, useEffect } from "react"
-import { getCurrentUser, getAllRoles, assignRoleToUser } from "@/services/Common/Role/roleServices"
+import { getCurrentUser, getAllRoles, assignRoleToUser } from "@/services/Role/roleServices"
 
 interface Role {
   id: number

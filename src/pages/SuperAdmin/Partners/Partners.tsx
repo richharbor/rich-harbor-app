@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -21,110 +21,68 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Search, Plus, Eye, Check, X, Users } from "lucide-react";
-import { Partner } from "@/types";
+import {
+  getApplications,
+  updateApplicationStatus,
+} from "@/services/Role/partnerServices";
+import { toast } from "sonner";
 
-// Mock partners data
-const mockPartners: Partner[] = [
-  {
-    id: "1",
-    name: "Rajesh Kumar",
-    state: "Maharashtra",
-    aadharCard: "1234-5678-9012",
-    panCard: "ABCDE1234F",
-    email: "rajesh@example.com",
-    mobile: "+91 9876543210",
-    bankName: "HDFC Bank",
-    accountNumber: "12345678901",
-    ifscCode: "HDFC0001234",
-    address: {
-      country: "India",
-      state: "Maharashtra",
-      addressLine1: "123 Main Street",
-      addressLine2: "Andheri West",
-      city: "Mumbai",
-      zipCode: "400058",
-    },
-    documents: {
-      cmlCopy: "uploaded",
-      panCard: "uploaded",
-      cancelCheque: "uploaded",
-      signature: "uploaded",
-      agreement: "uploaded",
-    },
-    registrationStep: 5,
-    status: "approved",
-    createdAt: "2024-01-10",
-  },
-  {
-    id: "2",
-    name: "Priya Sharma",
-    state: "Delhi",
-    aadharCard: "2345-6789-0123",
-    panCard: "BCDEF2345G",
-    email: "priya@example.com",
-    mobile: "+91 9765432109",
-    bankName: "SBI",
-    accountNumber: "23456789012",
-    ifscCode: "SBIN0001235",
-    address: {
-      country: "India",
-      state: "Delhi",
-      addressLine1: "456 Park Avenue",
-      addressLine2: "Connaught Place",
-      city: "New Delhi",
-      zipCode: "110001",
-    },
-    documents: {
-      cmlCopy: "uploaded",
-      panCard: "uploaded",
-      cancelCheque: "uploaded",
-      signature: "uploaded",
-    },
-    registrationStep: 4,
-    status: "pending",
-    createdAt: "2024-01-12",
-  },
-  {
-    id: "3",
-    name: "Amit Patel",
-    state: "Gujarat",
-    aadharCard: "3456-7890-1234",
-    panCard: "CDEFG3456H",
-    email: "amit@example.com",
-    mobile: "+91 9654321098",
-    bankName: "ICICI Bank",
-    accountNumber: "34567890123",
-    ifscCode: "ICIC0001236",
-    address: {
-      country: "India",
-      state: "Gujarat",
-      addressLine1: "789 Business District",
-      addressLine2: "Satellite",
-      city: "Ahmedabad",
-      zipCode: "380015",
-    },
-    documents: {
-      cmlCopy: "uploaded",
-      panCard: "uploaded",
-    },
-    registrationStep: 3,
-    status: "pending",
-    createdAt: "2024-01-14",
-  },
-];
+type PartnerRow = {
+  id: number;
+  name: string;
+  email: string;
+  state: string;
+  role: string;
+  registrationStep: number;
+  status: string;
+  createdAt: string;
+};
 
 export default function Partners() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [partners] = useState<Partner[]>(mockPartners);
+  const [partners, setPartners] = useState<PartnerRow[]>([]);
+  const [loading, setLoading] = useState(true);
 
+  useEffect(() => {
+    fetchPartners();
+  }, [statusFilter]);
+
+  const fetchPartners = async () => {
+    try {
+      setLoading(true);
+      const data = await getApplications({
+        status: statusFilter,
+        page: 1,
+        limit: 20,
+      });
+
+      // 🔑 Map backend data to table-friendly shape
+      const formatted: PartnerRow[] = data.applications.map((app: any) => ({
+        id: app.user.id,
+        name:
+          app.formData?.step2?.name ||
+          `${app.user?.firstName || ""} ${app.user?.lastName || ""}`,
+        email: app.user?.email,
+        state: app.formData?.step2?.state || "N/A",
+        role: app.requestedRole.name,
+        registrationStep: app.currentStep || 0,
+        status: app.status,
+        createdAt: app.createdAt,
+      }));
+
+      setPartners(formatted);
+    } catch (err) {
+      console.error("Error fetching partners", err);
+    } finally {
+      setLoading(false);
+    }
+  };
   const filteredPartners = partners.filter((partner) => {
     const matchesSearch =
       partner.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       partner.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus =
-      statusFilter === "all" || partner.status === statusFilter;
-    return matchesSearch && matchesStatus;
+    return matchesSearch;
   });
 
   const getStatusBadge = (status: string) => {
@@ -133,7 +91,6 @@ export default function Partners() {
       pending: "secondary",
       rejected: "destructive",
     } as const;
-
     return (
       <Badge variant={variants[status as keyof typeof variants]}>
         {status}
@@ -141,19 +98,36 @@ export default function Partners() {
     );
   };
 
-  const getStepBadge = (step: number) => {
-    const isComplete = step === 5;
-    return (
-      <Badge variant={isComplete ? "default" : "outline"}>Step {step}/5</Badge>
-    );
+  const getStepBadge = (step: number) => (
+    <Badge variant={step === 5 ? "default" : "outline"}>Step {step}/5</Badge>
+  );
+
+  const approvePartner = async (applicationId: number) => {
+    try {
+      await updateApplicationStatus(applicationId, "approved");
+      toast.success("Partner approved!");
+      // Refresh list after update
+      await fetchPartners();
+      // setPartners(refreshed.applications);
+    } catch (error) {
+      toast.error("Failed to approve partner");
+    }
   };
 
-  const approvePartner = (partnerId: string) => {
-    console.log("Approving partner:", partnerId);
-  };
-
-  const rejectPartner = (partnerId: string) => {
-    console.log("Rejecting partner:", partnerId);
+  const rejectPartner = async (applicationId: number) => {
+    try {
+      await updateApplicationStatus(
+        applicationId,
+        "rejected",
+        "Rejected by admin"
+      );
+      toast.success("Partner rejected!");
+      // Refresh list after update
+      await fetchPartners();
+      // setPartners(refreshed.applications);
+    } catch (error) {
+      toast.error("Failed to reject partner");
+    }
   };
 
   const totalPartners = partners.length;
@@ -179,6 +153,7 @@ export default function Partners() {
         </Button>
       </div>
 
+      {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -224,6 +199,7 @@ export default function Partners() {
         </Card>
       </div>
 
+      {/* Filters */}
       <div className="flex items-center gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
@@ -248,6 +224,7 @@ export default function Partners() {
         </Select>
       </div>
 
+      {/* Table */}
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -257,50 +234,66 @@ export default function Partners() {
               <TableHead>State</TableHead>
               <TableHead>Registration</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>Resquesting Role</TableHead>
               <TableHead>Created</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredPartners.map((partner) => (
-              <TableRow key={partner.id}>
-                <TableCell className="font-medium">{partner.name}</TableCell>
-                <TableCell>{partner.email}</TableCell>
-                <TableCell>{partner.state}</TableCell>
-                <TableCell>{getStepBadge(partner.registrationStep)}</TableCell>
-                <TableCell>{getStatusBadge(partner.status)}</TableCell>
-                <TableCell>
-                  {new Date(partner.createdAt).toLocaleDateString()}
-                </TableCell>
-                <TableCell>
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm">
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                    {partner.status === "pending" && (
-                      <>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => approvePartner(partner.id)}
-                          className="text-green-600 hover:text-green-700"
-                        >
-                          <Check className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => rejectPartner(partner.id)}
-                          className="text-red-600 hover:text-red-700"
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </>
-                    )}
-                  </div>
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={8} className="text-center">
+                  Loading...
                 </TableCell>
               </TableRow>
-            ))}
+            ) : filteredPartners.length > 0 ? (
+              filteredPartners.map((partner) => (
+                <TableRow key={partner.id}>
+                  <TableCell className="font-medium">{partner.name}</TableCell>
+                  <TableCell>{partner.email}</TableCell>
+                  <TableCell>{partner.state}</TableCell>
+                  <TableCell>
+                    {getStepBadge(partner.registrationStep)}
+                  </TableCell>
+                  <TableCell>{getStatusBadge(partner.status)}</TableCell>
+                  <TableCell>{partner.role}</TableCell>
+                  <TableCell>
+                    {new Date(partner.createdAt).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm">
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      {partner.status === "pending" && (
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => approvePartner(partner.id)}
+                            className="text-green-600 hover:text-green-700">
+                            <Check className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => rejectPartner(partner.id)}
+                            className="text-red-600 hover:text-red-700">
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center">
+                  No partners found
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </div>

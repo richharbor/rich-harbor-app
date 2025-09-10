@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { z } from "zod";
-import { postLogin } from "@/services/Common/Auth/authServices";
+import { postLogin } from "@/services/Auth/authServices";
 import Cookies from "js-cookie";
 
 interface ILoginBody {
@@ -21,7 +21,7 @@ const loginSchema = z.object({
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
-export function Login({ className, ...props }: React.ComponentProps<"div">) {
+export default function Login({ className, ...props }: React.ComponentProps<"div">) {
   const router = useRouter();
   const [form, setForm] = useState<ILoginBody>({
     email: "",
@@ -36,8 +36,11 @@ export function Login({ className, ...props }: React.ComponentProps<"div">) {
   const postLoginFn = async (requestBody: ILoginBody) => {
     try {
       const response = await postLogin(requestBody);
-      Cookies.set("authToken", response.accessToken);
-      Cookies.set("refreshToken", response.refreshToken);
+
+      console.log(response);
+      Cookies.set("authToken", response.token);
+      // Cookies.set("currentRole","wq")
+      // Cookies.set("refreshToken", response.refreshToken);
       router.push("/");
     } catch (error) {
       console.log(error);
@@ -99,6 +102,7 @@ export function Login({ className, ...props }: React.ComponentProps<"div">) {
                   id="password"
                   name="password"
                   type="password"
+                  placeholder="password"
                   value={form.password}
                   onChange={handleChange}
                 />
@@ -110,7 +114,6 @@ export function Login({ className, ...props }: React.ComponentProps<"div">) {
               <Button type="submit" className="w-full">
                 Login
               </Button>
-
 
               <div className="after:border-border relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t">
                 <span className="bg-card text-muted-foreground relative z-10 px-2">
@@ -150,7 +153,9 @@ export function Login({ className, ...props }: React.ComponentProps<"div">) {
 
               <div className="text-center text-sm">
                 Don&apos;t have an account?{" "}
-                <a href="/auth/signup" className="underline underline-offset-4">
+                <a
+                  href="/auth/onboarding"
+                  className="underline underline-offset-4">
                   Sign up
                 </a>
               </div>
