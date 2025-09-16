@@ -8,6 +8,13 @@ const PrivateAxios = axios.create({
   },
 });
 
+const PrivateFilesAxios = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_API_URL,
+  headers: {
+    "Content-Type": "multipart/form-data",
+  },
+});
+
 PrivateAxios.interceptors.request.use((config) => {
   const token = Cookies.get("authToken");
   if (token) {
@@ -16,4 +23,4 @@ PrivateAxios.interceptors.request.use((config) => {
   return config;
 });
 
-export { PrivateAxios };
+export { PrivateAxios, PrivateFilesAxios };

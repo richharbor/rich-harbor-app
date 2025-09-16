@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Check, Download, Upload, Loader2, X } from "lucide-react";
+import { Check, Download, Loader2, X, FileText, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
@@ -28,6 +28,11 @@ import {
   getOnboardingStatus,
 } from "@/services/Auth/authServices";
 import LoadingSpinner from "@/components/Common/LoadingSpinner/LoadingSpinner";
+import {
+  uploadDocumentFile,
+  deleteDocumentFile,
+  type UploadedFile,
+} from "@/services/Auth/uploadServices";
 
 type DocsKey =
   | "cmlCopy"
@@ -59,6 +64,7 @@ type FormDataState = {
   zipCode: string;
   // Step 3 & 4
   documents: Record<DocsKey, File | null>;
+  uploadedFiles: Record<DocsKey, UploadedFile | null>;
 };
 
 const DEFAULT_STEPS = [
@@ -102,6 +108,13 @@ export default function Onboarding() {
     zipCode: "",
     // Step 3 & 4
     documents: {
+      cmlCopy: null,
+      panCard: null,
+      cancelCheque: null,
+      signature: null,
+      agreement: null,
+    },
+    uploadedFiles: {
       cmlCopy: null,
       panCard: null,
       cancelCheque: null,
@@ -243,13 +256,18 @@ export default function Onboarding() {
   };
 
   const handleStep3Submit = async () => {
-    // In real app, upload files first and get URLs
-    const documentUrls = {
-      cmlCopy: "uploaded_url_1",
-      panCard: "uploaded_url_2",
-      cancelCheque: "uploaded_url_3",
-      signature: "uploaded_url_4",
-    };
+    const documentUrls: Record<string, string> = {};
+
+    // Extract actual file URLs from uploadedFiles
+    Object.entries(formData.uploadedFiles).forEach(
+      ([key, uploadedFile]: [string, any]) => {
+        if (uploadedFile && uploadedFile.fileUrl) {
+          documentUrls[key] = uploadedFile.fileUrl;
+        }
+      }
+    );
+
+    console.log("[v0] Submitting document URLs:", documentUrls);
 
     await postDocuments({ documents: documentUrls });
     toast.success("Documents uploaded!");
@@ -272,7 +290,27 @@ export default function Onboarding() {
     }
   };
 
-  const handleFileUpload = (field: DocsKey, file: File | null) => {
+  const [uploading, setUploading] = useState<Record<DocsKey, boolean>>({
+    cmlCopy: false,
+    panCard: false,
+    cancelCheque: false,
+    signature: false,
+    agreement: false,
+  });
+
+  const handleFileUpload = async (field: DocsKey, file: File | null) => {
+    if (!file) {
+      setFormData((prev) => ({
+        ...prev,
+        documents: {
+          ...prev.documents,
+          [field]: null,
+        },
+      }));
+      return;
+    }
+
+    // Set the file first
     setFormData((prev) => ({
       ...prev,
       documents: {
@@ -280,6 +318,92 @@ export default function Onboarding() {
         [field]: file,
       },
     }));
+
+    // Automatically start upload
+    setUploading((prev) => ({ ...prev, [field]: true }));
+
+    try {
+      const uploadedFile = await uploadDocumentFile(file);
+      console.log("[v0] Upload response:", uploadedFile);
+
+      const fileData = {
+        fileUrl: uploadedFile.fileUrl,
+        fileName: file.name,
+        fileSize: file.size,
+        key: field, // Adding key property for debugging
+        name: file.name, // Adding name property as alias
+      };
+
+      console.log("[v0] Storing file data:", fileData);
+
+      setFormData((prev) => {
+        const newFormData = {
+          ...prev,
+          uploadedFiles: {
+            ...prev.uploadedFiles,
+            [field]: fileData,
+          },
+          documents: {
+            ...prev.documents,
+            [field]: null, // Clear the file input after successful upload
+          },
+        };
+        console.log(
+          "[v0] New form data uploadedFiles:",
+          newFormData.uploadedFiles
+        );
+        return newFormData;
+      });
+      toast.success("File uploaded successfully");
+    } catch (error) {
+      console.log("[v0] Upload error:", error);
+      toast.error("Failed to upload file");
+    } finally {
+      setUploading((prev) => ({ ...prev, [field]: false }));
+    }
+  };
+
+  const handleUpload = async (field: DocsKey) => {
+    const file = formData.documents[field];
+    if (!file) return;
+
+    setUploading((prev) => ({ ...prev, [field]: true }));
+
+    try {
+      const uploadedFile = await uploadDocumentFile(file);
+      setFormData((prev) => ({
+        ...prev,
+        uploadedFiles: {
+          ...prev.uploadedFiles,
+          [field]: uploadedFile,
+        },
+        documents: {
+          ...prev.documents,
+          [field]: null, // Clear the file input after successful upload
+        },
+      }));
+    } catch (error) {
+    } finally {
+      setUploading((prev) => ({ ...prev, [field]: false }));
+    }
+  };
+
+  const handleDelete = async (field: DocsKey) => {
+    const uploadedFile = formData.uploadedFiles[field];
+    if (!uploadedFile) return;
+
+    try {
+      await deleteDocumentFile({ key: uploadedFile.key });
+      setFormData((prev) => ({
+        ...prev,
+        uploadedFiles: {
+          ...prev.uploadedFiles,
+          [field]: null,
+        },
+      }));
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   const isEmail = (val: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
@@ -317,14 +441,14 @@ export default function Onboarding() {
     }
     if (step === 3) {
       return Boolean(
-        formData.documents.cmlCopy &&
-          formData.documents.panCard &&
-          formData.documents.cancelCheque &&
-          formData.documents.signature
+        formData.uploadedFiles.cmlCopy &&
+          formData.uploadedFiles.panCard &&
+          formData.uploadedFiles.cancelCheque &&
+          formData.uploadedFiles.signature
       );
     }
     if (step === 4) {
-      return Boolean(formData.documents.agreement);
+      return Boolean(formData.uploadedFiles.agreement);
     }
     return true;
   }
@@ -352,14 +476,16 @@ export default function Onboarding() {
           !isActive && !isDone && "bg-muted text-muted-foreground",
           !isClickable && "cursor-not-allowed opacity-60"
         )}
-        disabled={loading}>
+        disabled={loading}
+      >
         <span
           className={cn(
             "inline-flex h-5 w-5 items-center justify-center rounded-full border text-[11px]",
             isActive && "border-emerald-600 text-emerald-700",
             isDone && "border-emerald-500 text-emerald-600",
             !isActive && !isDone && "border-transparent bg-background"
-          )}>
+          )}
+        >
           {isDone ? <Check className="h-3.5 w-3.5" /> : stepNumber}
         </span>
         <span>{steps[index]}</span>
@@ -393,7 +519,8 @@ export default function Onboarding() {
           </div>
           <Button
             type="button"
-            onClick={() => window.open("https://richharbor.com/", "_blank")}>
+            onClick={() => window.open("https://richharbor.com/", "_blank")}
+          >
             Go to website
           </Button>
         </div>
@@ -414,7 +541,8 @@ export default function Onboarding() {
           </div>
           <Button
             type="button"
-            onClick={() => window.open("https://richharbor.com/", "_blank")}>
+            onClick={() => window.open("https://richharbor.com/", "_blank")}
+          >
             Go to website
           </Button>
         </div>
@@ -453,6 +581,9 @@ export default function Onboarding() {
                 formData={formData}
                 setFormData={setFormData}
                 handleFileUpload={handleFileUpload}
+                handleUpload={handleUpload}
+                handleDelete={handleDelete}
+                uploading={uploading}
                 currentStatus={currentStatus}
               />
 
@@ -462,13 +593,15 @@ export default function Onboarding() {
                     <Button
                       variant="ghost"
                       onClick={() => router.push("/dashboard")}
-                      disabled={loading}>
+                      disabled={loading}
+                    >
                       Skip for now
                     </Button>
 
                     <Button
                       onClick={handleNext}
-                      disabled={!canGoNext || loading}>
+                      disabled={!canGoNext || loading}
+                    >
                       {loading && (
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       )}
@@ -492,12 +625,18 @@ function StepView({
   formData,
   setFormData,
   handleFileUpload,
+  handleUpload,
+  handleDelete,
+  uploading,
   currentStatus,
 }: {
   step?: number;
   formData: FormDataState;
   setFormData: React.Dispatch<React.SetStateAction<FormDataState>>;
   handleFileUpload: (field: DocsKey, file: File | null) => void;
+  handleUpload: (field: DocsKey) => void;
+  handleDelete: (field: DocsKey) => void;
+  uploading: Record<DocsKey, boolean>;
   currentStatus: string | null;
 }) {
   if (step === 1) {
@@ -509,7 +648,8 @@ function StepView({
             value={formData.accountType}
             onValueChange={(value) =>
               setFormData((prev) => ({ ...prev, accountType: value }))
-            }>
+            }
+          >
             <SelectTrigger id="accountType" className="mt-2">
               <SelectValue placeholder="Choose account type" />
             </SelectTrigger>
@@ -645,7 +785,10 @@ function StepView({
               inputMode="tel"
               value={formData.mobile}
               onChange={(e) =>
-                setFormData((prev) => ({ ...prev, mobile: e.target.value }))
+                setFormData((prev) => ({
+                  ...prev,
+                  mobile: e.target.value,
+                }))
               }
               placeholder="Enter mobile number"
               className="mt-2"
@@ -827,27 +970,47 @@ function StepView({
                 Allowed ({doc.formats}) file-types only
               </span>
             </div>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-              <Input
-                type="file"
-                accept={doc.formats}
-                onChange={(e) =>
-                  handleFileUpload(doc.key, e.target.files?.[0] || null)
-                }
-                className="flex-1"
-                aria-label={`Upload ${doc.label}`}
-              />
-              <Button variant="outline" size="sm" type="button">
-                <Upload className="mr-2 h-4 w-4" />
-                Upload
-              </Button>
-              {formData.documents[doc.key] && (
-                <span className="text-xs text-emerald-600 inline-flex items-center gap-1">
-                  <Check className="h-4 w-4" />
-                  File added
-                </span>
-              )}
-            </div>
+
+            {formData.uploadedFiles[doc.key] ? (
+              <div className="flex items-center justify-between rounded-lg border border-emerald-200 bg-emerald-50 p-3">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-emerald-600" />
+                  <span className="text-sm font-medium text-emerald-700">
+                    {formData.uploadedFiles[doc.key]?.key ||
+                      formData.uploadedFiles[doc.key]?.name ||
+                      "Unknown file"}
+                  </span>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  type="button"
+                  onClick={() => handleDelete(doc.key)}
+                  className="text-red-600 hover:text-red-700"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-3">
+                <Input
+                  type="file"
+                  accept={doc.formats}
+                  onChange={(e) =>
+                    handleFileUpload(doc.key, e.target.files?.[0] || null)
+                  }
+                  className="flex-1"
+                  aria-label={`Upload ${doc.label}`}
+                  disabled={uploading[doc.key]}
+                />
+                {uploading[doc.key] && (
+                  <div className="flex items-center gap-2 text-sm text-blue-600">
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-blue-600" />
+                    Uploading...
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         ))}
       </div>
@@ -871,34 +1034,54 @@ function StepView({
             variant="outline"
             className="w-full bg-transparent"
             type="button"
-            onClick={() => alert("Downloading agreement...")}>
+            onClick={() => alert("Downloading agreement...")}
+          >
             <Download className="mr-2 h-4 w-4" />
             Download Franchise Agreement
           </Button>
 
           <div className="rounded-lg border p-4 text-left">
             <Label className="font-medium">Upload Signed Agreement</Label>
-            <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-center">
-              <Input
-                type="file"
-                accept=".pdf"
-                onChange={(e) =>
-                  handleFileUpload("agreement", e.target.files?.[0] || null)
-                }
-                className="flex-1"
-                aria-label="Upload signed franchise agreement"
-              />
-              <Button variant="outline" size="sm" type="button">
-                <Upload className="mr-2 h-4 w-4" />
-                Upload
-              </Button>
-              {Boolean(formData.documents.agreement) && (
-                <span className="text-xs text-emerald-600 inline-flex items-center gap-1">
-                  <Check className="h-4 w-4" />
-                  File added
-                </span>
-              )}
-            </div>
+            {formData.uploadedFiles.agreement ? (
+              <div className="mt-2 flex items-center justify-between rounded-lg border border-emerald-200 bg-emerald-50 p-3">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-emerald-600" />
+                  <span className="text-sm font-medium text-emerald-700">
+                    {formData.uploadedFiles.agreement?.key ||
+                      formData.uploadedFiles.agreement?.name ||
+                      "Unknown file"}
+                  </span>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  type="button"
+                  onClick={() => handleDelete("agreement")}
+                  className="text-red-600 hover:text-red-700"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <div className="mt-2 flex flex-col gap-3">
+                <Input
+                  type="file"
+                  accept=".pdf"
+                  onChange={(e) =>
+                    handleFileUpload("agreement", e.target.files?.[0] || null)
+                  }
+                  className="flex-1"
+                  aria-label="Upload signed franchise agreement"
+                  disabled={uploading.agreement}
+                />
+                {uploading.agreement && (
+                  <div className="flex items-center gap-2 text-sm text-blue-600">
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-blue-600" />
+                    Uploading...
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -923,7 +1106,8 @@ function StepView({
           </div>
           <Button
             type="button"
-            onClick={() => window.open("https://richharbor.com/", "_blank")}>
+            onClick={() => window.open("https://richharbor.com/", "_blank")}
+          >
             Go to website
           </Button>
         </div>
@@ -946,7 +1130,8 @@ function StepView({
           </div>
           <Button
             type="button"
-            onClick={() => window.open("https://richharbor.com/", "_blank")}>
+            onClick={() => window.open("https://richharbor.com/", "_blank")}
+          >
             Go to website
           </Button>
         </div>
