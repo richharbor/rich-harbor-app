@@ -457,10 +457,9 @@ export default function Onboarding() {
 
   const stepBadge = (index: number) => {
     const stepNumber = index + 1;
-    const isDone = stepNumber < currentStep;
     const isActive = stepNumber === currentStep;
-    const isClickable =
-      stepNumber <= maxStepVisited && !completedSteps.includes(stepNumber);
+    const isDone = stepNumber < currentStep;
+    const isClickable = stepNumber <= currentStep && !loading;
 
     return (
       <button
@@ -469,10 +468,10 @@ export default function Onboarding() {
         onClick={() => isClickable && setCurrentStep(stepNumber)}
         className={cn(
           "flex items-center gap-2 px-3 py-2 rounded-full text-sm whitespace-nowrap transition-colors",
-          isActive && "bg-emerald-100 text-emerald-700",
+          isActive && "bg-primary/10 text-primary border border-primary/20",
           !isActive &&
             isDone &&
-            "bg-emerald-50 text-emerald-600 hover:bg-emerald-100",
+            "bg-muted text-muted-foreground hover:bg-muted/80",
           !isActive && !isDone && "bg-muted text-muted-foreground",
           !isClickable && "cursor-not-allowed opacity-60"
         )}
@@ -481,9 +480,11 @@ export default function Onboarding() {
         <span
           className={cn(
             "inline-flex h-5 w-5 items-center justify-center rounded-full border text-[11px]",
-            isActive && "border-emerald-600 text-emerald-700",
-            isDone && "border-emerald-500 text-emerald-600",
-            !isActive && !isDone && "border-transparent bg-background"
+            isActive && "border-primary text-primary bg-primary/5",
+            isDone && "border-primary text-primary bg-primary/10",
+            !isActive &&
+              !isDone &&
+              "border-muted-foreground/30 bg-background text-muted-foreground"
           )}
         >
           {isDone ? <Check className="h-3.5 w-3.5" /> : stepNumber}
@@ -550,11 +551,11 @@ export default function Onboarding() {
     </div>
   ) : (
     //  Normal form wizard
-    <div className="min-h-screen flex flex-col bg-white">
-      <header className="sticky top-0 z-40 border-b bg-white/90 backdrop-blur">
+    <div className="min-h-screen flex flex-col bg-background">
+      <header className="sticky top-0 z-40 border-b bg-background/90 backdrop-blur">
         <div className="mx-auto w-full max-w-5xl px-4 py-4">
           <div className="flex items-center justify-between">
-            <h1 className="text-lg md:text-xl font-semibold">
+            <h1 className="text-lg md:text-xl font-semibold text-foreground">
               Partner Registration
             </h1>
             <div className="text-xs md:text-sm text-muted-foreground">

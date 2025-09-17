@@ -21,14 +21,23 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Search, Plus, Eye, Check, X, Users } from "lucide-react";
-import {
-  getApplications,
-  updateApplicationStatus,
-} from "@/services/Role/partnerServices";
+import { PartnerDetails } from "./PartnerDetails/PartnerDetails";
 import { toast } from "sonner";
+import { getApplications } from "@/services/Role/partnerServices";
+
+const updateApplicationStatus = async (
+  applicationId: number,
+  status: string,
+  notes?: string
+) => {
+  // Mock API call - replace with your actual implementation
+  console.log(`Updating application ${applicationId} to ${status}`, notes);
+  return Promise.resolve();
+};
 
 type PartnerRow = {
   id: number;
+  applicationId: number;
   name: string;
   email: string;
   state: string;
@@ -36,6 +45,7 @@ type PartnerRow = {
   registrationStep: number;
   status: string;
   createdAt: string;
+  application: any; // Full application data for drawer
 };
 
 export default function Partners() {
@@ -43,6 +53,8 @@ export default function Partners() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [partners, setPartners] = useState<PartnerRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedApplication, setSelectedApplication] = useState<any>(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   useEffect(() => {
     fetchPartners();
@@ -57,27 +69,31 @@ export default function Partners() {
         limit: 20,
       });
 
-      // 🔑 Map backend data to table-friendly shape
       const formatted: PartnerRow[] = data.applications.map((app: any) => ({
         id: app.user.id,
+        applicationId: app.id,
         name:
           app.formData?.step2?.name ||
-          `${app.user?.firstName || ""} ${app.user?.lastName || ""}`,
+          app.formData?.step1?.fullName ||
+          `${app.user?.firstName || ""} ${app.user?.lastName || ""}`.trim(),
         email: app.user?.email,
         state: app.formData?.step2?.state || "N/A",
         role: app.requestedRole.name,
         registrationStep: app.currentStep || 0,
         status: app.status,
         createdAt: app.createdAt,
+        application: app, // Store full application data for drawer
       }));
 
       setPartners(formatted);
     } catch (err) {
       console.error("Error fetching partners", err);
+      toast.error("Failed to fetch partners");
     } finally {
       setLoading(false);
     }
   };
+
   const filteredPartners = partners.filter((partner) => {
     const matchesSearch =
       partner.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -90,10 +106,11 @@ export default function Partners() {
       approved: "default",
       pending: "secondary",
       rejected: "destructive",
+      draft: "outline",
     } as const;
     return (
-      <Badge variant={variants[status as keyof typeof variants]}>
-        {status}
+      <Badge variant={variants[status as keyof typeof variants] || "outline"}>
+        {status.charAt(0).toUpperCase() + status.slice(1)}
       </Badge>
     );
   };
@@ -106,9 +123,7 @@ export default function Partners() {
     try {
       await updateApplicationStatus(applicationId, "approved");
       toast.success("Partner approved!");
-      // Refresh list after update
       await fetchPartners();
-      // setPartners(refreshed.applications);
     } catch (error) {
       toast.error("Failed to approve partner");
     }
@@ -122,12 +137,15 @@ export default function Partners() {
         "Rejected by admin"
       );
       toast.success("Partner rejected!");
-      // Refresh list after update
       await fetchPartners();
-      // setPartners(refreshed.applications);
     } catch (error) {
       toast.error("Failed to reject partner");
     }
+  };
+
+  const handleViewDetails = (partner: PartnerRow) => {
+    setSelectedApplication(partner.application);
+    setIsDrawerOpen(true);
   };
 
   const totalPartners = partners.length;
@@ -137,7 +155,7 @@ export default function Partners() {
   const pendingPartners = partners.filter((p) => p.status === "pending").length;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">
@@ -147,10 +165,12 @@ export default function Partners() {
             Manage partner registrations and approvals
           </p>
         </div>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Partner
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Partner
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -220,6 +240,7 @@ export default function Partners() {
             <SelectItem value="approved">Approved</SelectItem>
             <SelectItem value="pending">Pending</SelectItem>
             <SelectItem value="rejected">Rejected</SelectItem>
+            <SelectItem value="draft">Draft</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -234,7 +255,7 @@ export default function Partners() {
               <TableHead>State</TableHead>
               <TableHead>Registration</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Resquesting Role</TableHead>
+              <TableHead>Requesting Role</TableHead>
               <TableHead>Created</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
@@ -256,13 +277,17 @@ export default function Partners() {
                     {getStepBadge(partner.registrationStep)}
                   </TableCell>
                   <TableCell>{getStatusBadge(partner.status)}</TableCell>
-                  <TableCell>{partner.role}</TableCell>
+                  <TableCell className="capitalize">{partner.role}</TableCell>
                   <TableCell>
                     {new Date(partner.createdAt).toLocaleDateString()}
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleViewDetails(partner)}
+                      >
                         <Eye className="h-4 w-4" />
                       </Button>
                       {partner.status === "pending" && (
@@ -270,15 +295,19 @@ export default function Partners() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => approvePartner(partner.id)}
-                            className="text-green-600 hover:text-green-700">
+                            onClick={() =>
+                              approvePartner(partner.applicationId)
+                            }
+                            className="text-green-600 hover:text-green-700"
+                          >
                             <Check className="h-4 w-4" />
                           </Button>
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => rejectPartner(partner.id)}
-                            className="text-red-600 hover:text-red-700">
+                            onClick={() => rejectPartner(partner.applicationId)}
+                            className="text-red-600 hover:text-red-700"
+                          >
                             <X className="h-4 w-4" />
                           </Button>
                         </>
@@ -289,7 +318,7 @@ export default function Partners() {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={7} className="text-center">
+                <TableCell colSpan={8} className="text-center">
                   No partners found
                 </TableCell>
               </TableRow>
@@ -297,6 +326,13 @@ export default function Partners() {
           </TableBody>
         </Table>
       </div>
+
+      {/* Partner Details Drawer */}
+      <PartnerDetails
+        isOpen={isDrawerOpen}
+        onClose={() => setIsDrawerOpen(false)}
+        application={selectedApplication}
+      />
     </div>
   );
 }

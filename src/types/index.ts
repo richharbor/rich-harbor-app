@@ -1,54 +1,90 @@
 export interface User {
-  id: string
-  name: string
-  email: string
-  role: 'superadmin' | 'admin'
-  partnerId?: string
-  status: 'active' | 'pending' | 'blocked'
+  id: number;
+  email: string;
+  firstName: string;
+  lastName: string;
+  phoneNumber: string | null;
+  emailVerified: boolean;
 }
 
-export interface Trade {
-  id: string
-  shareName: string
-  quantity: number
-  price: number
-  expectedPrice?: number
-  type: 'buying' | 'selling'
-  direct: boolean
-  buyerEntity: 'individual' | 'broker' | 'institution'
-  blocking: boolean
-  status: 'open' | 'closed'
-  createdAt: string
-  partnerId?: string
+export interface RequestedRole {
+  id: number;
+  name: string;
 }
 
-export interface Partner {
-  id: string
-  name: string
-  state: string
-  aadharCard: string
-  panCard: string
-  email: string
-  mobile: string
-  bankName: string
-  accountNumber: string
-  ifscCode: string
-  address: {
-    country: string
-    state: string
-    addressLine1: string
-    addressLine2: string
-    city: string
-    zipCode: string
-  }
-  documents: {
-    cmlCopy?: string
-    panCard?: string
-    cancelCheque?: string
-    signature?: string
-    agreement?: string
-  }
-  registrationStep: number
-  status: 'pending' | 'approved' | 'rejected'
-  createdAt: string
+export interface FormDataStep1 {
+  email: string;
+  fullName: string;
+  accountType: string;
+}
+
+export interface FormDataStep2 {
+  city: string;
+  name: string;
+  state: string;
+  mobile: string;
+  country: string;
+  panCard: string;
+  zipCode: string;
+  bankName: string;
+  ifscCode: string;
+  aadharCard: string;
+  addressLine1: string;
+  addressLine2: string;
+  addressState: string;
+  accountNumber: string;
+}
+
+export interface FormData {
+  step1?: FormDataStep1;
+  step2?: FormDataStep2;
+  systemGenerated?: boolean;
+}
+
+export interface Documents {
+  cmlCopy?: string;
+  panCard?: string;
+  signature?: string;
+  cancelCheque?: string;
+  agreement?: string;
+}
+
+export interface PartnerApplication {
+  id: number;
+  userId: number;
+  requestedRoleId: number;
+  currentStep: number;
+  completedSteps: number[];
+  formData: FormData;
+  documents: Documents;
+  status: 'draft' | 'approved' | 'rejected' | 'pending';
+  reviewedBy: number | null;
+  reviewedAt: string | null;
+  reviewNotes: string | null;
+  approvalToken: string | null;
+  createdAt: string;
+  updatedAt: string;
+  user: User;
+  requestedRole: RequestedRole;
+}
+
+export interface ApiResponse {
+  applications: PartnerApplication[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}
+
+export interface PartnerRow {
+  id: number;
+  name: string;
+  email: string;
+  state: string;
+  role: string;
+  registrationStep: number;
+  status: string;
+  createdAt: string;
 }

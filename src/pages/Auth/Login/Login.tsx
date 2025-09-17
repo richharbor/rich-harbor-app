@@ -73,9 +73,9 @@ export default function Login({ className, ...props }: React.ComponentProps<"div
           <form className="p-6 md:p-8" onSubmit={handleSubmit}>
             <div className="flex flex-col gap-6">
               <div className="flex flex-col items-center text-center">
-                <h1 className="text-2xl font-bold">Create an account</h1>
+                <h1 className="text-2xl font-bold">Welcome Back</h1>
                 <p className="text-muted-foreground text-balance">
-                  Join Rich Harbor in just a few steps
+                  Rich Harbor is waiting for you
                 </p>
               </div>
 
@@ -115,7 +115,7 @@ export default function Login({ className, ...props }: React.ComponentProps<"div
                 Login
               </Button>
 
-              <div className="after:border-border relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t">
+              {/* <div className="after:border-border relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t">
                 <span className="bg-card text-muted-foreground relative z-10 px-2">
                   Or continue with
                 </span>
@@ -158,7 +158,7 @@ export default function Login({ className, ...props }: React.ComponentProps<"div
                   className="underline underline-offset-4">
                   Sign up
                 </a>
-              </div>
+              </div> */}
             </div>
           </form>
 

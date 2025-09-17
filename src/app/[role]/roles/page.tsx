@@ -1,5 +1,5 @@
 import React from 'react'
-import Roles from '@/pages/SuperAdmin/Roles/Roles'
+import Roles from '@/pages/Users/Roles/Roles'
 
 const page = () => {
   return (
