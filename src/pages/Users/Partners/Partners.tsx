@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Search, Plus, Eye, Check, X, Users } from "lucide-react";
-import { PartnerDetails } from "./PartnerDetails/PartnerDetails";
+import PartnerDetails from "./PartnerDetails/PartnerDetails";
 import { toast } from "sonner";
 import { getApplications } from "@/services/Role/partnerServices";
 

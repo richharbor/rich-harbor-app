@@ -70,7 +70,7 @@ interface PartnerDetailsDrawerProps {
   application: PartnerApplication | null
 }
 
-export function PartnerDetails({ isOpen, onClose, application }: PartnerDetailsDrawerProps) {
+export default function PartnerDetails({ isOpen, onClose, application }: PartnerDetailsDrawerProps) {
   if (!application) return null
 
   const getStepStatus = (stepNumber: number) => {
