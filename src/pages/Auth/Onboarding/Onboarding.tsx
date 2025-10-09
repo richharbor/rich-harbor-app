@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/select";
 import { Check, Download, Loader2, X, FileText, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Cookies from "js-cookie";
 import { toast } from "sonner";
 import {
@@ -26,6 +26,7 @@ import {
   postAgreement,
   completeOnboarding,
   getOnboardingStatus,
+  verifyOnboardingToken,
 } from "@/services/Auth/authServices";
 import LoadingSpinner from "@/components/Common/LoadingSpinner/LoadingSpinner";
 import {
@@ -77,6 +78,7 @@ const DEFAULT_STEPS = [
 
 export default function Onboarding() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const steps = DEFAULT_STEPS;
   const [loading, setLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState<number>(1);
@@ -122,6 +124,8 @@ export default function Onboarding() {
       agreement: null,
     },
   });
+  const [inviteEmail, setInviteEmail] = useState<string | null>(null);
+  const [inviterId, setInviterId] = useState<number | null>(null);
 
   const progress = useMemo(
     () => (currentStep / steps.length) * 100,
@@ -139,12 +143,56 @@ export default function Onboarding() {
     }
   }, [currentStep]);
 
+  const cookieToken = Cookies.get("authToken");
+
+  useEffect(() => {
+    // If token exists in cookie, don't redirect
+    if (cookieToken) return;
+
+    // If searchParams is null, redirect
+    if (!searchParams) {
+      router.replace("/auth/login");
+      return;
+    }
+
+    const tokenFromUrl = searchParams.get("token");
+
+    // If no token in URL, redirect
+    if (!tokenFromUrl) {
+      router.replace("/auth/login");
+      return;
+    }
+
+    const verifyToken = async () => {
+      try {
+        const res = await verifyOnboardingToken({ token: tokenFromUrl });
+        console.log("Token verified:", res);
+
+        if (res?.data?.partnerEmail) {
+          setFormData((prev) => ({
+            ...prev,
+            email: res.data.partnerEmail,
+          }));
+          setInviteEmail(res.data.partnerEmail);
+        }
+
+        setInviterId(res.data.inviterId);
+      } catch (error: any) {
+        console.error("Invalid or expired token:", error);
+        toast.error("Invalid or expired invite link");
+        router.replace("/auth/login");
+      }
+    };
+
+    verifyToken();
+  }, [searchParams, router, cookieToken]);
+
   const checkOnboardingStatus = async () => {
     const token = Cookies.get("authToken");
     if (token) {
       try {
         const response = await getOnboardingStatus();
-        // ✅ store status in state
+        //  store status in state
         console.log(response.status);
         setCurrentStatus(response.status);
 
@@ -225,6 +273,7 @@ export default function Onboarding() {
   const handleStep1Submit = async () => {
     const response = await postStartOnboard({
       email: formData.email,
+      superiorId: inviterId,
       password: formData.password,
       fullName: formData.fullName,
       accountType: formData.accountType,
@@ -475,8 +524,7 @@ export default function Onboarding() {
           !isActive && !isDone && "bg-muted text-muted-foreground",
           !isClickable && "cursor-not-allowed opacity-60"
         )}
-        disabled={loading}
-      >
+        disabled={loading}>
         <span
           className={cn(
             "inline-flex h-5 w-5 items-center justify-center rounded-full border text-[11px]",
@@ -485,8 +533,7 @@ export default function Onboarding() {
             !isActive &&
               !isDone &&
               "border-muted-foreground/30 bg-background text-muted-foreground"
-          )}
-        >
+          )}>
           {isDone ? <Check className="h-3.5 w-3.5" /> : stepNumber}
         </span>
         <span>{steps[index]}</span>
@@ -520,8 +567,7 @@ export default function Onboarding() {
           </div>
           <Button
             type="button"
-            onClick={() => window.open("https://richharbor.com/", "_blank")}
-          >
+            onClick={() => window.open("https://richharbor.com/", "_blank")}>
             Go to website
           </Button>
         </div>
@@ -542,8 +588,7 @@ export default function Onboarding() {
           </div>
           <Button
             type="button"
-            onClick={() => window.open("https://richharbor.com/", "_blank")}
-          >
+            onClick={() => window.open("https://richharbor.com/", "_blank")}>
             Go to website
           </Button>
         </div>
@@ -586,6 +631,7 @@ export default function Onboarding() {
                 handleDelete={handleDelete}
                 uploading={uploading}
                 currentStatus={currentStatus}
+                inviteEmail={inviteEmail}
               />
 
               {currentStep < steps.length && (
@@ -594,15 +640,13 @@ export default function Onboarding() {
                     <Button
                       variant="ghost"
                       onClick={() => router.push("/dashboard")}
-                      disabled={loading}
-                    >
+                      disabled={loading}>
                       Skip for now
                     </Button>
 
                     <Button
                       onClick={handleNext}
-                      disabled={!canGoNext || loading}
-                    >
+                      disabled={!canGoNext || loading}>
                       {loading && (
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       )}
@@ -630,6 +674,7 @@ function StepView({
   handleDelete,
   uploading,
   currentStatus,
+  inviteEmail,
 }: {
   step?: number;
   formData: FormDataState;
@@ -639,6 +684,7 @@ function StepView({
   handleDelete: (field: DocsKey) => void;
   uploading: Record<DocsKey, boolean>;
   currentStatus: string | null;
+  inviteEmail: string | null;
 }) {
   if (step === 1) {
     return (
@@ -649,8 +695,7 @@ function StepView({
             value={formData.accountType}
             onValueChange={(value) =>
               setFormData((prev) => ({ ...prev, accountType: value }))
-            }
-          >
+            }>
             <SelectTrigger id="accountType" className="mt-2">
               <SelectValue placeholder="Choose account type" />
             </SelectTrigger>
@@ -682,6 +727,7 @@ function StepView({
             id="email"
             type="email"
             value={formData.email}
+            readOnly={!!inviteEmail} // now using state instead of cookie
             onChange={(e) =>
               setFormData((prev) => ({ ...prev, email: e.target.value }))
             }
@@ -987,8 +1033,7 @@ function StepView({
                   size="sm"
                   type="button"
                   onClick={() => handleDelete(doc.key)}
-                  className="text-red-600 hover:text-red-700"
-                >
+                  className="text-red-600 hover:text-red-700">
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
@@ -1035,8 +1080,7 @@ function StepView({
             variant="outline"
             className="w-full bg-transparent"
             type="button"
-            onClick={() => alert("Downloading agreement...")}
-          >
+            onClick={() => alert("Downloading agreement...")}>
             <Download className="mr-2 h-4 w-4" />
             Download Franchise Agreement
           </Button>
@@ -1058,8 +1102,7 @@ function StepView({
                   size="sm"
                   type="button"
                   onClick={() => handleDelete("agreement")}
-                  className="text-red-600 hover:text-red-700"
-                >
+                  className="text-red-600 hover:text-red-700">
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
@@ -1107,8 +1150,7 @@ function StepView({
           </div>
           <Button
             type="button"
-            onClick={() => window.open("https://richharbor.com/", "_blank")}
-          >
+            onClick={() => window.open("https://richharbor.com/", "_blank")}>
             Go to website
           </Button>
         </div>
@@ -1131,8 +1173,7 @@ function StepView({
           </div>
           <Button
             type="button"
-            onClick={() => window.open("https://richharbor.com/", "_blank")}
-          >
+            onClick={() => window.open("https://richharbor.com/", "_blank")}>
             Go to website
           </Button>
         </div>

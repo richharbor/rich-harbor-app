@@ -23,7 +23,18 @@ import {
 import { Search, Plus, Eye, Check, X, Users } from "lucide-react";
 import PartnerDetails from "./PartnerDetails/PartnerDetails";
 import { toast } from "sonner";
-import { getApplications } from "@/services/Role/partnerServices";
+import {
+  getApplications,
+  invitePartnerUsingEmail,
+} from "@/services/Role/partnerServices";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 
 const updateApplicationStatus = async (
   applicationId: number,
@@ -55,6 +66,34 @@ export default function Partners() {
   const [loading, setLoading] = useState(true);
   const [selectedApplication, setSelectedApplication] = useState<any>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
+  const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [isInviting, setIsInviting] = useState(false);
+
+  const invitePartner = async () => {
+    if (!inviteEmail) {
+      toast.error("Please enter an email address");
+      return;
+    }
+
+    try {
+      setIsInviting(true);
+
+      await invitePartnerUsingEmail(inviteEmail);
+
+      console.log(inviteEmail);
+      toast.success(`Invitation sent to ${inviteEmail}`);
+      setInviteEmail("");
+      setIsInviteDialogOpen(false);
+      // fetchPartners(); // refresh table
+    } catch (error) {
+      console.error("Error inviting partner:", error);
+      toast.error("Failed to send invitation");
+    } finally {
+      setIsInviting(false);
+    }
+  };
 
   useEffect(() => {
     fetchPartners();
@@ -166,9 +205,9 @@ export default function Partners() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button>
+          <Button onClick={() => setIsInviteDialogOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
-            Add Partner
+            Invite Partner
           </Button>
         </div>
       </div>
@@ -286,8 +325,7 @@ export default function Partners() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleViewDetails(partner)}
-                      >
+                        onClick={() => handleViewDetails(partner)}>
                         <Eye className="h-4 w-4" />
                       </Button>
                       {partner.status === "pending" && (
@@ -298,16 +336,14 @@ export default function Partners() {
                             onClick={() =>
                               approvePartner(partner.applicationId)
                             }
-                            className="text-green-600 hover:text-green-700"
-                          >
+                            className="text-green-600 hover:text-green-700">
                             <Check className="h-4 w-4" />
                           </Button>
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => rejectPartner(partner.applicationId)}
-                            className="text-red-600 hover:text-red-700"
-                          >
+                            className="text-red-600 hover:text-red-700">
                             <X className="h-4 w-4" />
                           </Button>
                         </>
@@ -333,6 +369,41 @@ export default function Partners() {
         onClose={() => setIsDrawerOpen(false)}
         application={selectedApplication}
       />
+      {/* Invite Partner Dialog */}
+      <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Invite a Partner</DialogTitle>
+            <p className="text-sm text-muted-foreground">
+              Enter the partner's email address. An invitation link will be sent
+              to them.
+            </p>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="flex flex-col space-y-2">
+              <Label htmlFor="email">Partner Email</Label>
+              <Input
+                id="email"
+                placeholder="partner@example.com"
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+                disabled={isInviting}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsInviteDialogOpen(false)}
+              disabled={isInviting}>
+              Cancel
+            </Button>
+            <Button onClick={invitePartner} disabled={isInviting}>
+              {isInviting ? "Inviting..." : "Send Invite"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -36,3 +36,17 @@ export const updateApplicationStatus = async (
     throw error;
   }
 };
+
+export const invitePartnerUsingEmail = async (email: string) => {
+  try {
+    const response = await PrivateAxios.post(
+      `${API_URL}/admin/invite-partner`,
+      { email } 
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Failed to send partner invite", error);
+    throw error;
+  }
+};
+
