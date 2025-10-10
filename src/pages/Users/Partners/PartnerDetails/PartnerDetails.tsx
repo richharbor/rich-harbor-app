@@ -1,87 +1,118 @@
-"use client"
+"use client";
 
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
-import { User, Mail, Phone, MapPin, FileText, Download, CheckCircle, Clock, XCircle } from "lucide-react"
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import {
+  User,
+  Mail,
+  Phone,
+  MapPin,
+  FileText,
+  Download,
+  CheckCircle,
+  Clock,
+  XCircle,
+} from "lucide-react";
 
 interface PartnerApplication {
-  id: number
-  userId: number
-  requestedRoleId: number
-  currentStep: number
-  completedSteps: number[]
+  id: number;
+  userId: number;
+  requestedRoleId: number;
+  currentStep: number;
+  completedSteps: number[];
   formData: {
     step1?: {
-      email: string
-      fullName: string
-      accountType: string
-    }
+      email: string;
+      fullName: string;
+      accountType: string;
+    };
     step2?: {
-      city: string
-      name: string
-      state: string
-      mobile: string
-      country: string
-      panCard: string
-      zipCode: string
-      bankName: string
-      ifscCode: string
-      aadharCard: string
-      addressLine1: string
-      addressLine2: string
-      addressState: string
-      accountNumber: string
-    }
-  }
+      city: string;
+      name: string;
+      state: string;
+      mobile: string;
+      country: string;
+      panCard: string;
+      zipCode: string;
+      bankName: string;
+      ifscCode: string;
+      aadharCard: string;
+      addressLine1: string;
+      addressLine2: string;
+      addressState: string;
+      accountNumber: string;
+    };
+  };
   documents: {
-    cmlCopy?: string
-    panCard?: string
-    signature?: string
-    cancelCheque?: string
-    agreement?: string
-  }
-  status: string
-  reviewedBy: number | null
-  reviewedAt: string | null
-  reviewNotes: string | null
-  approvalToken: string | null
-  createdAt: string
-  updatedAt: string
+    cmlCopy?: string;
+    panCard?: string;
+    signature?: string;
+    cancelCheque?: string;
+    agreement?: string;
+  };
+  status: string;
+  reviewedBy: number | null;
+  reviewedAt: string | null;
+  reviewNotes: string | null;
+  approvalToken: string | null;
+  createdAt: string;
+  updatedAt: string;
+
   user: {
-    id: number
-    email: string
-    firstName: string
-    lastName: string
-    phoneNumber: string | null
-    emailVerified: boolean
-  }
+    id: number;
+    email: string;
+    firstName: string;
+    lastName: string;
+    phoneNumber: string | null;
+    emailVerified: boolean;
+    superiorId?: number | null;
+    superiorName?: string | null;
+    superior?: {
+      id: number;
+      firstName: string;
+      lastName: string;
+      email: string;
+    } | null;
+  };
+
   requestedRole: {
-    id: number
-    name: string
-  }
+    id: number;
+    name: string;
+  };
 }
+
 
 interface PartnerDetailsDrawerProps {
-  isOpen: boolean
-  onClose: () => void
-  application: PartnerApplication | null
+  isOpen: boolean;
+  onClose: () => void;
+  application: PartnerApplication | null;
 }
 
-export default function PartnerDetails({ isOpen, onClose, application }: PartnerDetailsDrawerProps) {
-  if (!application) return null
+export default function PartnerDetails({
+  isOpen,
+  onClose,
+  application,
+}: PartnerDetailsDrawerProps) {
+  if (!application) return null;
 
   const getStepStatus = (stepNumber: number) => {
     if (application.completedSteps.includes(stepNumber)) {
-      return <CheckCircle className="h-4 w-4 text-green-500" />
+      return <CheckCircle className="h-4 w-4 text-green-500" />;
     } else if (application.currentStep === stepNumber) {
-      return <Clock className="h-4 w-4 text-yellow-500" />
+      return <Clock className="h-4 w-4 text-yellow-500" />;
     } else {
-      return <XCircle className="h-4 w-4 text-gray-300" />
+      return <XCircle className="h-4 w-4 text-gray-300" />;
     }
-  }
+  };
 
   const getStatusBadge = (status: string) => {
     const variants = {
@@ -89,13 +120,13 @@ export default function PartnerDetails({ isOpen, onClose, application }: Partner
       pending: "secondary",
       rejected: "destructive",
       draft: "outline",
-    } as const
+    } as const;
     return (
       <Badge variant={variants[status as keyof typeof variants] || "outline"}>
         {status.charAt(0).toUpperCase() + status.slice(1)}
       </Badge>
-    )
-  }
+    );
+  };
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
@@ -106,7 +137,8 @@ export default function PartnerDetails({ isOpen, onClose, application }: Partner
             Partner Application Details
           </SheetTitle>
           <SheetDescription>
-            Complete application information for {application.user.firstName} {application.user.lastName}
+            Complete application information for {application.user.firstName}{" "}
+            {application.user.lastName}
           </SheetDescription>
         </SheetHeader>
 
@@ -123,7 +155,9 @@ export default function PartnerDetails({ isOpen, onClose, application }: Partner
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">Current Step:</span>
-                <Badge variant="outline">Step {application.currentStep}/5</Badge>
+                <Badge variant="outline">
+                  Step {application.currentStep}/5
+                </Badge>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">Requested Role:</span>
@@ -147,12 +181,12 @@ export default function PartnerDetails({ isOpen, onClose, application }: Partner
                       {step === 1
                         ? "Basic Information"
                         : step === 2
-                          ? "Personal & Bank Details"
-                          : step === 3
-                            ? "Document Upload"
-                            : step === 4
-                              ? "Verification"
-                              : "Agreement & Approval"}
+                        ? "Personal & Bank Details"
+                        : step === 3
+                        ? "Document Upload"
+                        : step === 4
+                        ? "Verification"
+                        : "Agreement & Approval"}
                     </span>
                   </div>
                 ))}
@@ -172,23 +206,54 @@ export default function PartnerDetails({ isOpen, onClose, application }: Partner
               <CardContent className="space-y-3">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <span className="text-xs text-muted-foreground">Full Name</span>
-                    <p className="text-sm font-medium">{application.formData.step1.fullName}</p>
+                    <span className="text-xs text-muted-foreground">
+                      Full Name
+                    </span>
+                    <p className="text-sm font-medium">
+                      {application.formData.step1.fullName}
+                    </p>
                   </div>
                   <div>
-                    <span className="text-xs text-muted-foreground">Account Type</span>
-                    <p className="text-sm font-medium">{application.formData.step1.accountType}</p>
+                    <span className="text-xs text-muted-foreground">
+                      Account Type
+                    </span>
+                    <p className="text-sm font-medium">
+                      {application.formData.step1.accountType}
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <Mail className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm">{application.user.email}</span>
-                  {application.user.emailVerified && <CheckCircle className="h-4 w-4 text-green-500" />}
+                  {application.user.emailVerified && (
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                  )}
                 </div>
                 {application.user.phoneNumber && (
                   <div className="flex items-center gap-2">
                     <Phone className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">{application.user.phoneNumber}</span>
+                    <span className="text-sm">
+                      {application.user.phoneNumber}
+                    </span>
+                  </div>
+                )}
+
+                {/*  ADD THIS SECTION BELOW */}
+                {application.user.superior && (
+                  <div className="flex items-center gap-2">
+                    <User className="h-4 w-4 text-muted-foreground" />
+                    <div className="flex flex-col">
+                      <span className="text-xs text-muted-foreground">
+                        Reporting To
+                      </span>
+                      <p className="text-sm font-medium">
+                        {application.user.superior.firstName}{" "}
+                        {application.user.superior.lastName}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {application.user.superior.email}
+                      </p>
+                    </div>
                   </div>
                 )}
               </CardContent>
@@ -206,12 +271,17 @@ export default function PartnerDetails({ isOpen, onClose, application }: Partner
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <h4 className="text-xs font-medium text-muted-foreground mb-2">Address</h4>
+                  <h4 className="text-xs font-medium text-muted-foreground mb-2">
+                    Address
+                  </h4>
                   <div className="space-y-1 text-sm">
                     <p>{application.formData.step2.addressLine1}</p>
-                    {application.formData.step2.addressLine2 && <p>{application.formData.step2.addressLine2}</p>}
+                    {application.formData.step2.addressLine2 && (
+                      <p>{application.formData.step2.addressLine2}</p>
+                    )}
                     <p>
-                      {application.formData.step2.city}, {application.formData.step2.state}{" "}
+                      {application.formData.step2.city},{" "}
+                      {application.formData.step2.state}{" "}
                       {application.formData.step2.zipCode}
                     </p>
                     <p>{application.formData.step2.country}</p>
@@ -221,19 +291,33 @@ export default function PartnerDetails({ isOpen, onClose, application }: Partner
                 <Separator />
 
                 <div>
-                  <h4 className="text-xs font-medium text-muted-foreground mb-2">Bank Information</h4>
+                  <h4 className="text-xs font-medium text-muted-foreground mb-2">
+                    Bank Information
+                  </h4>
                   <div className="grid grid-cols-2 gap-3 text-sm">
                     <div>
-                      <span className="text-xs text-muted-foreground">Bank Name</span>
-                      <p className="font-medium">{application.formData.step2.bankName}</p>
+                      <span className="text-xs text-muted-foreground">
+                        Bank Name
+                      </span>
+                      <p className="font-medium">
+                        {application.formData.step2.bankName}
+                      </p>
                     </div>
                     <div>
-                      <span className="text-xs text-muted-foreground">IFSC Code</span>
-                      <p className="font-medium">{application.formData.step2.ifscCode}</p>
+                      <span className="text-xs text-muted-foreground">
+                        IFSC Code
+                      </span>
+                      <p className="font-medium">
+                        {application.formData.step2.ifscCode}
+                      </p>
                     </div>
                     <div className="col-span-2">
-                      <span className="text-xs text-muted-foreground">Account Number</span>
-                      <p className="font-medium">{application.formData.step2.accountNumber}</p>
+                      <span className="text-xs text-muted-foreground">
+                        Account Number
+                      </span>
+                      <p className="font-medium">
+                        {application.formData.step2.accountNumber}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -241,15 +325,25 @@ export default function PartnerDetails({ isOpen, onClose, application }: Partner
                 <Separator />
 
                 <div>
-                  <h4 className="text-xs font-medium text-muted-foreground mb-2">Identity Documents</h4>
+                  <h4 className="text-xs font-medium text-muted-foreground mb-2">
+                    Identity Documents
+                  </h4>
                   <div className="grid grid-cols-2 gap-3 text-sm">
                     <div>
-                      <span className="text-xs text-muted-foreground">PAN Card</span>
-                      <p className="font-medium">{application.formData.step2.panCard}</p>
+                      <span className="text-xs text-muted-foreground">
+                        PAN Card
+                      </span>
+                      <p className="font-medium">
+                        {application.formData.step2.panCard}
+                      </p>
                     </div>
                     <div>
-                      <span className="text-xs text-muted-foreground">Aadhar Card</span>
-                      <p className="font-medium">{application.formData.step2.aadharCard}</p>
+                      <span className="text-xs text-muted-foreground">
+                        Aadhar Card
+                      </span>
+                      <p className="font-medium">
+                        {application.formData.step2.aadharCard}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -268,21 +362,23 @@ export default function PartnerDetails({ isOpen, onClose, application }: Partner
             <CardContent>
               <div className="space-y-3">
                 {Object.entries(application.documents).map(([key, url]) => (
-                  <div key={key} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div
+                    key={key}
+                    className="flex items-center justify-between p-3 border rounded-lg">
                     <div className="flex items-center gap-2">
                       <FileText className="h-4 w-4 text-muted-foreground" />
                       <span className="text-sm font-medium">
                         {key === "cmlCopy"
                           ? "CML Copy"
                           : key === "panCard"
-                            ? "PAN Card"
-                            : key === "signature"
-                              ? "Signature"
-                              : key === "cancelCheque"
-                                ? "Cancelled Cheque"
-                                : key === "agreement"
-                                  ? "Agreement"
-                                  : key}
+                          ? "PAN Card"
+                          : key === "signature"
+                          ? "Signature"
+                          : key === "cancelCheque"
+                          ? "Cancelled Cheque"
+                          : key === "agreement"
+                          ? "Agreement"
+                          : key}
                       </span>
                     </div>
                     <Button variant="outline" size="sm" asChild>
@@ -305,12 +401,18 @@ export default function PartnerDetails({ isOpen, onClose, application }: Partner
               </CardHeader>
               <CardContent className="space-y-2">
                 <div>
-                  <span className="text-xs text-muted-foreground">Reviewed At</span>
-                  <p className="text-sm">{new Date(application.reviewedAt).toLocaleString()}</p>
+                  <span className="text-xs text-muted-foreground">
+                    Reviewed At
+                  </span>
+                  <p className="text-sm">
+                    {new Date(application.reviewedAt).toLocaleString()}
+                  </p>
                 </div>
                 {application.reviewNotes && (
                   <div>
-                    <span className="text-xs text-muted-foreground">Review Notes</span>
+                    <span className="text-xs text-muted-foreground">
+                      Review Notes
+                    </span>
                     <p className="text-sm">{application.reviewNotes}</p>
                   </div>
                 )}
@@ -326,16 +428,22 @@ export default function PartnerDetails({ isOpen, onClose, application }: Partner
             <CardContent className="space-y-2">
               <div>
                 <span className="text-xs text-muted-foreground">Created</span>
-                <p className="text-sm">{new Date(application.createdAt).toLocaleString()}</p>
+                <p className="text-sm">
+                  {new Date(application.createdAt).toLocaleString()}
+                </p>
               </div>
               <div>
-                <span className="text-xs text-muted-foreground">Last Updated</span>
-                <p className="text-sm">{new Date(application.updatedAt).toLocaleString()}</p>
+                <span className="text-xs text-muted-foreground">
+                  Last Updated
+                </span>
+                <p className="text-sm">
+                  {new Date(application.updatedAt).toLocaleString()}
+                </p>
               </div>
             </CardContent>
           </Card>
         </div>
       </SheetContent>
     </Sheet>
-  )
+  );
 }

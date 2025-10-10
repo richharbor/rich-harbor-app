@@ -8,6 +8,7 @@ interface ILoginBody {
 
 interface IRegisterBody {
   email: string;
+  superiorId: number|null;
   password: string;
   fullName: string;
   accountType: string;
@@ -192,6 +193,19 @@ export const getNewAccessToken = async (requestBody: any) => {
   try {
     const response = await PrivateAxios.post(
       `${API_URL}/auth/refresh`,
+      requestBody
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Login failed", error);
+    throw error;
+  }
+};
+
+export const verifyOnboardingToken = async (requestBody: any) => {
+  try {
+    const response = await PrivateAxios.post(
+      `${API_URL}/auth/verify-onboarding`,
       requestBody
     );
     return response.data;

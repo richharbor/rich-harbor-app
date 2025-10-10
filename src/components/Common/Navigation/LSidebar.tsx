@@ -9,6 +9,8 @@ import {
   Users,
   FileText,
   ShoppingCart,
+  UserCog,
+  Building2,
 } from "lucide-react";
 
 import { NavMain } from "@/components/Common/Providers/nav-main";
@@ -112,10 +114,22 @@ export function LSidebar(props: ComponentProps<typeof Sidebar>) {
       permission: "view_reports",
     },
     {
+      title: "Teams",
+      url: `/${role?.name}/teams`,
+      icon: UserCog,
+      permission: "manage_team", // visible to Super Admin & Admin
+    },
+    {
+      title: "Franchises",
+      url: `/${role?.name}/franchises`,
+      icon: Building2,
+      permission: "manage_franchise", // visible to Super Admin, Admin, Franchise Admin
+    },
+    {
       title: "Partners",
       url: `/${role?.name}/partners`,
       icon: Sparkles,
-      permission: "manage_users", // only for superadmin realistically
+      permission: "manage_partners", // visible to Super Admin only
     },
   ];
 
