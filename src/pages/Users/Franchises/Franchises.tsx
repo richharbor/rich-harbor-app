@@ -14,6 +14,8 @@ import {
 } from "@/components/ui/table";
 import { Search, Plus, Users } from "lucide-react";
 import { toast } from "sonner";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 // import {
 //   getFranchiseMembers,
 //   inviteFranchiseUser,
@@ -23,6 +25,12 @@ export default function Franchises() {
   const [search, setSearch] = useState("");
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    franchiseName: "",
+    name:"",
+    inviteEmail: ""
+  })
 
   useEffect(() => {
     fetchMembers();
@@ -40,11 +48,77 @@ export default function Franchises() {
     }
   };
 
-  const filtered = users.filter(
-    (u: any) =>
-      u.name.toLowerCase().includes(search.toLowerCase()) ||
-      u.email.toLowerCase().includes(search.toLowerCase())
-  );
+  // const filtered = users.filter(
+  //   (u: any) =>
+  //     u.name.toLowerCase().includes(search.toLowerCase()) ||
+  //     u.email.toLowerCase().includes(search.toLowerCase())
+  // );
+  const filtered = [
+    {
+      id: 1,
+      franchiseName:"Franchise 1",
+      name: "Alice Johnson",
+      email: "alice.johnson@example.com",
+      role: "Manager",
+      onboarding: {
+        currentStep: 3,
+        status: "approved",
+      },
+    },
+    {
+      id: 2,
+      name: "Bob Smith",
+      franchiseName:"Franchise 1",
+      email: "bob.smith@example.com",
+      role: "Agent",
+      onboarding: {
+        currentStep: 2,
+        status: "pending",
+      },
+    },
+    {
+      id: 3,
+      name: "Charlie Brown",
+      franchiseName:"Franchise 2",
+      email: "charlie.brown@example.com",
+      role: "Supervisor",
+      onboarding: {
+        currentStep: 1,
+        status: "rejected",
+      },
+    },
+    {
+      id: 4,
+      name: "Diana Prince",
+      franchiseName:"Franchise 1",
+      email: "diana.prince@example.com",
+      role: "Agent",
+      onboarding: {
+        currentStep: 4,
+        status: "approved",
+      },
+    },
+    {
+      id: 5,
+      name: "Ethan Hunt",
+      franchiseName:"Franchise 2",
+      email: "ethan.hunt@example.com",
+      role: "Manager",
+      onboarding: {
+        currentStep: 5,
+        status: "pending",
+      },
+    },
+  ];
+
+
+
+  const inviteFranchises = () => {
+
+    console.log(formData);
+    setIsInviteDialogOpen(false);
+
+  }
 
   return (
     <div className="space-y-6 p-6">
@@ -57,7 +131,7 @@ export default function Franchises() {
             Manage your franchise team and onboarding users
           </p>
         </div>
-        <Button onClick={() => toast.info("Invite logic to be added")}>
+        <Button onClick={() => setIsInviteDialogOpen(true)}>
           <Plus className="h-4 w-4 mr-2" /> Invite User
         </Button>
       </div>
@@ -77,9 +151,8 @@ export default function Franchises() {
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
+              <TableHead>Franchise Name</TableHead>
               <TableHead>Email</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead>Onboarding</TableHead>
               <TableHead>Status</TableHead>
             </TableRow>
           </TableHeader>
@@ -94,23 +167,17 @@ export default function Franchises() {
               filtered.map((u: any) => (
                 <TableRow key={u.id}>
                   <TableCell>{u.name}</TableCell>
+                  <TableCell>{u.franchiseName}</TableCell>
                   <TableCell>{u.email}</TableCell>
-                  <TableCell>
-                    <Badge>{u.role}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline">
-                      Step {u.onboarding?.currentStep || 1}/5
-                    </Badge>
-                  </TableCell>
+
                   <TableCell>
                     <Badge
                       variant={
                         u.onboarding?.status === "approved"
                           ? "default"
                           : u.onboarding?.status === "pending"
-                          ? "secondary"
-                          : "destructive"
+                            ? "secondary"
+                            : "destructive"
                       }>
                       {u.onboarding?.status || "N/A"}
                     </Badge>
@@ -127,6 +194,82 @@ export default function Franchises() {
           </TableBody>
         </Table>
       </div>
+
+      {/* Invite Franchises Dialog */}
+      <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Invite a Partner</DialogTitle>
+            <p className="text-sm text-muted-foreground">
+              Enter the partner's email address. An invitation link will be sent
+              to them.
+            </p>
+          </DialogHeader>
+          <div className=" grid gap-4 space-y-4 py-4">
+            <div className="flex flex-col space-y-2">
+              <Label htmlFor="text">Franchise Name</Label>
+              <Input
+                id="text"
+                placeholder="Enter Franchise Name"
+                value={formData.franchiseName}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    franchiseName: e.target.value,
+                  }))
+                }
+              // disabled={isInviting}
+              />
+            </div>
+            <div className="flex flex-col space-y-2">
+              <Label htmlFor="text">Full Name</Label>
+              <Input
+                id="text"
+                placeholder="Enter Your Name"
+                value={formData.name}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    name: e.target.value,
+                  }))
+                }
+              // disabled={isInviting}
+              />
+            </div>
+            <div className="flex flex-col space-y-2">
+              <Label htmlFor="email">Partner Email</Label>
+              <Input
+                id="email"
+                placeholder="partner@example.com"
+                value={formData.inviteEmail}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    inviteEmail: e.target.value,
+                  }))
+                }
+              // disabled={isInviting}
+              />
+            </div>
+
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsInviteDialogOpen(false)}
+            // disabled={isInviting}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={inviteFranchises}
+            //  disabled={isInviting}
+            >
+              Send Invite
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
