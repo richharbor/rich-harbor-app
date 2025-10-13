@@ -8,10 +8,11 @@ interface ILoginBody {
 
 interface IRegisterBody {
   email: string;
-  superiorId: number|null;
+  createdBy: number | null;
   password: string;
   fullName: string;
-  accountType: string;
+  accountType: string[];
+  franchiseId: number | null;
 }
 
 interface IAccountInfoBody {
@@ -53,6 +54,7 @@ export interface IUserProfile {
     lastName: string;
     isSuperAdmin: boolean;
     isActive: boolean;
+    franchiseId: number;
     roles: Array<{
       id: number;
       name: string;
@@ -211,6 +213,20 @@ export const verifyOnboardingToken = async (requestBody: any) => {
     return response.data;
   } catch (error) {
     console.error("Login failed", error);
+    throw error;
+  }
+};
+
+export const verifyEmail = async (requestBody: { token: string }) => {
+  try {
+    const response = await axios.post(
+      `${API_URL}/auth/verify-email`,
+      requestBody
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error("Some Error occured", error);
     throw error;
   }
 };

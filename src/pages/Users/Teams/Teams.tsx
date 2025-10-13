@@ -21,27 +21,38 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Search, Plus, User, Shield, Trash2, Settings, ChevronDown, Check } from "lucide-react";
+import {
+  Search,
+  Plus,
+  User,
+  Shield,
+  Trash2,
+  Settings,
+  ChevronDown,
+  Check,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { id } from "zod/v4/locales";
+import {
+  createNewRoleForTeams,
+  getAllTeamMembers,
+  getTeamRoles,
+  inviteTeamMember,
+} from "@/services/Role/teamService";
 // import {
 //   getAllTeamMembers,
 //   inviteTeamMember,
 //   updateUserRole,
 //   deactivateUser,
 // } from "@/services/Role/teamServices";
-
-
-
-
-interface Role {
-  name: string;
-  access: string[];
-}
 
 const availableAccess = [
   {
@@ -96,25 +107,53 @@ export default function Teams() {
   const [teams, setTeams] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isInviteOpen, setIsInviteOpen] = useState(false);
-  const [inviteEmail, setInviteEmail] = useState("");
+
   const [createRoleModalOpen, setCreateRoleModalOpen] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
   const [newRoleName, setNewRoleName] = useState("");
+  const [newRoleDescription, setNewRoleDescription] = useState("");
   const [selectedAccess, setSelectedAccess] = useState<string[]>([]);
   const [rolesModalOpen, setRolesModalOpen] = useState(false);
-  const [customRoles, setCustomRoles] = useState<Role[]>([]);
-  const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
+  const [customRoles, setCustomRoles] = useState<any[]>([]);
 
+  //invite team
+  const [selectedRoles, setSelectedRoles] = useState<number[]>([]);
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
 
   useEffect(() => {
-    fetchTeams();
+    fetchTeamsMembers();
+    fetchAllRoles();
   }, []);
 
-  const fetchTeams = async () => {
+  const fetchAllRoles = async () => {
     try {
       setLoading(true);
-      //   const data = await getAllTeamMembers();
-      //   setTeams(data);
+      const response = await getTeamRoles();
+      if (response?.success) {
+        setCustomRoles(response.roles || []);
+      } else {
+        console.error("Failed to load roles");
+      }
+    } catch (error) {
+      console.error("Error fetching roles:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchTeamsMembers = async () => {
+    try {
+      setLoading(true);
+      const data = await getAllTeamMembers();
+      console.log(data);
+
+      if (data.success && data.users) {
+        setTeams(data.users);
+      } else {
+        setTeams([]);
+      }
     } catch (err) {
       toast.error("Failed to load team members");
     } finally {
@@ -122,24 +161,11 @@ export default function Teams() {
     }
   };
 
-  const handleInvite = async () => {
-    if (!inviteEmail) return toast.error("Enter an email");
-    try {
-      //   await inviteTeamMember(inviteEmail);
-      toast.success(`Invite sent to ${inviteEmail}`);
-      setInviteEmail("");
-      setIsInviteOpen(false);
-      fetchTeams();
-    } catch {
-      toast.error("Failed to send invite");
-    }
-  };
-
   const handleDeactivate = async (id: string) => {
     try {
       //   await deactivateUser(id);
       toast.success("User deactivated");
-      fetchTeams();
+      fetchTeamsMembers();
     } catch {
       toast.error("Failed to deactivate user");
     }
@@ -193,7 +219,6 @@ export default function Teams() {
     },
   ];
 
-
   const handleAccessChange = (permissionId: string, checked: boolean) => {
     if (checked) {
       setSelectedAccess([...selectedAccess, permissionId]);
@@ -202,55 +227,54 @@ export default function Teams() {
     }
   };
 
-
   const handleCreateRole = async () => {
-    // console.log("Before:", customRoles);
-    // setSaveLoading(true);
-
     if (newRoleName && selectedAccess.length > 0) {
-      const value = {
+      const requestBody = {
         name: newRoleName.toLowerCase().replace(/\s+/g, "-"),
-        access: selectedAccess,
+        permissions: selectedAccess,
+        description: newRoleDescription || "", // optional
       };
-      console.log(value);
 
-      setCustomRoles((prev) => [...prev, value]);
+      try {
+        setSaveLoading(true);
 
-      // try {
-      //   await createRole(value);
+        const response = await createNewRoleForTeams(requestBody);
 
-      //   await fetchAllRoles();
+        // Optional: refresh roles list
+        await fetchAllRoles();
 
-      //   console.log("New Role Added:", value);
-      //   toast.success(`Role "${newRoleName}" created successfully`);
-      // } catch (error) {
-      //   toast.error("Error in creating role");
-      //   console.error("Error creating role:", error);
-      // }
+        toast.success(`Role "${response.role.name}" created successfully`);
 
-      // setSaveLoading(false);
-
-      // Reset UI
-      setNewRoleName("");
-      setSelectedAccess([]);
-      setCreateRoleModalOpen(false);
+        // setCustomRoles((prev) => [
+        //   ...prev,
+        //   { name: response.role.name, permissions: response.role.permissions },
+        // ]);
+      } catch (error) {
+        toast.error("Error creating role");
+        console.error("Error creating role:", error);
+      } finally {
+        setSaveLoading(false);
+        setNewRoleName("");
+        setNewRoleDescription("");
+        setSelectedAccess([]);
+        setCreateRoleModalOpen(false);
+      }
     } else {
-      setNewRoleName("");
-      setSelectedAccess([]);
-      setCreateRoleModalOpen(false);
       toast.error(
         "Please provide a role name and select at least one permission."
       );
+      setNewRoleName("");
+      setNewRoleDescription("");
+      setSelectedAccess([]);
+      setCreateRoleModalOpen(false);
     }
   };
 
   const handleRoleDelete = async (name: string) => {
     // try {
     //   const response = await deleteRole(name);
-
     //   // Check if the deleted role was part of current user's roles
     //   const roleWasAssigned = currentUserRoles.includes(name);
-
     //   if (roleWasAssigned) {
     //     toast.info("Your assigned role was deleted. Redirecting...");
     //     router.push("/"); // redirect to home
@@ -265,35 +289,45 @@ export default function Teams() {
     //   toast.error(`Failed to remove role "${name}".`);
     // }
   };
-  const handleToggleRole = (roleName: string) => {
+
+  const handleToggleRole = (roleId: number) => {
     setSelectedRoles((prev) =>
-      prev.includes(roleName)
-        ? prev.filter((r) => r !== roleName)
-        : [...prev, roleName]
+      prev.includes(roleId)
+        ? prev.filter((id) => id !== roleId)
+        : [...prev, roleId]
     );
   };
+
   const invitePartner = async () => {
-    // if (!inviteEmail) {
-    //   toast.error("Please enter an email address");
-    //   return;
-    // }
+    if (!email || !firstName || !lastName || selectedRoles.length === 0) {
+      toast.error("Please fill in all fields and select at least one role");
+      return;
+    }
 
-    // try {
-    //   setIsInviting(true);
+    try {
+      setLoading(true);
 
-    //   await invitePartnerUsingEmail(inviteEmail);
+      await inviteTeamMember({
+        email,
+        firstName,
+        lastName,
+        roles: selectedRoles, // array of role IDs
+      });
+      await fetchTeamsMembers();
+      toast.success(`Invitation sent to ${email}`);
 
-    //   console.log(inviteEmail);
-    //   toast.success(`Invitation sent to ${inviteEmail}`);
-    //   setInviteEmail("");
-    //   setIsInviteDialogOpen(false);
-    //   // fetchPartners(); // refresh table
-    // } catch (error) {
-    //   console.error("Error inviting partner:", error);
-    //   toast.error("Failed to send invitation");
-    // } finally {
-    //   setIsInviting(false);
-    // }
+      // Reset form
+      setEmail("");
+      setFirstName("");
+      setLastName("");
+      setSelectedRoles([]);
+      setIsInviteOpen(false);
+    } catch (error) {
+      console.error("Error inviting partner:", error);
+      toast.error("Failed to send invitation");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -309,8 +343,7 @@ export default function Teams() {
           <Button
             variant="outline"
             onClick={() => setRolesModalOpen(true)}
-            className="flex items-center gap-2"
-          >
+            className="flex items-center gap-2">
             Roles
             <Settings className="h-4 w-4" />
           </Button>
@@ -344,13 +377,17 @@ export default function Teams() {
       </div>
 
       {/* Table */}
+      {/* Table */}
       <div className="rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
               <TableHead>Email</TableHead>
+              {/* <TableHead>Phone</TableHead> */}
               <TableHead>Role</TableHead>
+              <TableHead>Created By</TableHead>
+              <TableHead>Tier</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
@@ -358,21 +395,29 @@ export default function Teams() {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center">
+                <TableCell colSpan={9} className="text-center">
                   Loading...
                 </TableCell>
               </TableRow>
-            ) : filteredTeams.length ? (
-              filteredTeams.map((t: any) => (
+            ) : teams.length ? (
+              teams.map((t: any) => (
                 <TableRow key={t.id}>
-                  <TableCell>{t.name}</TableCell>
-                  <TableCell>{t.email}</TableCell>
                   <TableCell>
-                    <Badge>{t.role}</Badge>
+                    {t.firstName} {t.lastName}
                   </TableCell>
+                  <TableCell>{t.email}</TableCell>
+                  {/* <TableCell>{t.phoneNumber || "N/A"}</TableCell> */}
                   <TableCell>
-                    <Badge variant={t.isActive ? "default" : "destructive"}>
-                      {t.isActive ? "Active" : "Inactive"}
+                    {t.roles && t.roles.length
+                      ? t.roles.map((r: any) => r.name).join(", ")
+                      : "N/A"}
+                  </TableCell>
+                  <TableCell>{t.creatorName || "N/A"}</TableCell>
+                  <TableCell>{t.tier}</TableCell>
+                  <TableCell>
+                    <Badge
+                      variant={t.emailVerified ? "default" : "destructive"}>
+                      {t.emailVerified ? "Acceprted" : "Pending"}
                     </Badge>
                   </TableCell>
                   <TableCell>
@@ -389,7 +434,7 @@ export default function Teams() {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={6} className="text-center">
+                <TableCell colSpan={9} className="text-center">
                   No team members found
                 </TableCell>
               </TableRow>
@@ -398,28 +443,49 @@ export default function Teams() {
         </Table>
       </div>
 
-
       {/* Invite Partner Dialog */}
       <Dialog modal={false} open={isInviteOpen} onOpenChange={setIsInviteOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Invite a Partner</DialogTitle>
+            <DialogTitle>Invite a Team Members</DialogTitle>
             <p className="text-sm text-muted-foreground">
-              Enter the partner's email address. An invitation link will be sent
-              to them.
+              Enter the partner’s details. An invitation link will be sent to
+              their email.
             </p>
           </DialogHeader>
-          <div className=" grid gap-4 space-y-4 py-4">
+
+          <div className="grid gap-4 py-4">
             <div className="flex flex-col space-y-2">
-              <Label htmlFor="email">Partner Email</Label>
+              <Label htmlFor="firstName">First Name</Label>
               <Input
-                id="email"
-                placeholder="partner@example.com"
-                value={inviteEmail}
-                onChange={(e) => setInviteEmail(e.target.value)}
-              // disabled={isInviting}
+                id="firstName"
+                placeholder="Enter First Name"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
               />
             </div>
+
+            <div className="flex flex-col space-y-2">
+              <Label htmlFor="lastName">Last Name</Label>
+              <Input
+                id="lastName"
+                placeholder="Enter Last Name"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+              />
+            </div>
+
+            <div className="flex flex-col space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                placeholder="teammember@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+
+            {/* ✅ Roles Selector */}
             <div className="relative grid gap-2">
               <Label htmlFor="roles">Roles</Label>
               <Popover>
@@ -427,40 +493,38 @@ export default function Teams() {
                   <Button
                     variant="outline"
                     role="combobox"
-                    className="w-full relative justify-between"
-                  >
+                    className="w-full justify-between">
                     {selectedRoles.length > 0
-                      ? selectedRoles.join(", ")
+                      ? customRoles
+                          .filter((r) => selectedRoles.includes(r.id))
+                          .map((r) => r.name)
+                          .join(", ")
                       : "Select roles"}
                     <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-full p-2 space-y-1">
-                  {!(
-                    customRoles.length === 0
-                  ) ? (
-                    customRoles
-                      .map((role) => (
-                        <div
-                          key={role.name}
-                          className={cn(
-                            "flex items-center p-2 rounded-md cursor-pointer hover:bg-muted",
-                            selectedRoles.includes(role.name) && "bg-muted"
+                  {customRoles.length > 0 ? (
+                    customRoles.map((role) => (
+                      <div
+                        key={role.id}
+                        className={cn(
+                          "flex items-center p-2 rounded-md cursor-pointer hover:bg-muted",
+                          selectedRoles.includes(role.id) && "bg-muted"
+                        )}
+                        onClick={() => handleToggleRole(role.id)}>
+                        <div className="mr-2">
+                          {selectedRoles.includes(role.id) ? (
+                            <Check className="h-4 w-4 text-primary" />
+                          ) : (
+                            <div className="h-4 w-4 border rounded-sm" />
                           )}
-                          onClick={() => handleToggleRole(role.name)}
-                        >
-                          <div className="mr-2">
-                            {selectedRoles.includes(role.name) ? (
-                              <Check className="h-4 w-4 text-primary" />
-                            ) : (
-                              <div className="h-4 w-4 border rounded-sm" />
-                            )}
-                          </div>
-                          <span>{role.name}</span>
                         </div>
-                      ))
+                        <span>{role.name}</span>
+                      </div>
+                    ))
                   ) : (
-                    <div className={cn("flex items-center p-2 rounded-md")}>
+                    <div className="flex items-center p-2 rounded-md">
                       No roles available
                     </div>
                   )}
@@ -468,29 +532,23 @@ export default function Teams() {
               </Popover>
             </div>
           </div>
+
           <DialogFooter>
             <Button
               variant="outline"
               onClick={() => setIsInviteOpen(false)}
-            // disabled={isInviting}
-            >
+              disabled={loading}>
               Cancel
             </Button>
-            <Button
-              onClick={invitePartner}
-            //  disabled={isInviting}
-            >
-              Send Invite
+            <Button onClick={invitePartner} disabled={loading}>
+              {loading ? "Sending..." : "Send Invite"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Create Role Dialog */}
-      <Dialog
-        open={createRoleModalOpen}
-        onOpenChange={setCreateRoleModalOpen}
-      >
+      <Dialog open={createRoleModalOpen} onOpenChange={setCreateRoleModalOpen}>
         <DialogContent className="sm:max-w-5xl max-w-[90vw] max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -515,6 +573,15 @@ export default function Teams() {
               />
             </div>
 
+            <div className="grid gap-2">
+              <Label htmlFor="roleName">Role Description</Label>
+              <Input
+                id="roleDescription"
+                placeholder="Enter role Description"
+                value={newRoleDescription}
+                onChange={(e) => setNewRoleDescription(e.target.value)}
+              />
+            </div>
             {/* Access section */}
             <div className="grid gap-3">
               <Label>Access</Label>
@@ -522,10 +589,7 @@ export default function Teams() {
               {/* ✅ Added grid layout (2x2) */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {availableAccess.map((access) => (
-                  <div
-                    key={access.id}
-                    className="flex items-start space-x-3"
-                  >
+                  <div key={access.id} className="flex items-start space-x-3">
                     <Checkbox
                       id={access.id}
                       checked={selectedAccess.includes(access.id)}
@@ -536,8 +600,7 @@ export default function Teams() {
                     <div className="grid gap-1.5 leading-none">
                       <Label
                         htmlFor={access.id}
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                      >
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                         {access.label}
                       </Label>
                       <p className="text-xs text-muted-foreground">
@@ -553,22 +616,19 @@ export default function Teams() {
           <DialogFooter>
             <Button
               variant="outline"
-              onClick={() => setCreateRoleModalOpen(false)}
-            >
+              onClick={() => setCreateRoleModalOpen(false)}>
               Cancel
             </Button>
             <Button
               onClick={handleCreateRole}
               disabled={
                 !newRoleName || selectedAccess.length === 0 || saveLoading
-              }
-            >
+              }>
               {saveLoading ? "Creating..." : "Create Role"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
 
       {/* Roles Modal */}
 
@@ -583,20 +643,16 @@ export default function Teams() {
 
           <div className="space-y-3 py-4">
             {customRoles.map((role) => {
-
               return (
                 <div
                   key={role.name}
-                  className="flex justify-between items-center p-2 rounded-md border hover:bg-muted"
-                >
+                  className="flex justify-between items-center p-2 rounded-md border hover:bg-muted">
                   <span>{role.name}</span>
                   <Button
                     variant="ghost"
                     size="sm"
                     className="text-destructive"
-                    onClick={() => handleRoleDelete(role.name)}
-
-                  >
+                    onClick={() => handleRoleDelete(role.name)}>
                     Remove
                   </Button>
                 </div>
@@ -605,18 +661,14 @@ export default function Teams() {
           </div>
 
           <DialogFooter className="flex justify-between">
-            <Button
-              variant="outline"
-              onClick={() => setRolesModalOpen(false)}
-            >
+            <Button variant="outline" onClick={() => setRolesModalOpen(false)}>
               Close
             </Button>
             <Button
               onClick={() => {
                 // setRolesModalOpen(false);
                 setCreateRoleModalOpen(true); // open Create Role modal
-              }}
-            >
+              }}>
               Create Role
             </Button>
           </DialogFooter>
