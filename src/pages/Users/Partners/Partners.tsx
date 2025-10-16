@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -144,6 +144,18 @@ export default function Partners() {
   const [selectedFranchiseId, setSelectedFranchiseId] = useState<number | null>(
     null
   );
+  const [open, setOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   useEffect(() => {
     if (isSuperAdmin || tier === 2) {
@@ -599,7 +611,6 @@ export default function Partners() {
       />
       {/* Invite Partner Dialog */}
       <Dialog
-        modal={false}
         open={isInviteDialogOpen}
         onOpenChange={setIsInviteDialogOpen}>
         <DialogContent className="sm:max-w-md">
@@ -623,51 +634,53 @@ export default function Partners() {
             </div>
             <div className="grid gap-2">
               <Label htmlFor="roles">Roles</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    className="w-full justify-between">
-                    {selectedRoles.length > 0
-                      ? customRoles
-                          .filter((role) => selectedRoles.includes(role.id))
-                          .map((role) => role.name)
-                          .join(", ")
-                      : "Select roles"}
-                    <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent
-                  side="bottom"
-                  align="start"
-                  className="w-full p-2 space-y-1">
-                  {customRoles.length > 0 ? (
-                    customRoles.map((role) => (
-                      <div
-                        key={role.id}
-                        className={cn(
-                          "flex items-center p-2 rounded-md cursor-pointer hover:bg-muted",
-                          selectedRoles.includes(role.id) && "bg-muted"
-                        )}
-                        onClick={() => handleToggleRole(role.id)}>
-                        <div className="mr-2">
-                          {selectedRoles.includes(role.id) ? (
-                            <Check className="h-4 w-4 text-primary" />
-                          ) : (
-                            <div className="h-4 w-4 border rounded-sm" />
+              <div className="relative w-full" ref={dropdownRef}>
+                {/* Trigger Button */}
+                <button
+                  type="button"
+                  onClick={() => setOpen(!open)}
+                  className="flex w-full items-center justify-between border rounded-md px-3 py-2 text-sm bg-background hover:bg-muted transition-colors"
+                >
+                  {selectedRoles.length > 0
+                    ? customRoles
+                      .filter((role) => selectedRoles.includes(role.id))
+                      .map((role) => role.name)
+                      .join(", ")
+                    : "Select roles"}
+                  <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+                </button>
+
+                {/* Dropdown Content */}
+                {open && (
+                  <div className="absolute left-0 top-full mt-2 w-full rounded-md border bg-background shadow-lg z-10 p-2 space-y-1">
+                    {customRoles.length > 0 ? (
+                      customRoles.map((role) => (
+                        <div
+                          key={role.id}
+                          onClick={() => handleToggleRole(role.id)}
+                          className={cn(
+                            "flex items-center p-2 rounded-md cursor-pointer hover:bg-muted",
+                            selectedRoles.includes(role.id) && "bg-muted"
                           )}
+                        >
+                          <div className="mr-2">
+                            {selectedRoles.includes(role.id) ? (
+                              <Check className="h-4 w-4 text-primary" />
+                            ) : (
+                              <div className="h-4 w-4 border rounded-sm" />
+                            )}
+                          </div>
+                          <span>{role.name}</span>
                         </div>
-                        <span>{role.name}</span>
+                      ))
+                    ) : (
+                      <div className="flex items-center p-2 rounded-md text-sm text-muted-foreground">
+                        No roles available
                       </div>
-                    ))
-                  ) : (
-                    <div className={cn("flex items-center p-2 rounded-md")}>
-                      No roles available
-                    </div>
-                  )}
-                </PopoverContent>
-              </Popover>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
           <DialogFooter>
