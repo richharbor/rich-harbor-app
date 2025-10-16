@@ -29,7 +29,7 @@ const baseSchema = z.object({
     .min(1, "Price is required")
     .refine((v) => !isNaN(Number(v)) && Number(v) > 0, "Must be a positive number"),
   deliveryTimeline: z.enum(deliveryTimelineOptions, {
-    required_error: "Select a timeline",
+    error: "Select a timeline",
   }),
   confirmDelivery: z.boolean(),
   shareInStock: z.boolean(),
