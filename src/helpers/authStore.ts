@@ -17,7 +17,7 @@ export interface User {
   isSuperAdmin: boolean;
   isActive: boolean;
   franchiseId: number;
-  tier: number;
+  tier?: number;
 }
 
 interface OnboardingStatus {
