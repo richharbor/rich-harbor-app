@@ -134,12 +134,25 @@ export function LSidebar(props: ComponentProps<typeof Sidebar>) {
   ];
 
   // SuperAdmin → all permissions
-  const navMain =
-    role?.name === "superadmin"
-      ? allNavItems
-      : allNavItems.filter((item) =>
-          role?.permissions?.includes(item.permission)
-        );
+  // Filter nav items based on role
+  let navMain = [];
+
+  if (role?.name === "superadmin") {
+    // SuperAdmin → all items
+    navMain = allNavItems;
+  } else if (role?.name === "franchise-admin") {
+    // Franchises Admin → all except Teams & Franchises
+    navMain = allNavItems.filter(
+      (item) =>
+        item.permission !== "manage_team" &&
+        item.permission !== "manage_franchise"
+    );
+  } else {
+    // Other roles → filter based on permissions
+    navMain = allNavItems.filter((item) =>
+      role?.permissions?.includes(item.permission)
+    );
+  }
 
   return (
     <Sidebar collapsible="icon" {...props}>

@@ -20,13 +20,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, Plus, Eye, Check, X, Users, Settings, ChevronDown } from "lucide-react";
+import {
+  Search,
+  Plus,
+  Eye,
+  Check,
+  X,
+  Users,
+  Settings,
+  ChevronDown,
+} from "lucide-react";
 import PartnerDetails from "./PartnerDetails/PartnerDetails";
 import { toast } from "sonner";
-import {
-  getApplications,
-  invitePartnerUsingEmail,
-} from "@/services/Role/partnerServices";
 import {
   Dialog,
   DialogContent,
@@ -37,22 +42,26 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-
-const updateApplicationStatus = async (
-  applicationId: number,
-  status: string,
-  notes?: string
-) => {
-  // Mock API call - replace with your actual implementation
-  console.log(`Updating application ${applicationId} to ${status}`, notes);
-  return Promise.resolve();
-};
+import {
+  createNewRoleForPartner,
+  getPartnerApplications,
+  invitePartnerUsingEmail,
+  getPartnerRoles,
+  fetchAllFranshisesForAdmin,
+  updateApplicationStatus,
+} from "@/services/Role/partnerServices";
+import useAuthStore from "@/helpers/authStore";
+import { permission } from "process";
 
 type PartnerRow = {
   id: number;
-  applicationId: number;
+  userId: number;
   name: string;
   email: string;
   state: string;
@@ -64,8 +73,11 @@ type PartnerRow = {
 };
 
 interface Role {
+  id: number;
   name: string;
-  access: string[];
+  permissions: string[];
+  description: string;
+  franchiseId: number;
 }
 
 const availableAccess = [
@@ -103,7 +115,7 @@ const availableAccess = [
     id: "view_reports",
     label: "Reports",
     description: "Generate and view business and performance reports",
-  }
+  },
 ];
 
 export default function Partners() {
@@ -123,7 +135,25 @@ export default function Partners() {
   const [selectedAccess, setSelectedAccess] = useState<string[]>([]);
   const [rolesModalOpen, setRolesModalOpen] = useState(false);
   const [customRoles, setCustomRoles] = useState<Role[]>([]);
-  const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
+  const [selectedRoles, setSelectedRoles] = useState<number[]>([]);
+  const [newRoleDescription, setNewRoleDescription] = useState("");
+  const franchiseId = useAuthStore((state) => state.user?.franchiseId);
+  const isSuperAdmin = useAuthStore((state) => state.user?.isSuperAdmin);
+  const tier = useAuthStore((state) => state.user?.tier);
+  const [franchises, setFranchises] = useState<any[]>([]);
+  const [selectedFranchiseId, setSelectedFranchiseId] = useState<number | null>(
+    null
+  );
+
+  useEffect(() => {
+    if (isSuperAdmin || tier === 2) {
+      fetchAllFranchises();
+    } else if (tier === 3 && franchiseId) {
+      setSelectedFranchiseId(franchiseId);
+      fetchAllRoles(franchiseId);
+      fetchPartners(franchiseId);
+    }
+  }, [isSuperAdmin, tier, franchiseId]);
 
   const invitePartner = async () => {
     if (!inviteEmail) {
@@ -134,7 +164,11 @@ export default function Partners() {
     try {
       setIsInviting(true);
 
-      await invitePartnerUsingEmail(inviteEmail);
+      await invitePartnerUsingEmail(
+        inviteEmail,
+        selectedRoles,
+        selectedFranchiseId!
+      );
 
       console.log(inviteEmail);
       toast.success(`Invitation sent to ${inviteEmail}`);
@@ -149,22 +183,51 @@ export default function Partners() {
     }
   };
 
-  useEffect(() => {
-    fetchPartners();
-  }, [statusFilter]);
+  const fetchAllFranchises = async () => {
+    try {
+      const response = await fetchAllFranshisesForAdmin();
+      if (response?.success) {
+        setFranchises(response.franchises || []);
+        const firstId = response.franchises[0]?.id || null;
+        setSelectedFranchiseId(firstId);
 
-  const fetchPartners = async () => {
+        if (firstId) {
+          await fetchAllRoles(firstId);
+          await fetchPartners(firstId);
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching franchises:", err);
+    }
+  };
+
+  const fetchAllRoles = async (fid?: number) => {
     try {
       setLoading(true);
-      const data = await getApplications({
+      const response = await getPartnerRoles(fid || selectedFranchiseId!);
+      if (response?.success) {
+        setCustomRoles(response.roles || []);
+      }
+    } catch (error) {
+      console.error("Error fetching roles:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchPartners = async (fid?: number) => {
+    try {
+      setLoading(true);
+      const data = await getPartnerApplications({
         status: statusFilter,
         page: 1,
         limit: 20,
+        franchiseId: fid || selectedFranchiseId!,
       });
 
       const formatted: PartnerRow[] = data.applications.map((app: any) => ({
         id: app.user.id,
-        applicationId: app.id,
+        userId: app.userId,
         name:
           app.formData?.step2?.name ||
           app.formData?.step1?.fullName ||
@@ -175,7 +238,7 @@ export default function Partners() {
         registrationStep: app.currentStep || 0,
         status: app.status,
         createdAt: app.createdAt,
-        application: app, // Store full application data for drawer
+        application: app,
       }));
 
       setPartners(formatted);
@@ -255,40 +318,44 @@ export default function Partners() {
     }
   };
 
-
   const handleCreateRole = async () => {
     // console.log("Before:", customRoles);
     // setSaveLoading(true);
 
-    if (newRoleName && selectedAccess.length > 0) {
+    if (newRoleName && selectedAccess.length > 0 && selectedFranchiseId) {
       const value = {
         name: newRoleName.toLowerCase().replace(/\s+/g, "-"),
-        access: selectedAccess,
+        permissions: selectedAccess,
+        description: newRoleDescription || "",
+        franchiseId: selectedFranchiseId,
       };
+
       console.log(value);
 
-      setCustomRoles((prev) => [...prev, value]);
+      // setCustomRoles((prev) => [...prev, value]);
 
-      // try {
-      //   await createRole(value);
+      try {
+        await createNewRoleForPartner(value);
 
-      //   await fetchAllRoles();
+        await fetchAllRoles();
 
-      //   console.log("New Role Added:", value);
-      //   toast.success(`Role "${newRoleName}" created successfully`);
-      // } catch (error) {
-      //   toast.error("Error in creating role");
-      //   console.error("Error creating role:", error);
-      // }
+        console.log("New Role Added:", value);
+        toast.success(`Role "${newRoleName}" created successfully`);
+      } catch (error) {
+        toast.error("Error in creating role");
+        console.error("Error creating role:", error);
+      }
 
-      // setSaveLoading(false);
+      setSaveLoading(false);
 
       // Reset UI
       setNewRoleName("");
+      setNewRoleDescription("");
       setSelectedAccess([]);
       setCreateRoleModalOpen(false);
     } else {
       setNewRoleName("");
+      setNewRoleDescription("");
       setSelectedAccess([]);
       setCreateRoleModalOpen(false);
       toast.error(
@@ -300,10 +367,8 @@ export default function Partners() {
   const handleRoleDelete = async (name: string) => {
     // try {
     //   const response = await deleteRole(name);
-
     //   // Check if the deleted role was part of current user's roles
     //   const roleWasAssigned = currentUserRoles.includes(name);
-
     //   if (roleWasAssigned) {
     //     toast.info("Your assigned role was deleted. Redirecting...");
     //     router.push("/"); // redirect to home
@@ -318,15 +383,13 @@ export default function Partners() {
     //   toast.error(`Failed to remove role "${name}".`);
     // }
   };
-  const handleToggleRole = (roleName: string) => {
+  const handleToggleRole = (roleId: number) => {
     setSelectedRoles((prev) =>
-      prev.includes(roleName)
-        ? prev.filter((r) => r !== roleName)
-        : [...prev, roleName]
+      prev.includes(roleId)
+        ? prev.filter((r) => r !== roleId)
+        : [...prev, roleId]
     );
   };
-
-
 
   return (
     <div className="space-y-6 p-6">
@@ -340,11 +403,35 @@ export default function Partners() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          {(isSuperAdmin || tier === 2) && (
+            <div className="flex items-center gap-2">
+              <Label className="font-medium">Select Franchise:</Label>
+              <Select
+                value={selectedFranchiseId?.toString() || ""}
+                onValueChange={(val) => {
+                  const fid = parseInt(val);
+                  setSelectedFranchiseId(fid);
+                  fetchAllRoles(fid);
+                  fetchPartners(fid);
+                }}>
+                <SelectTrigger className="w-64">
+                  <SelectValue placeholder="Select Franchise" />
+                </SelectTrigger>
+                <SelectContent>
+                  {franchises.map((f) => (
+                    <SelectItem key={f.id} value={f.id.toString()}>
+                      {f.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           <Button
             variant="outline"
             onClick={() => setRolesModalOpen(true)}
-            className="flex items-center gap-2"
-          >
+            className="flex items-center gap-2">
             Roles
             <Settings className="h-4 w-4" />
           </Button>
@@ -476,16 +563,14 @@ export default function Partners() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() =>
-                              approvePartner(partner.applicationId)
-                            }
+                            onClick={() => approvePartner(partner.userId)}
                             className="text-green-600 hover:text-green-700">
                             <Check className="h-4 w-4" />
                           </Button>
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => rejectPartner(partner.applicationId)}
+                            onClick={() => rejectPartner(partner.userId)}
                             className="text-red-600 hover:text-red-700">
                             <X className="h-4 w-4" />
                           </Button>
@@ -513,7 +598,10 @@ export default function Partners() {
         application={selectedApplication}
       />
       {/* Invite Partner Dialog */}
-      <Dialog modal={false} open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
+      <Dialog
+        modal={false}
+        open={isInviteDialogOpen}
+        onOpenChange={setIsInviteDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Invite a Partner</DialogTitle>
@@ -535,45 +623,44 @@ export default function Partners() {
             </div>
             <div className="grid gap-2">
               <Label htmlFor="roles">Roles</Label>
-              <Popover >
+              <Popover>
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
                     role="combobox"
-                    className="w-full justify-between"
-                  >
+                    className="w-full justify-between">
                     {selectedRoles.length > 0
-                      ? selectedRoles.join(", ")
+                      ? customRoles
+                          .filter((role) => selectedRoles.includes(role.id))
+                          .map((role) => role.name)
+                          .join(", ")
                       : "Select roles"}
                     <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent side="bottom"
+                <PopoverContent
+                  side="bottom"
                   align="start"
                   className="w-full p-2 space-y-1">
-                  {!(
-                    customRoles.length === 0
-                  ) ? (
-                    customRoles
-                      .map((role) => (
-                        <div
-                          key={role.name}
-                          className={cn(
-                            "flex items-center p-2 rounded-md cursor-pointer hover:bg-muted",
-                            selectedRoles.includes(role.name) && "bg-muted"
+                  {customRoles.length > 0 ? (
+                    customRoles.map((role) => (
+                      <div
+                        key={role.id}
+                        className={cn(
+                          "flex items-center p-2 rounded-md cursor-pointer hover:bg-muted",
+                          selectedRoles.includes(role.id) && "bg-muted"
+                        )}
+                        onClick={() => handleToggleRole(role.id)}>
+                        <div className="mr-2">
+                          {selectedRoles.includes(role.id) ? (
+                            <Check className="h-4 w-4 text-primary" />
+                          ) : (
+                            <div className="h-4 w-4 border rounded-sm" />
                           )}
-                          onClick={() => handleToggleRole(role.name)}
-                        >
-                          <div className="mr-2">
-                            {selectedRoles.includes(role.name) ? (
-                              <Check className="h-4 w-4 text-primary" />
-                            ) : (
-                              <div className="h-4 w-4 border rounded-sm" />
-                            )}
-                          </div>
-                          <span>{role.name}</span>
                         </div>
-                      ))
+                        <span>{role.name}</span>
+                      </div>
+                    ))
                   ) : (
                     <div className={cn("flex items-center p-2 rounded-md")}>
                       No roles available
@@ -598,10 +685,7 @@ export default function Partners() {
       </Dialog>
 
       {/* Create Role Dialog */}
-      <Dialog
-        open={createRoleModalOpen}
-        onOpenChange={setCreateRoleModalOpen}
-      >
+      <Dialog open={createRoleModalOpen} onOpenChange={setCreateRoleModalOpen}>
         <DialogContent className="sm:max-w-5xl max-w-[90vw] max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -626,6 +710,15 @@ export default function Partners() {
               />
             </div>
 
+            <div className="grid gap-2">
+              <Label htmlFor="roleName">Role Description</Label>
+              <Input
+                id="roleDescription"
+                placeholder="Enter role Description"
+                value={newRoleDescription}
+                onChange={(e) => setNewRoleDescription(e.target.value)}
+              />
+            </div>
             {/* Access section */}
             <div className="grid gap-3">
               <Label>Access</Label>
@@ -633,10 +726,7 @@ export default function Partners() {
               {/* ✅ Added grid layout (2x2) */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {availableAccess.map((access) => (
-                  <div
-                    key={access.id}
-                    className="flex items-start space-x-3"
-                  >
+                  <div key={access.id} className="flex items-start space-x-3">
                     <Checkbox
                       id={access.id}
                       checked={selectedAccess.includes(access.id)}
@@ -647,8 +737,7 @@ export default function Partners() {
                     <div className="grid gap-1.5 leading-none">
                       <Label
                         htmlFor={access.id}
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                      >
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                         {access.label}
                       </Label>
                       <p className="text-xs text-muted-foreground">
@@ -664,22 +753,19 @@ export default function Partners() {
           <DialogFooter>
             <Button
               variant="outline"
-              onClick={() => setCreateRoleModalOpen(false)}
-            >
+              onClick={() => setCreateRoleModalOpen(false)}>
               Cancel
             </Button>
             <Button
               onClick={handleCreateRole}
               disabled={
                 !newRoleName || selectedAccess.length === 0 || saveLoading
-              }
-            >
+              }>
               {saveLoading ? "Creating..." : "Create Role"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
 
       {/* Roles Modal */}
 
@@ -694,20 +780,16 @@ export default function Partners() {
 
           <div className="space-y-3 py-4">
             {customRoles.map((role) => {
-
               return (
                 <div
                   key={role.name}
-                  className="flex justify-between items-center p-2 rounded-md border hover:bg-muted"
-                >
+                  className="flex justify-between items-center p-2 rounded-md border hover:bg-muted">
                   <span>{role.name}</span>
                   <Button
                     variant="ghost"
                     size="sm"
                     className="text-destructive"
-                    onClick={() => handleRoleDelete(role.name)}
-
-                  >
+                    onClick={() => handleRoleDelete(role.name)}>
                     Remove
                   </Button>
                 </div>
@@ -716,24 +798,19 @@ export default function Partners() {
           </div>
 
           <DialogFooter className="flex justify-between">
-            <Button
-              variant="outline"
-              onClick={() => setRolesModalOpen(false)}
-            >
+            <Button variant="outline" onClick={() => setRolesModalOpen(false)}>
               Close
             </Button>
             <Button
               onClick={() => {
                 // setRolesModalOpen(false);
                 setCreateRoleModalOpen(true); // open Create Role modal
-              }}
-            >
+              }}>
               Create Role
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
     </div>
   );
 }

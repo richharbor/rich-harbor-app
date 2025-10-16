@@ -44,7 +44,7 @@ type DocsKey =
 
 type FormDataState = {
   // Step 1
-  accountType: string;
+  accountType: string[];
   email: string;
   password: string;
   fullName: string;
@@ -89,7 +89,7 @@ export default function Onboarding() {
   const [currentStatus, setCurrentStatus] = useState<string | null>(null);
   const [formData, setFormData] = useState<FormDataState>({
     // Step 1
-    accountType: "",
+    accountType: [],
     email: "",
     password: "",
     fullName: "",
@@ -126,6 +126,10 @@ export default function Onboarding() {
   });
   const [inviteEmail, setInviteEmail] = useState<string | null>(null);
   const [inviterId, setInviterId] = useState<number | null>(null);
+  const [franchiseId, setFranchiseId] = useState<number | null>(null);
+  const [accountRoles, setAccountRoles] = useState<
+    { id: string; name: string }[]
+  >([]);
 
   const progress = useMemo(
     () => (currentStep / steps.length) * 100,
@@ -172,11 +176,14 @@ export default function Onboarding() {
           setFormData((prev) => ({
             ...prev,
             email: res.data.partnerEmail,
+            accountType: res.data.partnerRoles.map((r: any) => r.id), // store IDs
           }));
           setInviteEmail(res.data.partnerEmail);
+          setAccountRoles(res.data.partnerRoles); // store {id, name} for UI
         }
 
         setInviterId(res.data.inviterId);
+        setFranchiseId(res.data.franchiseId || null);
       } catch (error: any) {
         console.error("Invalid or expired token:", error);
         toast.error("Invalid or expired invite link");
@@ -271,17 +278,22 @@ export default function Onboarding() {
   };
 
   const handleStep1Submit = async () => {
-    const response = await postStartOnboard({
-      email: formData.email,
-      superiorId: inviterId,
-      password: formData.password,
-      fullName: formData.fullName,
-      accountType: formData.accountType,
-    });
+    try {
+      const response = await postStartOnboard({
+        email: formData.email,
+        createdBy: inviterId!,
+        password: formData.password,
+        fullName: formData.fullName,
+        accountType: formData.accountType,
+        franchiseId, //  include franchiseId in payload
+      });
 
-    // Save token
-    Cookies.set("authToken", response.token);
-    toast.success("Account created successfully!");
+      Cookies.set("authToken", response.token);
+      toast.success("Account created successfully!");
+    } catch (error: any) {
+      console.error("Onboarding error:", error);
+      toast.error(error.response?.data?.error || "Failed to create account");
+    }
   };
 
   const handleStep2Submit = async () => {
@@ -632,6 +644,7 @@ export default function Onboarding() {
                 uploading={uploading}
                 currentStatus={currentStatus}
                 inviteEmail={inviteEmail}
+                accountRoles={accountRoles}
               />
 
               {currentStep < steps.length && (
@@ -675,6 +688,7 @@ function StepView({
   uploading,
   currentStatus,
   inviteEmail,
+  accountRoles,
 }: {
   step?: number;
   formData: FormDataState;
@@ -685,27 +699,20 @@ function StepView({
   uploading: Record<DocsKey, boolean>;
   currentStatus: string | null;
   inviteEmail: string | null;
+  accountRoles: any;
 }) {
   if (step === 1) {
     return (
       <div className="space-y-4">
         <div>
-          <Label htmlFor="accountType">Select Account Type</Label>
-          <Select
-            value={formData.accountType}
-            onValueChange={(value) =>
-              setFormData((prev) => ({ ...prev, accountType: value }))
-            }>
-            <SelectTrigger id="accountType" className="mt-2">
-              <SelectValue placeholder="Choose account type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="partner">Partner</SelectItem>
-              <SelectItem value="vendor">Vendor</SelectItem>
-              <SelectItem value="customer">Customer</SelectItem>
-              <SelectItem value="employee">Employee</SelectItem>
-            </SelectContent>
-          </Select>
+          <div>
+            <Label htmlFor="accountType">Account Roles</Label>
+            <div className="mt-2 p-2 rounded-md bg-muted text-sm min-h-[40px]">
+              {accountRoles.length > 0
+                ? accountRoles.map((r: any) => r.name).join(", ")
+                : ""}
+            </div>
+          </div>
         </div>
 
         <div>
