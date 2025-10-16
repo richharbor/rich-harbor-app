@@ -12,7 +12,7 @@ export function middleware(request: NextRequest) {
   const authToken = request.cookies.get("authToken")?.value;
   const currentRole = request.cookies.get("currentRole")?.value;
 
-  const publicRoutes = ["/auth/login", "/auth/onboarding"];
+  const publicRoutes = ["/auth/login", "/auth/onboarding", "/auth/verify"];
 
   // 1️⃣ Allow public routes
   if (publicRoutes.some((route) => pathname.startsWith(route))) {

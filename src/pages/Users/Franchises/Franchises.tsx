@@ -14,12 +14,18 @@ import {
 } from "@/components/ui/table";
 import { Search, Plus, Users } from "lucide-react";
 import { toast } from "sonner";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-// import {
-//   getFranchiseMembers,
-//   inviteFranchiseUser,
-// } from "@/services/Franchise/franchiseService";
+import {
+  getFranchiseMembers,
+  inviteFranchisesAdmin,
+} from "@/services/Role/franchisesServices";
 
 export default function Franchises() {
   const [search, setSearch] = useState("");
@@ -28,9 +34,10 @@ export default function Franchises() {
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
     franchiseName: "",
-    name:"",
-    inviteEmail: ""
-  })
+    firstName: "",
+    lastName: "",
+    inviteEmail: "",
+  });
 
   useEffect(() => {
     fetchMembers();
@@ -39,9 +46,16 @@ export default function Franchises() {
   const fetchMembers = async () => {
     try {
       setLoading(true);
-      // const data = await getFranchiseMembers();
-      // setUsers(data);
+      const data = await getFranchiseMembers();
+      console.log(data); // Check API response
+      if (data.success && Array.isArray(data.users)) {
+        setUsers(data.users);
+      } else {
+        setUsers([]);
+        toast.error("No users found");
+      }
     } catch (err) {
+      console.error(err);
       toast.error("Failed to load franchise users");
     } finally {
       setLoading(false);
@@ -53,72 +67,19 @@ export default function Franchises() {
   //     u.name.toLowerCase().includes(search.toLowerCase()) ||
   //     u.email.toLowerCase().includes(search.toLowerCase())
   // );
-  const filtered = [
-    {
-      id: 1,
-      franchiseName:"Franchise 1",
-      name: "Alice Johnson",
-      email: "alice.johnson@example.com",
-      role: "Manager",
-      onboarding: {
-        currentStep: 3,
-        status: "approved",
-      },
-    },
-    {
-      id: 2,
-      name: "Bob Smith",
-      franchiseName:"Franchise 1",
-      email: "bob.smith@example.com",
-      role: "Agent",
-      onboarding: {
-        currentStep: 2,
-        status: "pending",
-      },
-    },
-    {
-      id: 3,
-      name: "Charlie Brown",
-      franchiseName:"Franchise 2",
-      email: "charlie.brown@example.com",
-      role: "Supervisor",
-      onboarding: {
-        currentStep: 1,
-        status: "rejected",
-      },
-    },
-    {
-      id: 4,
-      name: "Diana Prince",
-      franchiseName:"Franchise 1",
-      email: "diana.prince@example.com",
-      role: "Agent",
-      onboarding: {
-        currentStep: 4,
-        status: "approved",
-      },
-    },
-    {
-      id: 5,
-      name: "Ethan Hunt",
-      franchiseName:"Franchise 2",
-      email: "ethan.hunt@example.com",
-      role: "Manager",
-      onboarding: {
-        currentStep: 5,
-        status: "pending",
-      },
-    },
-  ];
 
-
-
-  const inviteFranchises = () => {
-
-    console.log(formData);
-    setIsInviteDialogOpen(false);
-
-  }
+  const inviteFranchises = async () => {
+    try {
+      console.log("Form Data:", formData);
+      await inviteFranchisesAdmin(formData); // Ensure this function is defined
+      await fetchMembers();
+      setIsInviteDialogOpen(false);
+      toast.success("Invitation sent successfully");
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to send invitation");
+    }
+  };
 
   return (
     <div className="space-y-6 p-6">
@@ -150,43 +111,49 @@ export default function Franchises() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Franchise Name</TableHead>
+              <TableHead>Branch Name</TableHead>
+              <TableHead>Franchise Admin</TableHead>
               <TableHead>Email</TableHead>
+              <TableHead>Created By</TableHead>
+              <TableHead>Tier</TableHead>
               <TableHead>Status</TableHead>
+              {/* <TableHead>Subdomain</TableHead> */}
+
+              {/* <TableHead>Phone Number</TableHead> */}
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center">
+                <TableCell colSpan={7} className="text-center">
                   Loading...
                 </TableCell>
               </TableRow>
-            ) : filtered.length ? (
-              filtered.map((u: any) => (
+            ) : users.length ? (
+              users.map((u: any) => (
                 <TableRow key={u.id}>
-                  <TableCell>{u.name}</TableCell>
-                  <TableCell>{u.franchiseName}</TableCell>
-                  <TableCell>{u.email}</TableCell>
-
+                  <TableCell>{u.franchise?.name}</TableCell>
+                  <TableCell>
+                    {`${u.firstName || ""} ${u.lastName || ""}`}
+                  </TableCell>
+                  <TableCell>{u.creator?.email || u.email}</TableCell>
+                  <TableCell>{`${u.franchise?.creator?.firstName || ""} ${
+                    u.franchise?.creator?.lastName || ""
+                  }`}</TableCell>
+                  <TableCell>{u.tier || "N/A"}</TableCell>
                   <TableCell>
                     <Badge
-                      variant={
-                        u.onboarding?.status === "approved"
-                          ? "default"
-                          : u.onboarding?.status === "pending"
-                            ? "secondary"
-                            : "destructive"
-                      }>
-                      {u.onboarding?.status || "N/A"}
+                      variant={u.emailVerified ? "default" : "destructive"}>
+                      {u.emailVerified ? "Accepted" : "Pending"}
                     </Badge>
                   </TableCell>
+                  {/* <TableCell>{u.subdomain || "N/A"}</TableCell> */}
+                  {/* <TableCell>{u.phoneNumber || "N/A"}</TableCell> */}
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={5} className="text-center">
+                <TableCell colSpan={7} className="text-center">
                   No members found
                 </TableCell>
               </TableRow>
@@ -199,7 +166,7 @@ export default function Franchises() {
       <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Invite a Partner</DialogTitle>
+            <DialogTitle>Invite a Franchise Admin</DialogTitle>
             <p className="text-sm text-muted-foreground">
               Enter the partner's email address. An invitation link will be sent
               to them.
@@ -218,29 +185,44 @@ export default function Franchises() {
                     franchiseName: e.target.value,
                   }))
                 }
-              // disabled={isInviting}
+                // disabled={isInviting}
               />
             </div>
             <div className="flex flex-col space-y-2">
-              <Label htmlFor="text">Full Name</Label>
+              <Label htmlFor="text">First Name</Label>
               <Input
                 id="text"
-                placeholder="Enter Your Name"
-                value={formData.name}
+                placeholder="Enter First Name"
+                value={formData.firstName}
                 onChange={(e) =>
                   setFormData((prev) => ({
                     ...prev,
-                    name: e.target.value,
+                    firstName: e.target.value,
                   }))
                 }
-              // disabled={isInviting}
+                // disabled={isInviting}
               />
             </div>
             <div className="flex flex-col space-y-2">
-              <Label htmlFor="email">Partner Email</Label>
+              <Label htmlFor="text">last Name</Label>
+              <Input
+                id="text"
+                placeholder="Enter Last Name"
+                value={formData.lastName}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    lastName: e.target.value,
+                  }))
+                }
+                // disabled={isInviting}
+              />
+            </div>
+            <div className="flex flex-col space-y-2">
+              <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
-                placeholder="partner@example.com"
+                placeholder="franchisesadmin@example.com"
                 value={formData.inviteEmail}
                 onChange={(e) =>
                   setFormData((prev) => ({
@@ -248,22 +230,21 @@ export default function Franchises() {
                     inviteEmail: e.target.value,
                   }))
                 }
-              // disabled={isInviting}
+                // disabled={isInviting}
               />
             </div>
-
           </div>
           <DialogFooter>
             <Button
               variant="outline"
               onClick={() => setIsInviteDialogOpen(false)}
-            // disabled={isInviting}
+              // disabled={isInviting}
             >
               Cancel
             </Button>
             <Button
               onClick={inviteFranchises}
-            //  disabled={isInviting}
+              //  disabled={isInviting}
             >
               Send Invite
             </Button>
