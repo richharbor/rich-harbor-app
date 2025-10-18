@@ -51,7 +51,7 @@ interface StateSelectProps {
   disabled?: boolean
 }
 
-export function StateSelect({
+export default function StateSelect({
   id,
   label,
   value,

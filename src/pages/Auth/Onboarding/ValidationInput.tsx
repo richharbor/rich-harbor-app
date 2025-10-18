@@ -20,7 +20,7 @@ interface ValidationInputProps {
   disabled?: boolean;
 }
 
-export function ValidationInput({
+export default function ValidationInput({
   id,
   label,
   value,
@@ -34,8 +34,9 @@ export function ValidationInput({
   disabled,
 }: ValidationInputProps) {
   // Show validation status only if field has content
-  const isValid = value.length > 0 && validator ? validator(value) : null;
-  const isEmpty = value.length === 0;
+  const isValid =
+    (value?.length ?? 0) > 0 && validator ? validator(value) : null;
+  const isEmpty = (value?.length ?? 0) === 0;
 
   return (
     <div className="space-y-1">

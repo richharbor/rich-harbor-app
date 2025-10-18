@@ -27,8 +27,8 @@ import {
   deleteDocumentFile,
   type UploadedFile,
 } from "@/services/Auth/uploadServices";
-import { StateSelect } from "./StateSelect";
-import { ValidationInput } from "./ValidationInput";
+import StateSelect from "./StateSelect";
+import ValidationInput from "./ValidationInput";
 
 type DocsKey =
   | "cmlCopy"
