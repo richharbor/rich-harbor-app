@@ -23,7 +23,7 @@ export default function LoadingSpinner({
     <div
       aria-hidden={!visible}
       role="status"
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-white/40 backdrop-blur-md"
+      className="fixed inset-0 z-9999 flex items-center justify-center bg-white/40 backdrop-blur-md"
     >
       {/* Container to center content */}
       <div className="flex flex-col items-center gap-4 p-4">
