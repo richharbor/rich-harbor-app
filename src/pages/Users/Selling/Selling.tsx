@@ -35,6 +35,8 @@ interface ShareItem {
     confirmDelivery: boolean;
     shareInStock: boolean;
     preShareTransfer: boolean;
+    moq:string;
+    fixed:boolean;
 }
 
 
@@ -146,8 +148,11 @@ export default function Selling() {
                                     <TableHead>Share Name</TableHead>
                                     <TableHead>Available Quantity</TableHead>
                                     <TableHead>Price</TableHead>
+                                    <TableHead>Deal Type</TableHead>
                                     <TableHead>Delivery Timeline</TableHead>
                                     <TableHead>Confirm Delivery</TableHead>
+                                    <TableHead>MOQ</TableHead>
+                                    
                                     <TableHead>Share in Stock</TableHead>
                                     <TableHead>Pre-Share Transfer</TableHead>
                                     <TableHead>Action</TableHead>
@@ -171,8 +176,11 @@ export default function Selling() {
                                                 <TableCell>{t.shareName}</TableCell>
                                                 <TableCell>{t.quantityAvailable}</TableCell>
                                                 <TableCell>{t.price}</TableCell>
+                                                <TableCell>{t.fixed ? "Fixed" : "Negotiable"}</TableCell>
                                                 <TableCell>{t.deliveryTimeline}</TableCell>
                                                 <TableCell>{t.confirmDelivery ? "Yes" : "No"}</TableCell>
+                                                <TableCell>{t.moq}</TableCell>
+                                                
                                                 <TableCell>{t.shareInStock ? "Yes" : "No"}</TableCell>
                                                 <TableCell>{t.preShareTransfer ? "Yes" : "No"}</TableCell>
                                                 <TableCell>

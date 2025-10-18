@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useShareStore } from "@/store/useShareStore";
 
 interface SharePageProps {
     id: string;
@@ -11,150 +12,167 @@ interface SharePageProps {
 
 export interface Seller {
     sellerName: string;
-    quantity: number;
-    price: number;
+    quantity: string;
+    price: string;
     deliveryTimeline: string;
     confirmDelivery: boolean;
     shareInStock: boolean;
     preShareTransfer: boolean;
+    moq: string;
+    fixed: boolean;
 }
 
 export interface Share {
     id: string;
     shareName: string;
-    quantityAvailable: number;
-    price: number;
     sellers: Seller[];
 }
+interface Bid {
+    stockId: number;   // 1-5
+    userId: string;    // example: "user1", "user2"
+    amount: number;    // bid price
+    quantity: number;  // number of shares
+    count: number;     // number of bids by this user for this stock
+};
 
 export const dummyShares: Share[] = [
     {
         id: "1",
         shareName: "Alpha Corp",
-        quantityAvailable: 1200,
-        price: 45.5,
         sellers: [
             {
                 sellerName: "Seller A1",
-                quantity: 300,
-                price: 45.5,
-                deliveryTimeline: "2 weeks",
+                quantity: "1300",
+                price: "45.5",
+                deliveryTimeline: "T",
                 confirmDelivery: true,
                 shareInStock: true,
                 preShareTransfer: false,
+                moq: "1200",
+                fixed: false,
             },
             {
                 sellerName: "Seller A2",
-                quantity: 400,
-                price: 46.0,
-                deliveryTimeline: "2 weeks",
+                quantity: "5400",
+                price: "46.0",
+                deliveryTimeline: "T+1",
                 confirmDelivery: false,
                 shareInStock: true,
                 preShareTransfer: false,
+                moq: "1210",
+                fixed: true,
             },
         ],
     },
     {
         id: "2",
         shareName: "Beta Holdings",
-        quantityAvailable: 800,
-        price: 38.2,
         sellers: [
             {
                 sellerName: "Seller B1",
-                quantity: 500,
-                price: 38.2,
-                deliveryTimeline: "1 week",
+                quantity: "4500",
+                price: "38.2",
+                deliveryTimeline: "T+4",
                 confirmDelivery: false,
                 shareInStock: true,
                 preShareTransfer: true,
+                moq: "1100",
+                fixed: true,
             },
             {
                 sellerName: "Seller B2",
-                quantity: 300,
-                price: 39.0,
-                deliveryTimeline: "1 week",
+                quantity: "7300",
+                price: "39.0",
+                deliveryTimeline: "T+1",
                 confirmDelivery: true,
                 shareInStock: true,
                 preShareTransfer: false,
+                moq: "1100",
+                fixed: false,
             },
         ],
     },
     {
         id: "3",
         shareName: "Gamma Investments",
-        quantityAvailable: 1500,
-        price: 52.0,
         sellers: [
             {
                 sellerName: "Seller G1",
-                quantity: 700,
-                price: 52.0,
+                quantity: "6700",
+                price: "52.0",
                 deliveryTimeline: "3 weeks",
                 confirmDelivery: true,
                 shareInStock: false,
                 preShareTransfer: false,
+                moq: "1400",
+                fixed: false,
             },
             {
                 sellerName: "Seller G2",
-                quantity: 800,
-                price: 53.0,
+                quantity: "5800",
+                price: "53.0",
                 deliveryTimeline: "3 weeks",
                 confirmDelivery: false,
                 shareInStock: false,
                 preShareTransfer: false,
+                moq: "1400",
+                fixed: true,
             },
         ],
     },
     {
         id: "4",
         shareName: "Delta Ventures",
-        quantityAvailable: 600,
-        price: 27.75,
         sellers: [
             {
                 sellerName: "Seller D1",
-                quantity: 300,
-                price: 27.75,
-                deliveryTimeline: "5 days",
+                quantity: "2300",
+                price: "27.75",
+                deliveryTimeline: "T",
                 confirmDelivery: false,
                 shareInStock: true,
                 preShareTransfer: false,
+                moq: "1000",
+                fixed: true,
             },
             {
                 sellerName: "Seller D2",
-                quantity: 300,
-                price: 28.0,
-                deliveryTimeline: "5 days",
+                quantity: "1300",
+                price: "28.0",
+                deliveryTimeline: "T",
                 confirmDelivery: true,
                 shareInStock: true,
                 preShareTransfer: false,
+                moq: "1150",
+                fixed: false,
             },
         ],
     },
     {
         id: "5",
         shareName: "Epsilon Partners",
-        quantityAvailable: 2000,
-        price: 61.4,
         sellers: [
             {
                 sellerName: "Seller E1",
-                quantity: 1000,
-                price: 61.4,
-                deliveryTimeline: "1 month",
+                quantity: "1000",
+                price: "61.4",
+                deliveryTimeline: "T+3",
                 confirmDelivery: true,
                 shareInStock: true,
                 preShareTransfer: true,
+                moq: "500",
+                fixed: false,
             },
             {
                 sellerName: "Seller E2",
-                quantity: 1000,
-                price: 62.0,
-                deliveryTimeline: "1 month",
+                quantity: "1000",
+                price: "62.0",
+                deliveryTimeline: "T+2",
                 confirmDelivery: false,
                 shareInStock: true,
                 preShareTransfer: true,
+                moq: "300",
+                fixed: true,
             },
         ],
     },
@@ -163,17 +181,43 @@ export const dummyShares: Share[] = [
 
 export default function SharePage({ id }: SharePageProps) {
     const [share, setShare] = useState<any>(null);
+    const {dummyBids} = useShareStore() as { dummyBids: Bid[] };;
     const [loading, setLoading] = useState(true);
+    const [bids, setBids] = useState<Bid[] | []>([]);
+
+
 
     useEffect(() => {
         // Simulate fetching data
         const foundShare = dummyShares.find((s) => s.id === id);
         setShare(foundShare);
+
+        const filterBids = dummyBids.filter((t) => String(t.stockId) === id);
+        setBids(filterBids);
+
         setLoading(false);
     }, [id]);
 
+
+
     if (loading) return <div>Loading...</div>;
     if (!share) return <div>Share not found!</div>;
+
+
+
+    // Get all prices as numbers
+    let prices = share.sellers.map((seller : Seller) => parseFloat(seller.price));
+
+    // Find min and max
+    let minPrice = Math.min(...prices);
+    let maxPrice = Math.max(...prices);
+
+    const quantity = share.sellers.map((seller : Seller) => parseInt(seller.quantity))
+
+    const minQuantity = Math.min(...quantity);
+    const maxQuantity = Math.max(...quantity);
+
+    
 
     return (
         <div className=" h-[calc(100vh-4.7rem)] flex flex-col overflow-hidden p-6 space-y-6">
@@ -194,11 +238,11 @@ export default function SharePage({ id }: SharePageProps) {
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                         <div className="flex flex-col">
                             <span className="text-muted-foreground text-sm">Available Quantity</span>
-                            <span className="text-lg font-semibold">{share.quantityAvailable}</span>
+                            <span className="text-lg font-semibold">{minQuantity} - {maxQuantity}</span>
                         </div>
                         <div className="flex flex-col">
                             <span className="text-muted-foreground text-sm">Price</span>
-                            <span className="text-lg font-semibold">${share.price}</span>
+                            <span className="text-lg font-semibold">₹{minPrice} - ₹{maxPrice}</span>
                         </div>
                         <div className="flex flex-col">
                             <span className="text-muted-foreground text-sm">Delivery Timeline</span>
@@ -207,7 +251,7 @@ export default function SharePage({ id }: SharePageProps) {
                         <div className="flex flex-col">
                             <span className="text-muted-foreground text-sm">Confirm Delivery</span>
                             <span className="text-lg font-semibold">
-                                {share.confirmDelivery ? "Yes" : "No"}
+                                {share.sellers[0]?.confirmDelivery ? "Yes" : "No"}
                             </span>
                         </div>
                         <div className="flex flex-col">
@@ -218,8 +262,30 @@ export default function SharePage({ id }: SharePageProps) {
                         </div>
                     </div>
                 </div>
-                <div className="w-[20vw] h-[250px] flex justify-center items-center">
-                    bids
+                <div className="w-[20vw] border rounded-md flex-col h-[250px] flex">
+                    <h1 className="text-xl p-3 border-b">Bids</h1>
+                    <ScrollArea className="h-full">
+                    <Table className="min-w-full h-full">
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Amount</TableHead>
+                                <TableHead>Quantity</TableHead>
+                                <TableHead>Count</TableHead>
+                                
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {[...bids,...bids,...bids]?.map((bid: Bid, index: any) => (
+                                <TableRow key={index}>
+                                    <TableCell>{bid.amount}</TableCell>
+                                    <TableCell>{bid.quantity}</TableCell>
+                                    <TableCell>{bid.count}</TableCell>
+                                    
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </ScrollArea>
                 </div>
 
             </div>
@@ -231,9 +297,11 @@ export default function SharePage({ id }: SharePageProps) {
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Seller Name</TableHead>
+                                <TableHead>Seller ID</TableHead>
                                 <TableHead>Quantity</TableHead>
                                 <TableHead>Price</TableHead>
+                                <TableHead>Deal Type</TableHead>
+                                <TableHead>MOQ</TableHead>
                                 <TableHead>Delivery Timeline</TableHead>
                                 <TableHead>Confirm Delivery</TableHead>
                                 <TableHead>Pre-Share Transfer</TableHead>
@@ -246,13 +314,15 @@ export default function SharePage({ id }: SharePageProps) {
                                     <TableCell>{seller.sellerName}</TableCell>
                                     <TableCell>{seller.quantity}</TableCell>
                                     <TableCell>{seller.price}</TableCell>
+                                    <TableCell>{seller.fixed ? 'Fixed' : 'Negotiable'}</TableCell>
+                                    <TableCell>{seller.moq}</TableCell>
                                     <TableCell>{seller.deliveryTimeline ? 'Yes' : 'No'}</TableCell>
                                     <TableCell>{seller.confirmDelivery ? 'Yes' : 'No'}</TableCell>
                                     <TableCell>{seller.preShareTransfer ? 'Yes' : 'No'}</TableCell>
                                     <TableCell>
                                         <div className="flex gap-2">
                                             <Button size="sm" variant="default">
-                                                Buy
+                                                Book
                                             </Button>
                                             <Button size="sm" variant="outline">
                                                 Bid
