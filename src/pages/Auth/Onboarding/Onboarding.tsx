@@ -7,13 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Check, Download, Loader2, X, FileText, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -34,6 +27,8 @@ import {
   deleteDocumentFile,
   type UploadedFile,
 } from "@/services/Auth/uploadServices";
+import StateSelect from "./StateSelect";
+import ValidationInput from "./ValidationInput";
 
 type DocsKey =
   | "cmlCopy"
@@ -473,6 +468,7 @@ export default function Onboarding() {
   const isPAN = (val: string) =>
     /^[A-Z]{5}\d{4}[A-Z]{1}$/.test(val.toUpperCase());
   const isMobile = (val: string) => /^\d{10}$/.test(val);
+  const isPostalCode = (val: string) => /^\d{4,6}$/.test(val);
 
   function isStepValid(step: number): boolean {
     if (step === 1) {
@@ -536,7 +532,8 @@ export default function Onboarding() {
           !isActive && !isDone && "bg-muted text-muted-foreground",
           !isClickable && "cursor-not-allowed opacity-60"
         )}
-        disabled={loading}>
+        disabled={loading}
+      >
         <span
           className={cn(
             "inline-flex h-5 w-5 items-center justify-center rounded-full border text-[11px]",
@@ -545,7 +542,8 @@ export default function Onboarding() {
             !isActive &&
               !isDone &&
               "border-muted-foreground/30 bg-background text-muted-foreground"
-          )}>
+          )}
+        >
           {isDone ? <Check className="h-3.5 w-3.5" /> : stepNumber}
         </span>
         <span>{steps[index]}</span>
@@ -579,7 +577,8 @@ export default function Onboarding() {
           </div>
           <Button
             type="button"
-            onClick={() => window.open("https://richharbor.com/", "_blank")}>
+            onClick={() => window.open("https://richharbor.com/", "_blank")}
+          >
             Go to website
           </Button>
         </div>
@@ -600,7 +599,8 @@ export default function Onboarding() {
           </div>
           <Button
             type="button"
-            onClick={() => window.open("https://richharbor.com/", "_blank")}>
+            onClick={() => window.open("https://richharbor.com/", "_blank")}
+          >
             Go to website
           </Button>
         </div>
@@ -645,6 +645,14 @@ export default function Onboarding() {
                 currentStatus={currentStatus}
                 inviteEmail={inviteEmail}
                 accountRoles={accountRoles}
+                validators={{
+                  isEmail,
+                  isIFSC,
+                  isAadhar,
+                  isPAN,
+                  isMobile,
+                  isPostalCode,
+                }}
               />
 
               {currentStep < steps.length && (
@@ -653,13 +661,15 @@ export default function Onboarding() {
                     <Button
                       variant="ghost"
                       onClick={() => router.push("/dashboard")}
-                      disabled={loading}>
+                      disabled={loading}
+                    >
                       Skip for now
                     </Button>
 
                     <Button
                       onClick={handleNext}
-                      disabled={!canGoNext || loading}>
+                      disabled={!canGoNext || loading}
+                    >
                       {loading && (
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       )}
@@ -689,6 +699,7 @@ function StepView({
   currentStatus,
   inviteEmail,
   accountRoles,
+  validators,
 }: {
   step?: number;
   formData: FormDataState;
@@ -700,6 +711,14 @@ function StepView({
   currentStatus: string | null;
   inviteEmail: string | null;
   accountRoles: any;
+  validators?: {
+    isEmail: (val: string) => boolean;
+    isIFSC: (val: string) => boolean;
+    isAadhar: (val: string) => boolean;
+    isPAN: (val: string) => boolean;
+    isMobile: (val: string) => boolean;
+    isPostalCode: (val: string) => boolean;
+  };
 }) {
   if (step === 1) {
     return (
@@ -776,46 +795,40 @@ function StepView({
               className="mt-2"
             />
           </div>
-          <div>
-            <Label htmlFor="state">State of Operation</Label>
-            <Input
-              id="state"
-              value={formData.state}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, state: e.target.value }))
-              }
-              placeholder="Enter state"
-              className="mt-2"
-            />
-          </div>
+          <StateSelect
+            id="state"
+            label="State of Operation"
+            value={formData.state}
+            onChange={(e) =>
+              setFormData((prev) => ({ ...prev, state: e.target.value }))
+            }
+          />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="aadhar">Aadhar Card</Label>
-            <Input
-              id="aadhar"
-              inputMode="numeric"
-              value={formData.aadharCard}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, aadharCard: e.target.value }))
-              }
-              placeholder="Enter Aadhar number"
-              className="mt-2"
-            />
-          </div>
-          <div>
-            <Label htmlFor="pan">PAN Card</Label>
-            <Input
-              id="pan"
-              value={formData.panCard}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, panCard: e.target.value }))
-              }
-              placeholder="Enter PAN number"
-              className="mt-2"
-            />
-          </div>
+          <ValidationInput
+            id="aadhar"
+            label="Aadhar Card"
+            value={formData.aadharCard}
+            onChange={(e) =>
+              setFormData((prev) => ({ ...prev, aadharCard: e.target.value }))
+            }
+            placeholder="Enter 12-digit Aadhar number"
+            inputMode="numeric"
+            validator={validators?.isAadhar}
+            helperText="Format: 12 digits (e.g., 123456789012)"
+          />
+          <ValidationInput
+            id="pan"
+            label="PAN Card"
+            value={formData.panCard}
+            onChange={(e) =>
+              setFormData((prev) => ({ ...prev, panCard: e.target.value }))
+            }
+            placeholder="Enter PAN number"
+            validator={validators?.isPAN}
+            helperText="Format: 5 letters, 4 digits, 1 letter (e.g., ABCDE1234F)"
+          />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -832,22 +845,21 @@ function StepView({
               className="mt-2"
             />
           </div>
-          <div>
-            <Label htmlFor="mobile">Mobile No.</Label>
-            <Input
-              id="mobile"
-              inputMode="tel"
-              value={formData.mobile}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  mobile: e.target.value,
-                }))
-              }
-              placeholder="Enter mobile number"
-              className="mt-2"
-            />
-          </div>
+          <ValidationInput
+            id="mobile"
+            label="Mobile No."
+            value={formData.mobile}
+            onChange={(e) =>
+              setFormData((prev) => ({
+                ...prev,
+                mobile: e.target.value,
+              }))
+            }
+            placeholder="Enter 10-digit mobile number"
+            inputMode="tel"
+            validator={validators?.isMobile}
+            helperText="Format: 10 digits (e.g., 9876543210)"
+          />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -879,18 +891,17 @@ function StepView({
               className="mt-2"
             />
           </div>
-          <div>
-            <Label htmlFor="ifsc">IFSC Code</Label>
-            <Input
-              id="ifsc"
-              value={formData.ifscCode}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, ifscCode: e.target.value }))
-              }
-              placeholder="Enter IFSC code"
-              className="mt-2"
-            />
-          </div>
+          <ValidationInput
+            id="ifsc"
+            label="IFSC Code"
+            value={formData.ifscCode}
+            onChange={(e) =>
+              setFormData((prev) => ({ ...prev, ifscCode: e.target.value }))
+            }
+            placeholder="Enter IFSC code"
+            validator={validators?.isIFSC}
+            helperText="Format: 4 letters, 0, 6 alphanumeric (e.g., ABCD0123456)"
+          />
         </div>
 
         <div className="space-y-4">
@@ -907,21 +918,17 @@ function StepView({
                 className="mt-2"
               />
             </div>
-            <div>
-              <Label htmlFor="addressState">State</Label>
-              <Input
-                id="addressState"
-                value={formData.addressState}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    addressState: e.target.value,
-                  }))
-                }
-                placeholder="Enter state"
-                className="mt-2"
-              />
-            </div>
+            <StateSelect
+              id="addressState"
+              label="State"
+              value={formData.addressState}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  addressState: e.target.value,
+                }))
+              }
+            />
           </div>
 
           <div>
@@ -968,19 +975,18 @@ function StepView({
                 className="mt-2"
               />
             </div>
-            <div>
-              <Label htmlFor="zipCode">Zip / Postal Code</Label>
-              <Input
-                id="zipCode"
-                inputMode="numeric"
-                value={formData.zipCode}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, zipCode: e.target.value }))
-                }
-                placeholder="Enter zip code"
-                className="mt-2"
-              />
-            </div>
+            <ValidationInput
+              id="zipCode"
+              label="Zip / Postal Code"
+              value={formData.zipCode}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, zipCode: e.target.value }))
+              }
+              placeholder="Enter zip code"
+              inputMode="numeric"
+              validator={validators?.isPostalCode}
+              helperText="Format: 4-6 digits (e.g., 110001)"
+            />
           </div>
         </div>
       </div>
@@ -1040,7 +1046,8 @@ function StepView({
                   size="sm"
                   type="button"
                   onClick={() => handleDelete(doc.key)}
-                  className="text-red-600 hover:text-red-700">
+                  className="text-red-600 hover:text-red-700"
+                >
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
@@ -1087,7 +1094,8 @@ function StepView({
             variant="outline"
             className="w-full bg-transparent"
             type="button"
-            onClick={() => alert("Downloading agreement...")}>
+            onClick={() => alert("Downloading agreement...")}
+          >
             <Download className="mr-2 h-4 w-4" />
             Download Franchise Agreement
           </Button>
@@ -1109,7 +1117,8 @@ function StepView({
                   size="sm"
                   type="button"
                   onClick={() => handleDelete("agreement")}
-                  className="text-red-600 hover:text-red-700">
+                  className="text-red-600 hover:text-red-700"
+                >
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
@@ -1157,7 +1166,8 @@ function StepView({
           </div>
           <Button
             type="button"
-            onClick={() => window.open("https://richharbor.com/", "_blank")}>
+            onClick={() => window.open("https://richharbor.com/", "_blank")}
+          >
             Go to website
           </Button>
         </div>
@@ -1180,7 +1190,8 @@ function StepView({
           </div>
           <Button
             type="button"
-            onClick={() => window.open("https://richharbor.com/", "_blank")}>
+            onClick={() => window.open("https://richharbor.com/", "_blank")}
+          >
             Go to website
           </Button>
         </div>

@@ -274,17 +274,17 @@ export default function Partners() {
       approved: "default",
       pending: "secondary",
       rejected: "destructive",
-      draft: "outline-solid",
+      draft: "outline",
     } as const;
     return (
-      <Badge variant={variants[status as keyof typeof variants] || "outline-solid"}>
+      <Badge variant={variants[status as keyof typeof variants] || "outline"}>
         {status.charAt(0).toUpperCase() + status.slice(1)}
       </Badge>
     );
   };
 
   const getStepBadge = (step: number) => (
-    <Badge variant={step === 5 ? "default" : "outline-solid"}>Step {step}/5</Badge>
+    <Badge variant={step === 5 ? "default" : "outline"}>Step {step}/5</Badge>
   );
 
   const approvePartner = async (applicationId: number) => {

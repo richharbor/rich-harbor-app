@@ -119,10 +119,10 @@ export default function PartnerDetails({
       approved: "default",
       pending: "secondary",
       rejected: "destructive",
-      draft: "outline-solid",
+      draft: "outline",
     } as const;
     return (
-      <Badge variant={variants[status as keyof typeof variants] || "outline-solid"}>
+      <Badge variant={variants[status as keyof typeof variants] || "outline"}>
         {status.charAt(0).toUpperCase() + status.slice(1)}
       </Badge>
     );
