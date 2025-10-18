@@ -609,7 +609,7 @@ export default function Onboarding() {
   ) : (
     //  Normal form wizard
     <div className="min-h-screen flex flex-col bg-background">
-      <header className="sticky top-0 z-40 border-b bg-background/90 backdrop-blur">
+      <header className="sticky top-0 z-40 border-b bg-background/90 backdrop-blur-sm">
         <div className="mx-auto w-full max-w-5xl px-4 py-4">
           <div className="flex items-center justify-between">
             <h1 className="text-lg md:text-xl font-semibold text-foreground">
