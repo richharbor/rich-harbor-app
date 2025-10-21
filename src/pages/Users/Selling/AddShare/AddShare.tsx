@@ -2,7 +2,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import AddStockForm from "./AddShareForm"
 
 interface AddSharePageProps {
-  shareName: string;
+  shareName?: string;
 }
 
 export default function AddSharePage({shareName} : AddSharePageProps) {

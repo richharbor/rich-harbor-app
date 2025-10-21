@@ -74,7 +74,7 @@ const formSchema = baseSchema.superRefine((data, ctx) => {
 type FormValues = z.infer<typeof formSchema>
 
 interface AddSharePageProps {
-  shareName: string;
+  shareName?: string;
 }
 
 
@@ -89,7 +89,7 @@ export default function AddStockForm( {shareName} : AddSharePageProps) {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      shareName: isNewShare ? "" : shareName.replace(/_/g, " "),
+      shareName: isNewShare ? "" : shareName?.replace(/_/g, " "),
       quantityAvailable: "",
       price: "",
       deliveryTimeline: "t",
