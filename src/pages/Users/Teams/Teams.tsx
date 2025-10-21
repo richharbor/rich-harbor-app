@@ -56,22 +56,22 @@ import {
 
 const availableAccess = [
   {
-    id: "view_dashboard",
+    id: "dashboard", //view_dashboard
     label: "Access Dashboard",
     description: "View and interact with the main dashboard and its metrics",
   },
   {
-    id: "place_orders",
+    id: "buying", //place_orders
     label: "Buying",
     description: "Create and place customer orders",
   },
   {
-    id: "manage_orders",
+    id: "selling", //manage_orders
     label: "Selling",
     description: "Manage and track all customer orders",
   },
   {
-    id: "view_products",
+    id: "best_deals", //view_products
     label: "Best Deals",
     description: "View product listings, deals, and promotions",
   },
@@ -224,14 +224,16 @@ export default function Teams() {
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
 
   const handleAccessChange = (permissionId: string, checked: boolean) => {
     if (checked) {
@@ -357,7 +359,8 @@ export default function Teams() {
           <Button
             variant="outline"
             onClick={() => setRolesModalOpen(true)}
-            className="flex items-center gap-2">
+            className="flex items-center gap-2"
+          >
             Roles
             <Settings className="h-4 w-4" />
           </Button>
@@ -430,7 +433,8 @@ export default function Teams() {
                   <TableCell>{t.tier}</TableCell>
                   <TableCell>
                     <Badge
-                      variant={t.emailVerified ? "default" : "destructive"}>
+                      variant={t.emailVerified ? "default" : "destructive"}
+                    >
                       {t.emailVerified ? "Acceprted" : "Pending"}
                     </Badge>
                   </TableCell>
@@ -439,7 +443,8 @@ export default function Teams() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleDeactivate(t.id)}>
+                        onClick={() => handleDeactivate(t.id)}
+                      >
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
@@ -511,9 +516,9 @@ export default function Teams() {
                 >
                   {selectedRoles.length > 0
                     ? customRoles
-                      .filter((role) => selectedRoles.includes(role.id))
-                      .map((role) => role.name)
-                      .join(", ")
+                        .filter((role) => selectedRoles.includes(role.id))
+                        .map((role) => role.name)
+                        .join(", ")
                     : "Select roles"}
                   <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
                 </button>
@@ -556,7 +561,8 @@ export default function Teams() {
             <Button
               variant="outline"
               onClick={() => setIsInviteOpen(false)}
-              disabled={loading}>
+              disabled={loading}
+            >
               Cancel
             </Button>
             <Button onClick={invitePartner} disabled={loading}>
@@ -619,7 +625,8 @@ export default function Teams() {
                     <div className="grid gap-1.5 leading-none">
                       <Label
                         htmlFor={access.id}
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      >
                         {access.label}
                       </Label>
                       <p className="text-xs text-muted-foreground">
@@ -635,14 +642,16 @@ export default function Teams() {
           <DialogFooter>
             <Button
               variant="outline"
-              onClick={() => setCreateRoleModalOpen(false)}>
+              onClick={() => setCreateRoleModalOpen(false)}
+            >
               Cancel
             </Button>
             <Button
               onClick={handleCreateRole}
               disabled={
                 !newRoleName || selectedAccess.length === 0 || saveLoading
-              }>
+              }
+            >
               {saveLoading ? "Creating..." : "Create Role"}
             </Button>
           </DialogFooter>
@@ -665,13 +674,15 @@ export default function Teams() {
               return (
                 <div
                   key={role.name}
-                  className="flex justify-between items-center p-2 rounded-md border hover:bg-muted">
+                  className="flex justify-between items-center p-2 rounded-md border hover:bg-muted"
+                >
                   <span>{role.name}</span>
                   <Button
                     variant="ghost"
                     size="sm"
                     className="text-destructive"
-                    onClick={() => handleRoleDelete(role.name)}>
+                    onClick={() => handleRoleDelete(role.name)}
+                  >
                     Remove
                   </Button>
                 </div>
@@ -687,7 +698,8 @@ export default function Teams() {
               onClick={() => {
                 // setRolesModalOpen(false);
                 setCreateRoleModalOpen(true); // open Create Role modal
-              }}>
+              }}
+            >
               Create Role
             </Button>
           </DialogFooter>
