@@ -67,7 +67,7 @@ const availableAccess = [
   },
   {
     id: "manage_orders",
-    label: "Buying",
+    label: "Selling",
     description: "Manage and track all customer orders",
   },
   {

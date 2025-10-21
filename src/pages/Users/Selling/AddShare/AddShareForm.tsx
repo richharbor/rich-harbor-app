@@ -31,6 +31,11 @@ const baseSchema = z.object({
   deliveryTimeline: z.enum(deliveryTimelineOptions, {
     error: "Select a timeline",
   }),
+  moq: z
+    .string()
+    .min(1, "Min quantity is required")
+    .refine((v)=> !isNaN(Number(v)) && Number(v) > 0, "Must be a positive number"),
+  fixed: z.boolean(),
   confirmDelivery: z.boolean(),
   shareInStock: z.boolean(),
   preShareTransfer: z.boolean(),
@@ -68,19 +73,28 @@ const formSchema = baseSchema.superRefine((data, ctx) => {
 
 type FormValues = z.infer<typeof formSchema>
 
-export default function AddStockForm() {
+interface AddSharePageProps {
+  shareName: string;
+}
+
+
+export default function AddStockForm( {shareName} : AddSharePageProps) {
 
   const currentRole = Cookies.get("currentRole");
 
   const route = useRouter();
 
+  const isNewShare = String(shareName) === "addShare";
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      shareName:"",
+      shareName: isNewShare ? "" : shareName.replace(/_/g, " "),
       quantityAvailable: "",
       price: "",
       deliveryTimeline: "t",
+      moq:"",
+      fixed:false,
       confirmDelivery: false,
       shareInStock: true,
       preShareTransfer: false,
@@ -110,7 +124,7 @@ export default function AddStockForm() {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 p-6 max-w-3xl mx-auto rounded-lg bg-card">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 p-6 max-w-3xl mx-auto rounded-lg">
         {/* Quantity + Price */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField
@@ -124,6 +138,7 @@ export default function AddStockForm() {
                     type="text"
                     inputMode="text"
                     placeholder="Enter share name"
+                    readOnly={!isNewShare}
                     className="appearance-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     {...field}
                   />
@@ -202,6 +217,59 @@ export default function AddStockForm() {
             </FormItem>
           )}
         />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <FormField
+            control={form.control}
+            name="moq"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Minimum order quantity</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    inputMode="decimal"
+                    placeholder="Enter Minimum order quantity"
+                    className="appearance-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+
+        {/* Delivery timeline */}
+        <FormField
+            control={form.control}
+            name="fixed"
+            render={({ field }) => (
+              <FormItem className="flex items-center gap-2 justify-between rounded-md border p-3">
+                <div className="space-y-1">
+                  <FormLabel>Fixed price</FormLabel>
+                  <p className="text-sm text-muted-foreground">The price of share is fixed.</p>
+                </div>
+                <FormControl>
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="fixed-no" className="text-sm">
+                      No
+                    </Label>
+                    <Switch
+                      id="fixed"
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      aria-label="Fixed"
+                    />
+                    <Label htmlFor="fixed-yes" className="text-sm">
+                      Yes
+                    </Label>
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </div>
 
         {/* Toggles */}

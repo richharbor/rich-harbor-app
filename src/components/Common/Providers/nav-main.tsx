@@ -44,8 +44,8 @@ export function NavMain({
           <Collapsible key={item.title} asChild defaultOpen={item.isActive}>
             <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip={item.title}>
-                <div onClick={() => router.push(item.url)}>
-                  <item.icon />
+                <div className="cursor-pointer" onClick={() => router.push(item.url)}>
+                  <item.icon className="" />
                   <span>{item.title}</span>
                 </div>
               </SidebarMenuButton>
