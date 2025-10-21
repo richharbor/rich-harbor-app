@@ -217,7 +217,11 @@ export const verifyOnboardingToken = async (requestBody: any) => {
   }
 };
 
-export const verifyEmail = async (requestBody: { token: string }) => {
+export const verifyEmailAndSetNewPassword = async (requestBody: {
+  token: string;
+  tempPassword?: string;
+  newPassword?: string;
+}) => {
   try {
     const response = await axios.post(
       `${API_URL}/auth/verify-email`,

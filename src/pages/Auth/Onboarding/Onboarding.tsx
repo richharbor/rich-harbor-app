@@ -145,49 +145,49 @@ export default function Onboarding() {
   const cookieToken = Cookies.get("authToken");
 
   useEffect(() => {
-    // If token exists in cookie, don't redirect
-    if (cookieToken) return;
+    const tokenFromUrl = searchParams?.get("token");
+    const franchiseIdFromUrl = searchParams?.get("franchiseId");
 
-    // If searchParams is null, redirect
-    if (!searchParams) {
-      router.replace("/auth/login");
-      return;
-    }
+    // 1. Token flow
+    if (tokenFromUrl) {
+      const verifyToken = async () => {
+        try {
+          const res = await verifyOnboardingToken({ token: tokenFromUrl });
+          console.log("Token verified:", res);
 
-    const tokenFromUrl = searchParams.get("token");
+          if (res?.data?.partnerEmail) {
+            setFormData((prev) => ({
+              ...prev,
+              email: res.data.partnerEmail,
+              accountType: res.data.partnerRoles.map((r: any) => r.id),
+            }));
+            setInviteEmail(res.data.partnerEmail);
+            setAccountRoles(res.data.partnerRoles);
+          }
 
-    // If no token in URL, redirect
-    if (!tokenFromUrl) {
-      router.replace("/auth/login");
-      return;
-    }
-
-    const verifyToken = async () => {
-      try {
-        const res = await verifyOnboardingToken({ token: tokenFromUrl });
-        console.log("Token verified:", res);
-
-        if (res?.data?.partnerEmail) {
-          setFormData((prev) => ({
-            ...prev,
-            email: res.data.partnerEmail,
-            accountType: res.data.partnerRoles.map((r: any) => r.id), // store IDs
-          }));
-          setInviteEmail(res.data.partnerEmail);
-          setAccountRoles(res.data.partnerRoles); // store {id, name} for UI
+          setInviterId(res.data.inviterId);
+          setFranchiseId(res.data.franchiseId || null);
+        } catch (error: any) {
+          console.error("Invalid or expired token:", error);
+          toast.error("Invalid or expired invite link");
+          router.replace("/auth/login");
         }
+      };
 
-        setInviterId(res.data.inviterId);
-        setFranchiseId(res.data.franchiseId || null);
-      } catch (error: any) {
-        console.error("Invalid or expired token:", error);
-        toast.error("Invalid or expired invite link");
-        router.replace("/auth/login");
-      }
-    };
+      verifyToken();
+      return;
+    }
 
-    verifyToken();
-  }, [searchParams, router, cookieToken]);
+    // 2. Direct franchiseId flow
+    if (franchiseIdFromUrl) {
+      setFranchiseId(Number(franchiseIdFromUrl));
+      setAccountRoles([{ id: "partner", name: "Partner" }]);
+      setFormData((prev) => ({
+        ...prev,
+        accountType: ["partner"], // default role
+      }));
+    }
+  }, [searchParams, router]);
 
   const checkOnboardingStatus = async () => {
     const token = Cookies.get("authToken");
@@ -532,8 +532,7 @@ export default function Onboarding() {
           !isActive && !isDone && "bg-muted text-muted-foreground",
           !isClickable && "cursor-not-allowed opacity-60"
         )}
-        disabled={loading}
-      >
+        disabled={loading}>
         <span
           className={cn(
             "inline-flex h-5 w-5 items-center justify-center rounded-full border text-[11px]",
@@ -542,8 +541,7 @@ export default function Onboarding() {
             !isActive &&
               !isDone &&
               "border-muted-foreground/30 bg-background text-muted-foreground"
-          )}
-        >
+          )}>
           {isDone ? <Check className="h-3.5 w-3.5" /> : stepNumber}
         </span>
         <span>{steps[index]}</span>
@@ -577,8 +575,7 @@ export default function Onboarding() {
           </div>
           <Button
             type="button"
-            onClick={() => window.open("https://richharbor.com/", "_blank")}
-          >
+            onClick={() => window.open("https://richharbor.com/", "_blank")}>
             Go to website
           </Button>
         </div>
@@ -599,8 +596,7 @@ export default function Onboarding() {
           </div>
           <Button
             type="button"
-            onClick={() => window.open("https://richharbor.com/", "_blank")}
-          >
+            onClick={() => window.open("https://richharbor.com/", "_blank")}>
             Go to website
           </Button>
         </div>
@@ -661,15 +657,13 @@ export default function Onboarding() {
                     <Button
                       variant="ghost"
                       onClick={() => router.push("/dashboard")}
-                      disabled={loading}
-                    >
+                      disabled={loading}>
                       Skip for now
                     </Button>
 
                     <Button
                       onClick={handleNext}
-                      disabled={!canGoNext || loading}
-                    >
+                      disabled={!canGoNext || loading}>
                       {loading && (
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       )}
@@ -1046,8 +1040,7 @@ function StepView({
                   size="sm"
                   type="button"
                   onClick={() => handleDelete(doc.key)}
-                  className="text-red-600 hover:text-red-700"
-                >
+                  className="text-red-600 hover:text-red-700">
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
@@ -1094,8 +1087,7 @@ function StepView({
             variant="outline"
             className="w-full bg-transparent"
             type="button"
-            onClick={() => alert("Downloading agreement...")}
-          >
+            onClick={() => alert("Downloading agreement...")}>
             <Download className="mr-2 h-4 w-4" />
             Download Franchise Agreement
           </Button>
@@ -1117,8 +1109,7 @@ function StepView({
                   size="sm"
                   type="button"
                   onClick={() => handleDelete("agreement")}
-                  className="text-red-600 hover:text-red-700"
-                >
+                  className="text-red-600 hover:text-red-700">
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
@@ -1166,8 +1157,7 @@ function StepView({
           </div>
           <Button
             type="button"
-            onClick={() => window.open("https://richharbor.com/", "_blank")}
-          >
+            onClick={() => window.open("https://richharbor.com/", "_blank")}>
             Go to website
           </Button>
         </div>
@@ -1190,8 +1180,7 @@ function StepView({
           </div>
           <Button
             type="button"
-            onClick={() => window.open("https://richharbor.com/", "_blank")}
-          >
+            onClick={() => window.open("https://richharbor.com/", "_blank")}>
             Go to website
           </Button>
         </div>
