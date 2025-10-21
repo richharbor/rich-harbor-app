@@ -82,37 +82,37 @@ interface Role {
 
 const availableAccess = [
   {
-    id: "view_dashboard",
+    id: "dashboard", //view_dashboard
     label: "Access Dashboard",
     description: "View and interact with the main dashboard and its metrics",
   },
   {
-    id: "place_orders",
+    id: "buying", //place_orders
     label: "Buying",
     description: "Create and place customer orders",
   },
   {
-    id: "manage_orders",
+    id: "selling", //manage_orders
     label: "Selling",
     description: "Manage and track all customer orders",
   },
   {
-    id: "view_products",
+    id: "best_deals", //view_products
     label: "Best Deals",
     description: "View product listings, deals, and promotions",
   },
   {
-    id: "manage_products",
+    id: "manage_products", //manage_products
     label: "Products",
     description: "Add, edit, and manage product inventory",
   },
   {
-    id: "manage_users",
+    id: "manage_users", //manage_users
     label: "Users",
     description: "Manage leads, contacts, and team members",
   },
   {
-    id: "view_reports",
+    id: "view_reports", //view_reports
     label: "Reports",
     description: "Generate and view business and performance reports",
   },
@@ -149,7 +149,10 @@ export default function Partners() {
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setOpen(false);
       }
     };
@@ -210,12 +213,13 @@ export default function Partners() {
       }
     } catch (err) {
       console.error("Error fetching franchises:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
   const fetchAllRoles = async (fid?: number) => {
     try {
-      setLoading(true);
       const response = await getPartnerRoles(fid || selectedFranchiseId!);
       if (response?.success) {
         setCustomRoles(response.roles || []);
@@ -229,7 +233,6 @@ export default function Partners() {
 
   const fetchPartners = async (fid?: number) => {
     try {
-      setLoading(true);
       const data = await getPartnerApplications({
         status: statusFilter,
         page: 1,
@@ -425,7 +428,8 @@ export default function Partners() {
                   setSelectedFranchiseId(fid);
                   fetchAllRoles(fid);
                   fetchPartners(fid);
-                }}>
+                }}
+              >
                 <SelectTrigger className="w-64">
                   <SelectValue placeholder="Select Franchise" />
                 </SelectTrigger>
@@ -443,7 +447,8 @@ export default function Partners() {
           <Button
             variant="outline"
             onClick={() => setRolesModalOpen(true)}
-            className="flex items-center gap-2">
+            className="flex items-center gap-2"
+          >
             Roles
             <Settings className="h-4 w-4" />
           </Button>
@@ -567,7 +572,8 @@ export default function Partners() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleViewDetails(partner)}>
+                        onClick={() => handleViewDetails(partner)}
+                      >
                         <Eye className="h-4 w-4" />
                       </Button>
                       {partner.status === "pending" && (
@@ -576,14 +582,16 @@ export default function Partners() {
                             variant="outline"
                             size="sm"
                             onClick={() => approvePartner(partner.userId)}
-                            className="text-green-600 hover:text-green-700">
+                            className="text-green-600 hover:text-green-700"
+                          >
                             <Check className="h-4 w-4" />
                           </Button>
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => rejectPartner(partner.userId)}
-                            className="text-red-600 hover:text-red-700">
+                            className="text-red-600 hover:text-red-700"
+                          >
                             <X className="h-4 w-4" />
                           </Button>
                         </>
@@ -610,9 +618,7 @@ export default function Partners() {
         application={selectedApplication}
       />
       {/* Invite Partner Dialog */}
-      <Dialog
-        open={isInviteDialogOpen}
-        onOpenChange={setIsInviteDialogOpen}>
+      <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Invite a Partner</DialogTitle>
@@ -643,9 +649,9 @@ export default function Partners() {
                 >
                   {selectedRoles.length > 0
                     ? customRoles
-                      .filter((role) => selectedRoles.includes(role.id))
-                      .map((role) => role.name)
-                      .join(", ")
+                        .filter((role) => selectedRoles.includes(role.id))
+                        .map((role) => role.name)
+                        .join(", ")
                     : "Select roles"}
                   <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
                 </button>
@@ -687,7 +693,8 @@ export default function Partners() {
             <Button
               variant="outline"
               onClick={() => setIsInviteDialogOpen(false)}
-              disabled={isInviting}>
+              disabled={isInviting}
+            >
               Cancel
             </Button>
             <Button onClick={invitePartner} disabled={isInviting}>
@@ -750,7 +757,8 @@ export default function Partners() {
                     <div className="grid gap-1.5 leading-none">
                       <Label
                         htmlFor={access.id}
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      >
                         {access.label}
                       </Label>
                       <p className="text-xs text-muted-foreground">
@@ -766,14 +774,16 @@ export default function Partners() {
           <DialogFooter>
             <Button
               variant="outline"
-              onClick={() => setCreateRoleModalOpen(false)}>
+              onClick={() => setCreateRoleModalOpen(false)}
+            >
               Cancel
             </Button>
             <Button
               onClick={handleCreateRole}
               disabled={
                 !newRoleName || selectedAccess.length === 0 || saveLoading
-              }>
+              }
+            >
               {saveLoading ? "Creating..." : "Create Role"}
             </Button>
           </DialogFooter>
@@ -796,13 +806,15 @@ export default function Partners() {
               return (
                 <div
                   key={role.name}
-                  className="flex justify-between items-center p-2 rounded-md border hover:bg-muted">
+                  className="flex justify-between items-center p-2 rounded-md border hover:bg-muted"
+                >
                   <span>{role.name}</span>
                   <Button
                     variant="ghost"
                     size="sm"
                     className="text-destructive"
-                    onClick={() => handleRoleDelete(role.name)}>
+                    onClick={() => handleRoleDelete(role.name)}
+                  >
                     Remove
                   </Button>
                 </div>
@@ -818,7 +830,8 @@ export default function Partners() {
               onClick={() => {
                 // setRolesModalOpen(false);
                 setCreateRoleModalOpen(true); // open Create Role modal
-              }}>
+              }}
+            >
               Create Role
             </Button>
           </DialogFooter>
