@@ -1,7 +1,14 @@
 import { ScrollArea } from "@/components/ui/scroll-area"
 import AddStockForm from "./AddShareForm"
 
-export default function AddSharePage() {
+interface AddSharePageProps {
+  shareName: string;
+}
+
+export default function AddSharePage({shareName} : AddSharePageProps) {
+ 
+
+
   return (
     <div className="flex flex-1 flex-col w-full">
       <div className="flex items-center justify-between border-b h-[60px] p-4">
@@ -10,7 +17,7 @@ export default function AddSharePage() {
         </div>
       </div>
       <ScrollArea className="flex-1 max-h-[calc(100vh-8.5rem)]"> 
-        <AddStockForm />
+        <AddStockForm shareName = {shareName} />
       </ScrollArea>
     </div>
   )

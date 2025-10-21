@@ -5,6 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useShareStore } from "@/store/useShareStore";
+import { useSearchParams } from "next/navigation";
 
 interface SharePageProps {
     id: string;
@@ -181,9 +182,11 @@ export const dummyShares: Share[] = [
 
 export default function SharePage({ id }: SharePageProps) {
     const [share, setShare] = useState<any>(null);
-    const {dummyBids} = useShareStore() as { dummyBids: Bid[] };;
+    const { dummyBids } = useShareStore() as { dummyBids: Bid[] };;
     const [loading, setLoading] = useState(true);
     const [bids, setBids] = useState<Bid[] | []>([]);
+    const params = useSearchParams() ?? new URLSearchParams(); // URLSearchParams object
+    const owner = params.get('owner');
 
 
 
@@ -206,18 +209,18 @@ export default function SharePage({ id }: SharePageProps) {
 
 
     // Get all prices as numbers
-    let prices = share.sellers.map((seller : Seller) => parseFloat(seller.price));
+    let prices = share.sellers.map((seller: Seller) => parseFloat(seller.price));
 
     // Find min and max
     let minPrice = Math.min(...prices);
     let maxPrice = Math.max(...prices);
 
-    const quantity = share.sellers.map((seller : Seller) => parseInt(seller.quantity))
+    const quantity = share.sellers.map((seller: Seller) => parseInt(seller.quantity))
 
     const minQuantity = Math.min(...quantity);
     const maxQuantity = Math.max(...quantity);
 
-    
+
 
     return (
         <div className=" h-[calc(100vh-4.7rem)] flex flex-col overflow-hidden p-6 space-y-6">
@@ -262,37 +265,37 @@ export default function SharePage({ id }: SharePageProps) {
                         </div>
                     </div>
                 </div>
-                <div className="w-[20vw] border rounded-md flex-col h-[250px] flex">
+                {!owner && <div className="w-[20vw] border rounded-md flex-col h-[250px] flex">
                     <h1 className="text-xl p-3 border-b">Bids</h1>
                     <ScrollArea className="h-full">
-                    <Table className="min-w-full h-full">
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Amount</TableHead>
-                                <TableHead>Quantity</TableHead>
-                                <TableHead>Count</TableHead>
-                                
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {[...bids,...bids,...bids]?.map((bid: Bid, index: any) => (
-                                <TableRow key={index}>
-                                    <TableCell>{bid.amount}</TableCell>
-                                    <TableCell>{bid.quantity}</TableCell>
-                                    <TableCell>{bid.count}</TableCell>
-                                    
+                        <Table className="min-w-full h-full">
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Amount</TableHead>
+                                    <TableHead>Quantity</TableHead>
+                                    <TableHead>Count</TableHead>
+
                                 </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </ScrollArea>
-                </div>
+                            </TableHeader>
+                            <TableBody>
+                                {bids?.map((bid: Bid, index: any) => (
+                                    <TableRow key={index}>
+                                        <TableCell>{bid.amount}</TableCell>
+                                        <TableCell>{bid.quantity}</TableCell>
+                                        <TableCell>{bid.count}</TableCell>
+
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </ScrollArea>
+                </div>}
 
             </div>
 
 
             {/* Sellers Table */}
-            <div className="border rounded-md flex-1 min-h-0">
+            {!owner && <div className="border rounded-md flex-1 min-h-0">
                 <ScrollArea className="h-full">
                     <Table>
                         <TableHeader>
@@ -334,7 +337,50 @@ export default function SharePage({ id }: SharePageProps) {
                         </TableBody>
                     </Table>
                 </ScrollArea>
-            </div>
+            </div>}
+
+            {/* bids tabel for the owner */}
+
+
+           {owner && <h1 className="text-3xl mb-3">Bids</h1>}
+            {owner && <div className=" rounded-md flex-1 min-h-0">
+                
+                <ScrollArea className="h-full rounded-md border">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>User ID</TableHead>
+                                <TableHead>Quantity</TableHead>
+                                <TableHead>Price</TableHead>
+                                <TableHead>Count</TableHead>
+                                <TableHead>Action</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {bids?.map((bid: Bid, index: any) => (
+                                <TableRow key={index}>
+                                    <TableCell>{bid.userId}</TableCell>
+                                    <TableCell>{bid.quantity}</TableCell>
+                                    <TableCell>{bid.amount}</TableCell>
+                                    <TableCell>{bid.count}</TableCell>
+                                    <TableCell>
+                                        <div className="flex gap-2">
+                                            <Button size="sm" variant="default">
+                                                Accept
+                                            </Button>
+                                        </div>
+                                    </TableCell>
+
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </ScrollArea>
+            </div>}
+
+
+
+
         </div>
     );
 }

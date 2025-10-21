@@ -95,24 +95,24 @@ export function LSidebar(props: ComponentProps<typeof Sidebar>) {
       icon: Sparkles,
       permission: "view_products",
     },
-    {
-      title: "Products",
-      url: `/${role?.name}/products`,
-      icon: ShoppingCart,
-      permission: "manage_products",
-    },
-    {
-      title: "Users",
-      url: `/${role?.name}/users`,
-      icon: Users,
-      permission: "manage_users",
-    },
-    {
-      title: "Reports",
-      url: `/${role?.name}/reports`,
-      icon: FileText,
-      permission: "view_reports",
-    },
+    // {
+    //   title: "Products",
+    //   url: `/${role?.name}/products`,
+    //   icon: ShoppingCart,
+    //   permission: "manage_products",
+    // },
+    // {
+    //   title: "Users",
+    //   url: `/${role?.name}/users`,
+    //   icon: Users,
+    //   permission: "manage_users",
+    // },
+    // {
+    //   title: "Reports",
+    //   url: `/${role?.name}/reports`,
+    //   icon: FileText,
+    //   permission: "view_reports",
+    // },
     {
       title: "Teams",
       url: `/${role?.name}/teams`,

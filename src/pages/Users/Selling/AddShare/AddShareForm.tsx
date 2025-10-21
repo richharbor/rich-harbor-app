@@ -73,16 +73,23 @@ const formSchema = baseSchema.superRefine((data, ctx) => {
 
 type FormValues = z.infer<typeof formSchema>
 
-export default function AddStockForm() {
+interface AddSharePageProps {
+  shareName: string;
+}
+
+
+export default function AddStockForm( {shareName} : AddSharePageProps) {
 
   const currentRole = Cookies.get("currentRole");
 
   const route = useRouter();
 
+  const isNewShare = String(shareName) === "addShare";
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      shareName:"",
+      shareName: isNewShare ? "" : shareName.replace(/_/g, " "),
       quantityAvailable: "",
       price: "",
       deliveryTimeline: "t",
@@ -117,7 +124,7 @@ export default function AddStockForm() {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 p-6 max-w-3xl mx-auto rounded-lg bg-card">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 p-6 max-w-3xl mx-auto rounded-lg">
         {/* Quantity + Price */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField
@@ -131,6 +138,7 @@ export default function AddStockForm() {
                     type="text"
                     inputMode="text"
                     placeholder="Enter share name"
+                    readOnly={!isNewShare}
                     className="appearance-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     {...field}
                   />

@@ -11,7 +11,7 @@ import Cookies from "js-cookie";
 import { useState } from "react";
 
 interface ShareItem {
-    id:number;
+    id: number;
     shareName: string;
     quantityAvailable: string;
     price: string;
@@ -19,11 +19,13 @@ interface ShareItem {
     confirmDelivery: boolean;
     shareInStock: boolean;
     preShareTransfer: boolean;
+    fixed:boolean;
+    moq:string;
 }
 export default function Buying() {
     const { dummyShares } = useShareStore() as { dummyShares: ShareItem[] };
 
-     const currentRole = Cookies.get("currentRole");
+    const currentRole = Cookies.get("currentRole");
 
 
     const route = useRouter();
@@ -32,7 +34,7 @@ export default function Buying() {
         <div className=" h-[calc(100vh-4.7rem)] flex flex-col relative overflow-hidden space-y-6">
             <div className="flex items-center justify-between px-6 pt-6">
                 <div>
-                    <h2 className="text-3xl font-bold tracking-tight">Shares</h2>
+                    <h2 className="text-3xl font-bold tracking-tight">Buy</h2>
                     <p className="text-muted-foreground">
                         Manage super admin and admin users
                     </p>
@@ -70,22 +72,46 @@ export default function Buying() {
                         {dummyShares.map((share, index) => (
                             <Card
                                 key={index}
-                                className="cursor-pointer relative hover:bg-accent/50 bg-card transition-all border "
-                                onClick={()=> route.push(`/${currentRole}/buying/${share.id}`)}
+                                onClick={() => route.push(`/${currentRole}/share/${share.id}`)}
+                                className="group relative cursor-pointer border border-border/50 bg-card hover:shadow-lg hover:border-primary/40 transition-all duration-300 rounded-2xl p-4"
                             >
-                                <CardHeader className="flex flex-row items-center justify-between">
-                                    <CardTitle className="text-lg font-semibold">{share.shareName}</CardTitle>
-                                    <ChevronRight className="w-5 absolute top-1/2 -translate-y-1/2 right-3 h-5 text-gray-600" />
-                                </CardHeader>
+                                {/* Top Row */}
+                                <div className="flex items-center justify-between mb-2">
+                                    <CardTitle className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
+                                        {share.shareName}
+                                    </CardTitle>
+                                    <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-transform duration-300 group-hover:translate-x-1" />
+                                </div>
 
-                                <CardContent>
-                                    <div className="text-sm -mt-3 text-muted-foreground">
-                                        <p><strong>Price:</strong> ₹{share.price}</p>
-                                        <p><strong>Available:</strong> {share.quantityAvailable}</p>
-                                    </div>
+                                {/* Price Section */}
+                                <div className="flex items-baseline gap-2">
+                                    <span className="text-sm text-muted-foreground">Price:</span>
+                                    <span className="text-xl font-bold text-foreground tracking-tight">
+                                        ₹{share.price}
+                                    </span>
+                                </div>
 
-                                </CardContent>
+                                {/* Divider */}
+                                <div className="my-3 h-px bg-border" />
+
+                                {/* Quantity + Deal Info */}
+                                <div className="flex justify-between text-sm text-muted-foreground">
+                                    <p>
+                                        <strong>Available:</strong> {share.quantityAvailable}
+                                    </p>
+                                    <p>
+                                        <strong>Deal Type:</strong> {share.fixed ? "Fixed" : "Negotiable"}
+                                    </p>
+                                </div>
+
+                                {/* Optional Badge for stock status */}
+                                {/* {share.shareInStock && (
+                                    <span className="absolute top-3 right-3 bg-green-100 text-green-700 text-xs font-medium px-2 py-0.5 rounded-full">
+                                        In Stock
+                                    </span>
+                                )} */}
                             </Card>
+
                         ))}
                     </div>
                 </ScrollArea>
