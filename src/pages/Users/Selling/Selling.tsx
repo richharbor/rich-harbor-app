@@ -288,7 +288,7 @@ export default function Selling() {
                           <TableCell>
                             {t.confirmDelivery ? "Yes" : "No"}
                           </TableCell>
-                          <TableCell>{t.moq}</TableCell>
+                          <TableCell>{t.minimumOrderQuatity}</TableCell>
 
                           <TableCell>{t.shareInStock ? "Yes" : "No"}</TableCell>
                           <TableCell>

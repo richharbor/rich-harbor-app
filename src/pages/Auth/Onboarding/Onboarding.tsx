@@ -1,87 +1,92 @@
-"use client";
+"use client"
 
-import type React from "react";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Check, Download, Loader2, X, FileText, Trash2 } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { useRouter, useSearchParams } from "next/navigation";
-import Cookies from "js-cookie";
-import { toast } from "sonner";
+import type React from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Card, CardContent } from "@/components/ui/card"
+import { Progress } from "@/components/ui/progress"
+import { Check, Download, Loader2, X, FileText, Trash2 } from "lucide-react"
+import { cn } from "@/lib/utils"
+import { useRouter, useSearchParams } from "next/navigation"
+import Cookies from "js-cookie"
+import { toast } from "sonner"
 import {
   postStartOnboard,
   postAccountInfo,
   postDocuments,
   postAgreement,
-  completeOnboarding,
   getOnboardingStatus,
   verifyOnboardingToken,
-} from "@/services/Auth/authServices";
-import LoadingSpinner from "@/components/Common/LoadingSpinner/LoadingSpinner";
-import {
-  uploadDocumentFile,
-  deleteDocumentFile,
-  type UploadedFile,
-} from "@/services/Auth/uploadServices";
-import StateSelect from "./StateSelect";
-import ValidationInput from "./ValidationInput";
+} from "@/services/Auth/authServices"
+import LoadingSpinner from "@/components/Common/LoadingSpinner/LoadingSpinner"
+import { uploadDocumentFile, deleteDocumentFile, type UploadedFile } from "@/services/Auth/uploadServices"
+import StateSelect from "./StateSelect"
+import ValidationInput from "./ValidationInput"
 
-type DocsKey =
-  | "cmlCopy"
-  | "panCard"
-  | "cancelCheque"
-  | "signature"
-  | "agreement";
+type DocsKey = "cmlCopy" | "panCard" | "cancelCheque" | "signature" | "agreement"
+
+type Referral = {
+  referralName: string
+  designation: string
+  firmName: string
+  natureOfBusiness: string
+  entityType: "broker" | "wealth firm" | "institution" | ""
+  contact: string
+  mailId: string
+  location: string
+  totalTradeExecution: string
+}
 
 type FormDataState = {
   // Step 1
-  accountType: string[];
-  email: string;
-  password: string;
-  fullName: string;
+  accountType: string[]
+  email: string
+  password: string
+  fullName: string
   // Step 2
-  name: string;
-  state: string;
-  aadharCard: string;
-  panCard: string;
-  mobile: string;
-  bankName: string;
-  accountNumber: string;
-  ifscCode: string;
-  country: string;
-  addressState: string;
-  addressLine1: string;
-  addressLine2: string;
-  city: string;
-  zipCode: string;
+  name: string
+  state: string
+  aadharCard: string
+  panCard: string
+  mobile: string
+  bankName: string
+  accountNumber: string
+  ifscCode: string
+  country: string
+  addressState: string
+  addressLine1: string
+  addressLine2: string
+  city: string
+  zipCode: string
   // Step 3 & 4
-  documents: Record<DocsKey, File | null>;
-  uploadedFiles: Record<DocsKey, UploadedFile | null>;
-};
+  documents: Record<DocsKey, File | null>
+  uploadedFiles: Record<DocsKey, UploadedFile | null>
+  referrals: Referral[]
+}
 
 const DEFAULT_STEPS = [
   "Account Setup",
   "Account Info",
   "Upload Documents",
   "Franchise Agreement",
+  "Referrals",
   "Completed",
-];
+]
 
 export default function Onboarding() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const steps = DEFAULT_STEPS;
-  const [loading, setLoading] = useState(false);
-  const [currentStep, setCurrentStep] = useState<number>(1);
-  const [maxStepVisited, setMaxStepVisited] = useState<number>(1);
-  const scrollRef = useRef<HTMLDivElement | null>(null);
-  const [isCompleted, setIsCompleted] = useState<boolean>(false);
-  const [completedSteps, setCompletedSteps] = useState<number[]>([]);
-  const [currentStatus, setCurrentStatus] = useState<string | null>(null);
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const steps = DEFAULT_STEPS
+  const [loading, setLoading] = useState(false)
+  const [currentStep, setCurrentStep] = useState<number>(1)
+  const [maxStepVisited, setMaxStepVisited] = useState<number>(1)
+  const scrollRef = useRef<HTMLDivElement | null>(null)
+  const [isCompleted, setIsCompleted] = useState<boolean>(false)
+  const [completedSteps, setCompletedSteps] = useState<number[]>([])
+  const [currentStatus, setCurrentStatus] = useState<string | null>(null)
+  const [err, setErrs] = useState<Record<string, string>>({})
   const [formData, setFormData] = useState<FormDataState>({
     // Step 1
     accountType: [],
@@ -118,96 +123,104 @@ export default function Onboarding() {
       signature: null,
       agreement: null,
     },
-  });
-  const [inviteEmail, setInviteEmail] = useState<string | null>(null);
-  const [inviterId, setInviterId] = useState<number | null>(null);
-  const [franchiseId, setFranchiseId] = useState<number | null>(null);
-  const [accountRoles, setAccountRoles] = useState<
-    { id: string; name: string }[]
-  >([]);
+    referrals: Array(5)
+      .fill(null)
+      .map(() => ({
+        referralName: "",
+        designation: "",
+        firmName: "",
+        natureOfBusiness: "",
+        entityType: "",
+        contact: "",
+        mailId: "",
+        location: "",
+        totalTradeExecution: "",
+      })),
+  })
+  const [inviteEmail, setInviteEmail] = useState<string | null>(null)
+  const [inviterId, setInviterId] = useState<number | null>(null)
+  const [franchiseId, setFranchiseId] = useState<number | null>(null)
+  const [accountRoles, setAccountRoles] = useState<{ id: string; name: string }[]>([])
 
-  const progress = useMemo(
-    () => (currentStep / steps.length) * 100,
-    [currentStep, steps.length]
-  );
+  const progress = useMemo(() => (currentStep / steps.length) * 100, [currentStep, steps.length])
 
   useEffect(() => {
     // Check if user has existing onboarding application
-    checkOnboardingStatus();
-  }, []);
+    checkOnboardingStatus()
+  }, [])
 
   useEffect(() => {
     if (scrollRef.current) {
-      scrollRef.current.scrollTo({ top: 0, behavior: "smooth" });
+      scrollRef.current.scrollTo({ top: 0, behavior: "smooth" })
     }
-  }, [currentStep]);
+  }, [currentStep])
 
-  const cookieToken = Cookies.get("authToken");
+  const cookieToken = Cookies.get("authToken")
 
   useEffect(() => {
-    const tokenFromUrl = searchParams?.get("token");
-    const franchiseIdFromUrl = searchParams?.get("franchiseId");
+    const tokenFromUrl = searchParams?.get("token")
+    const franchiseIdFromUrl = searchParams?.get("franchiseId")
 
     // 1. Token flow
     if (tokenFromUrl) {
       const verifyToken = async () => {
         try {
-          const res = await verifyOnboardingToken({ token: tokenFromUrl });
-          console.log("Token verified:", res);
+          const res = await verifyOnboardingToken({ token: tokenFromUrl })
+          console.log("Token verified:", res)
 
           if (res?.data?.partnerEmail) {
             setFormData((prev) => ({
               ...prev,
               email: res.data.partnerEmail,
               accountType: res.data.partnerRoles.map((r: any) => r.name),
-            }));
-            setInviteEmail(res.data.partnerEmail);
-            setAccountRoles(res.data.partnerRoles);
+            }))
+            setInviteEmail(res.data.partnerEmail)
+            setAccountRoles(res.data.partnerRoles)
           }
 
-          setInviterId(res.data.inviterId);
-          setFranchiseId(res.data.franchiseId || null);
+          setInviterId(res.data.inviterId)
+          setFranchiseId(res.data.franchiseId || null)
         } catch (error: any) {
-          console.error("Invalid or expired token:", error);
-          toast.error("Invalid or expired invite link");
-          router.replace("/auth/login");
+          console.error("Invalid or expired token:", error)
+          toast.error("Invalid or expired invite link")
+          router.replace("/auth/login")
         }
-      };
+      }
 
-      verifyToken();
-      return;
+      verifyToken()
+      return
     }
 
     // 2. Direct franchiseId flow
     if (franchiseIdFromUrl) {
-      setFranchiseId(Number(franchiseIdFromUrl));
-      setAccountRoles([{ id: "partner", name: "Partner" }]);
+      setFranchiseId(Number(franchiseIdFromUrl))
+      setAccountRoles([{ id: "partner", name: "Partner" }])
       setFormData((prev) => ({
         ...prev,
         accountType: ["partner"], // default role
-      }));
+      }))
     }
-  }, [searchParams, router]);
+  }, [searchParams, router])
 
   const checkOnboardingStatus = async () => {
-    const token = Cookies.get("authToken");
+    const token = Cookies.get("authToken")
     if (token) {
       try {
-        const response = await getOnboardingStatus();
+        const response = await getOnboardingStatus()
         //  store status in state
-        console.log(response.status);
-        setCurrentStatus(response.status);
+        console.log(response.status)
+        setCurrentStatus(response.status)
 
-        if (response.currentStep && response.currentStep != 5) {
-          setCurrentStep(response.currentStep + 1);
-          setMaxStepVisited(response.currentStep);
-        } else if (response.currentStep === 5) {
-          setIsCompleted(true);
+        if (response.currentStep && response.currentStep != 6) {
+          setCurrentStep(response.currentStep + 1)
+          setMaxStepVisited(response.currentStep)
+        } else if (response.currentStep === 6) {
+          setIsCompleted(true)
         }
 
         if (response.completedSteps) {
           // store in state
-          setCompletedSteps(response.completedSteps);
+          setCompletedSteps(response.completedSteps)
         }
 
         if (response.formData) {
@@ -216,8 +229,7 @@ export default function Onboarding() {
             // Step 1
             email: response.formData.step1?.email || prev.email,
             fullName: response.formData.step1?.fullName || prev.fullName,
-            accountType:
-              response.formData.step1?.accountType || prev.accountType,
+            accountType: response.formData.step1?.accountType || prev.accountType,
 
             // Step 2 (if API sends later)
             name: response.formData.step2?.name || prev.name,
@@ -226,51 +238,50 @@ export default function Onboarding() {
             panCard: response.formData.step2?.panCard || prev.panCard,
             mobile: response.formData.step2?.mobile || prev.mobile,
             bankName: response.formData.step2?.bankName || prev.bankName,
-            accountNumber:
-              response.formData.step2?.accountNumber || prev.accountNumber,
+            accountNumber: response.formData.step2?.accountNumber || prev.accountNumber,
             ifscCode: response.formData.step2?.ifscCode || prev.ifscCode,
             country: response.formData.step2?.country || prev.country,
-            addressState:
-              response.formData.step2?.addressState || prev.addressState,
-            addressLine1:
-              response.formData.step2?.addressLine1 || prev.addressLine1,
-            addressLine2:
-              response.formData.step2?.addressLine2 || prev.addressLine2,
+            addressState: response.formData.step2?.addressState || prev.addressState,
+            addressLine1: response.formData.step2?.addressLine1 || prev.addressLine1,
+            addressLine2: response.formData.step2?.addressLine2 || prev.addressLine2,
             city: response.formData.step2?.city || prev.city,
             zipCode: response.formData.step2?.zipCode || prev.zipCode,
-          }));
+          }))
         }
       } catch (error) {
-        console.log("No existing application");
+        console.log("No existing application")
       }
     }
-  };
+  }
 
   const handleNext = async () => {
+    if (!isStepValid(currentStep)) return
     if (currentStep < steps.length && isStepValid(currentStep)) {
-      setLoading(true);
+      setLoading(true)
       try {
         // Call API based on current step
         if (currentStep === 1) {
-          await handleStep1Submit();
+          await handleStep1Submit()
         } else if (currentStep === 2) {
-          await handleStep2Submit();
+          await handleStep2Submit()
         } else if (currentStep === 3) {
-          await handleStep3Submit();
+          await handleStep3Submit()
         } else if (currentStep === 4) {
-          await handleStep4Submit();
+          await handleStep4Submit()
+        } else if (currentStep === 5) {
+          await handleStep5Submit()
         }
 
-        const next = currentStep + 1;
-        setCurrentStep(next);
-        setMaxStepVisited((prev) => Math.max(prev, next));
+        const next = currentStep + 1
+        setCurrentStep(next)
+        setMaxStepVisited((prev) => Math.max(prev, next))
       } catch (error: any) {
-        toast.error(error.response?.data?.error || "Something went wrong");
+        toast.error(error.response?.data?.error || "Something went wrong")
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
     }
-  };
+  }
 
   const handleStep1Submit = async () => {
     try {
@@ -281,15 +292,15 @@ export default function Onboarding() {
         fullName: formData.fullName,
         accountType: formData.accountType,
         franchiseId, //  include franchiseId in payload
-      });
+      })
 
-      Cookies.set("authToken", response.token);
-      toast.success("Account created successfully!");
+      Cookies.set("authToken", response.token)
+      toast.success("Account created successfully!")
     } catch (error: any) {
-      console.error("Onboarding error:", error);
-      toast.error(error.response?.data?.error || "Failed to create account");
+      console.error("Onboarding error:", error)
+      toast.error(error.response?.data?.error || "Failed to create account")
     }
-  };
+  }
 
   const handleStep2Submit = async () => {
     await postAccountInfo({
@@ -307,44 +318,49 @@ export default function Onboarding() {
       addressLine2: formData.addressLine2,
       city: formData.city,
       zipCode: formData.zipCode,
-    });
-    toast.success("Account information saved!");
-  };
+    })
+    toast.success("Account information saved!")
+  }
 
   const handleStep3Submit = async () => {
-    const documentUrls: Record<string, string> = {};
+    const documentUrls: Record<string, string> = {}
 
     // Extract actual file URLs from uploadedFiles
-    Object.entries(formData.uploadedFiles).forEach(
-      ([key, uploadedFile]: [string, any]) => {
-        if (uploadedFile && uploadedFile.fileUrl) {
-          documentUrls[key] = uploadedFile.fileUrl;
-        }
+    Object.entries(formData.uploadedFiles).forEach(([key, uploadedFile]: [string, any]) => {
+      if (uploadedFile && uploadedFile.fileUrl) {
+        documentUrls[key] = uploadedFile.fileUrl
       }
-    );
+    })
 
-    console.log("[v0] Submitting document URLs:", documentUrls);
+    console.log("[v0] Submitting document URLs:", documentUrls)
 
-    await postDocuments({ documents: documentUrls });
-    toast.success("Documents uploaded!");
-  };
+    await postDocuments({ documents: documentUrls })
+    toast.success("Documents uploaded!")
+  }
 
   const handleStep4Submit = async () => {
     // Upload agreement and get URL
-    const agreementUrl = "uploaded_agreement_url";
+    const agreementUrl = "uploaded_agreement_url"
 
-    await postAgreement({ agreementUrl });
+    await postAgreement({ agreementUrl })
+    toast.success("Agreement saved!")
+  }
 
-    // Complete the onboarding
-    await completeOnboarding();
-    toast.success("Application submitted for review!");
-  };
+  const handleStep5Submit = async () => {
+    // Filter out empty referrals and submit only filled ones
+    const filledReferrals = formData.referrals.filter((ref) => ref.referralName.trim() !== "")
+
+    console.log("[v0] Submitting referrals:", filledReferrals)
+    toast.success("Referrals saved!")
+    // TODO: Call API to save referrals
+    // await postReferrals({ referrals: filledReferrals });
+  }
 
   const handlePrevious = () => {
     if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
+      setCurrentStep(currentStep - 1)
     }
-  };
+  }
 
   const [uploading, setUploading] = useState<Record<DocsKey, boolean>>({
     cmlCopy: false,
@@ -352,7 +368,7 @@ export default function Onboarding() {
     cancelCheque: false,
     signature: false,
     agreement: false,
-  });
+  })
 
   const handleFileUpload = async (field: DocsKey, file: File | null) => {
     if (!file) {
@@ -362,8 +378,8 @@ export default function Onboarding() {
           ...prev.documents,
           [field]: null,
         },
-      }));
-      return;
+      }))
+      return
     }
 
     // Set the file first
@@ -373,14 +389,14 @@ export default function Onboarding() {
         ...prev.documents,
         [field]: file,
       },
-    }));
+    }))
 
     // Automatically start upload
-    setUploading((prev) => ({ ...prev, [field]: true }));
+    setUploading((prev) => ({ ...prev, [field]: true }))
 
     try {
-      const uploadedFile = await uploadDocumentFile(file);
-      console.log("[v0] Upload response:", uploadedFile);
+      const uploadedFile = await uploadDocumentFile(file)
+      console.log("[v0] Upload response:", uploadedFile)
 
       const fileData = {
         fileUrl: uploadedFile.fileUrl,
@@ -388,9 +404,9 @@ export default function Onboarding() {
         fileSize: file.size,
         key: field, // Adding key property for debugging
         name: file.name, // Adding name property as alias
-      };
+      }
 
-      console.log("[v0] Storing file data:", fileData);
+      console.log("[v0] Storing file data:", fileData)
 
       setFormData((prev) => {
         const newFormData = {
@@ -403,30 +419,27 @@ export default function Onboarding() {
             ...prev.documents,
             [field]: null, // Clear the file input after successful upload
           },
-        };
-        console.log(
-          "[v0] New form data uploadedFiles:",
-          newFormData.uploadedFiles
-        );
-        return newFormData;
-      });
-      toast.success("File uploaded successfully");
+        }
+        console.log("[v0] New form data uploadedFiles:", newFormData.uploadedFiles)
+        return newFormData
+      })
+      toast.success("File uploaded successfully")
     } catch (error) {
-      console.log("[v0] Upload error:", error);
-      toast.error("Failed to upload file");
+      console.log("[v0] Upload error:", error)
+      toast.error("Failed to upload file")
     } finally {
-      setUploading((prev) => ({ ...prev, [field]: false }));
+      setUploading((prev) => ({ ...prev, [field]: false }))
     }
-  };
+  }
 
   const handleUpload = async (field: DocsKey) => {
-    const file = formData.documents[field];
-    if (!file) return;
+    const file = formData.documents[field]
+    if (!file) return
 
-    setUploading((prev) => ({ ...prev, [field]: true }));
+    setUploading((prev) => ({ ...prev, [field]: true }))
 
     try {
-      const uploadedFile = await uploadDocumentFile(file);
+      const uploadedFile = await uploadDocumentFile(file)
       setFormData((prev) => ({
         ...prev,
         uploadedFiles: {
@@ -437,86 +450,175 @@ export default function Onboarding() {
           ...prev.documents,
           [field]: null, // Clear the file input after successful upload
         },
-      }));
+      }))
     } catch (error) {
     } finally {
-      setUploading((prev) => ({ ...prev, [field]: false }));
+      setUploading((prev) => ({ ...prev, [field]: false }))
     }
-  };
+  }
 
   const handleDelete = async (field: DocsKey) => {
-    const uploadedFile = formData.uploadedFiles[field];
-    if (!uploadedFile) return;
+    const uploadedFile = formData.uploadedFiles[field]
+    if (!uploadedFile) return
 
     try {
-      await deleteDocumentFile({ key: uploadedFile.key });
+      await deleteDocumentFile({ key: uploadedFile.key })
       setFormData((prev) => ({
         ...prev,
         uploadedFiles: {
           ...prev.uploadedFiles,
           [field]: null,
         },
-      }));
+      }))
     } catch (error) {
-      console.log(error);
+      console.log(error)
     }
-  };
-
-  const isEmail = (val: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
-  const isIFSC = (val: string) => /^[A-Za-z]{4}0[A-Za-z0-9]{6}$/.test(val);
-  const isAadhar = (val: string) => /^\d{12}$/.test(val.replace(/\s/g, ""));
-  const isPAN = (val: string) =>
-    /^[A-Z]{5}\d{4}[A-Z]{1}$/.test(val.toUpperCase());
-  const isMobile = (val: string) => /^\d{10}$/.test(val);
-  const isPostalCode = (val: string) => /^\d{4,6}$/.test(val);
-
-  function isStepValid(step: number): boolean {
-    if (step === 1) {
-      return (
-        formData.accountType.length > 0 &&
-        isEmail(formData.email) &&
-        formData.password.length >= 8 &&
-        formData.fullName.trim().length > 2
-      );
-    }
-    if (step === 2) {
-      return (
-        formData.name.trim().length > 1 &&
-        formData.state.trim().length > 0 &&
-        isAadhar(formData.aadharCard) &&
-        isPAN(formData.panCard) &&
-        isMobile(formData.mobile) &&
-        formData.bankName.trim().length > 0 &&
-        formData.accountNumber.trim().length >= 8 &&
-        isIFSC(formData.ifscCode) &&
-        formData.country.trim().length > 0 &&
-        formData.addressState.trim().length > 0 &&
-        formData.addressLine1.trim().length > 0 &&
-        formData.city.trim().length > 0 &&
-        formData.zipCode.trim().length >= 4
-      );
-    }
-    if (step === 3) {
-      return Boolean(
-        formData.uploadedFiles.cmlCopy &&
-          formData.uploadedFiles.panCard &&
-          formData.uploadedFiles.cancelCheque &&
-          formData.uploadedFiles.signature
-      );
-    }
-    if (step === 4) {
-      return Boolean(formData.uploadedFiles.agreement);
-    }
-    return true;
   }
 
-  const canGoNext = isStepValid(currentStep);
+  const isEmail = (val: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)
+  const isIFSC = (val: string) => /^[A-Za-z]{4}0[A-Za-z0-9]{6}$/.test(val)
+  const isAadhar = (val: string) => /^\d{12}$/.test(val.replace(/\s/g, ""))
+  const isPAN = (val: string) => /^[A-Z]{5}\d{4}[A-Z]{1}$/.test(val.toUpperCase())
+  const isMobile = (val: string) => /^\d{10}$/.test(val)
+  const isPostalCode = (val: string) => /^\d{4,6}$/.test(val)
+
+  function validateStep1(): boolean {
+    const newErrors: Record<string, string> = {}
+
+    if (formData.accountType.length === 0) {
+      newErrors.accountType = "Select at least one account type"
+    }
+    if (!isEmail(formData.email)) {
+      newErrors.email = "Enter a valid email address"
+    }
+    if (formData.password.length < 8) {
+      newErrors.password = "Password must be at least 8 characters"
+    }
+    if (formData.fullName.trim().length <= 2) {
+      newErrors.fullName = "Full name must be at least 3 characters"
+    }
+
+    setErrs(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  // Step 2 validation
+  function validateStep2(): boolean {
+    const newErrors: Record<string, string> = {}
+
+    if (formData.name.trim().length <= 1) newErrors.name = "Name is required"
+    if (formData.state.trim().length === 0) newErrors.state = "State is required"
+    if (!isAadhar(formData.aadharCard)) newErrors.aadharCard = "Aadhar must be 12 digits"
+    if (!isPAN(formData.panCard)) newErrors.panCard = "Invalid PAN format"
+    if (!isMobile(formData.mobile)) newErrors.mobile = "Mobile must be 10 digits"
+    if (formData.bankName.trim().length === 0) newErrors.bankName = "Bank name is required"
+    if (formData.accountNumber.trim().length === 0) {
+      newErrors.accountNumber = "Account number is required"
+    } else if (!/^\d+$/.test(formData.accountNumber.trim())) {
+      newErrors.accountNumber = "Account number must contain only numbers"
+    } else if (formData.accountNumber.trim().length < 8) {
+      newErrors.accountNumber = "Account number must be at least 8 digits long"
+    }
+    if (!isIFSC(formData.ifscCode)) newErrors.ifscCode = "Invalid IFSC code"
+    if (formData.country.trim().length === 0) newErrors.country = "Country is required"
+    if (formData.addressState.trim().length === 0) newErrors.addressState = "State is required"
+    if (formData.addressLine1.trim().length === 0) newErrors.addressLine1 = "Address Line 1 is required"
+    if (formData.city.trim().length === 0) newErrors.city = "City is required"
+    if (formData.zipCode.trim().length < 4) newErrors.zipCode = "Zip code too short"
+
+    setErrs(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  // Step 3 validation
+  function validateStep3(): boolean {
+    const newErrors: Record<string, string> = {}
+
+    if (!formData.uploadedFiles.cmlCopy) newErrors.cmlCopy = "CML Copy is required"
+    if (!formData.uploadedFiles.panCard) newErrors.panCard = "PAN Card is required"
+    if (!formData.uploadedFiles.cancelCheque) newErrors.cancelCheque = "Cancel Cheque is required"
+    if (!formData.uploadedFiles.signature) newErrors.signature = "Signature is required"
+
+    setErrs(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  // Step 4 validation
+  function validateStep4(): boolean {
+    const newErrors: Record<string, string> = {}
+
+    if (!formData.uploadedFiles.agreement) newErrors.agreement = "Signed agreement is required"
+
+    setErrs(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  function validateStep5(): boolean {
+    const newErrors: Record<string, string> = {}
+
+    // Count filled referrals
+    const filledReferrals = formData.referrals.filter((ref) => ref.referralName.trim() !== "")
+
+    // Check if at least 3 referrals are filled
+    if (filledReferrals.length < 3) {
+      newErrors.referrals = `At least 3 referrals are required. You have filled ${filledReferrals.length}.`
+    }
+
+    // Validate each filled referral
+    filledReferrals.forEach((ref, index) => {
+      if (ref.referralName.trim().length === 0) {
+        newErrors[`referral_${index}_name`] = "Referral name is required"
+      }
+      if (ref.designation.trim().length === 0) {
+        newErrors[`referral_${index}_designation`] = "Designation is required"
+      }
+      if (ref.firmName.trim().length === 0) {
+        newErrors[`referral_${index}_firmName`] = "Firm name is required"
+      }
+      if (ref.natureOfBusiness.trim().length === 0) {
+        newErrors[`referral_${index}_natureOfBusiness`] = "Nature of business is required"
+      }
+      if (ref.entityType === "") {
+        newErrors[`referral_${index}_entityType`] = "Entity type is required"
+      }
+      if (ref.contact.trim().length === 0) {
+        newErrors[`referral_${index}_contact`] = "Contact is required"
+      } else if (!isMobile(ref.contact)) {
+        newErrors[`referral_${index}_contact`] = "Contact must be 10 digits"
+      }
+      if (ref.mailId.trim().length === 0) {
+        newErrors[`referral_${index}_mailId`] = "Email is required"
+      } else if (!isEmail(ref.mailId)) {
+        newErrors[`referral_${index}_mailId`] = "Invalid email format"
+      }
+      if (ref.location.trim().length === 0) {
+        newErrors[`referral_${index}_location`] = "Location is required"
+      }
+      if (ref.totalTradeExecution.trim().length === 0) {
+        newErrors[`referral_${index}_totalTradeExecution`] = "Total trade execution is required"
+      }
+    })
+
+    setErrs(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  function isStepValid(step: number): boolean {
+    if (step === 1) return validateStep1()
+    if (step === 2) return validateStep2()
+    if (step === 3) return validateStep3()
+    if (step === 4) return validateStep4()
+    if (step === 5) return validateStep5()
+    return true
+  }
+
+  // const canGoNext = isStepValid(currentStep);
 
   const stepBadge = (index: number) => {
-    const stepNumber = index + 1;
-    const isActive = stepNumber === currentStep;
-    const isDone = stepNumber < currentStep;
-    const isClickable = stepNumber <= currentStep && !loading;
+    const stepNumber = index + 1
+    const isActive = stepNumber === currentStep
+    const isDone = stepNumber < currentStep
+    const isClickable = stepNumber <= currentStep && !loading
 
     return (
       <button
@@ -526,11 +628,9 @@ export default function Onboarding() {
         className={cn(
           "flex items-center gap-2 px-3 py-2 rounded-full text-sm whitespace-nowrap transition-colors",
           isActive && "bg-primary/10 text-primary border border-primary/20",
-          !isActive &&
-            isDone &&
-            "bg-muted text-muted-foreground hover:bg-muted/80",
+          !isActive && isDone && "bg-muted text-muted-foreground hover:bg-muted/80",
           !isActive && !isDone && "bg-muted text-muted-foreground",
-          !isClickable && "cursor-not-allowed opacity-60"
+          !isClickable && "cursor-not-allowed opacity-60",
         )}
         disabled={loading}
       >
@@ -539,22 +639,20 @@ export default function Onboarding() {
             "inline-flex h-5 w-5 items-center justify-center rounded-full border text-[11px]",
             isActive && "border-primary text-primary bg-primary/5",
             isDone && "border-primary text-primary bg-primary/10",
-            !isActive &&
-              !isDone &&
-              "border-muted-foreground/30 bg-background text-muted-foreground"
+            !isActive && !isDone && "border-muted-foreground/30 bg-background text-muted-foreground",
           )}
         >
           {isDone ? <Check className="h-3.5 w-3.5" /> : stepNumber}
         </span>
         <span>{steps[index]}</span>
       </button>
-    );
-  };
+    )
+  }
 
   useEffect(() => {
-    setLoading(true);
-    setTimeout(() => setLoading(false), 1000);
-  }, []);
+    setLoading(true)
+    setTimeout(() => setLoading(false), 1000)
+  }, [])
 
   return loading ? (
     <LoadingSpinner visible={loading} message="Please wait..." />
@@ -567,18 +665,13 @@ export default function Onboarding() {
             <X className="h-8 w-8 text-red-600" aria-hidden="true" />
           </div>
           <div>
-            <h3 className="mb-2 text-xl font-bold text-red-600">
-              Registration Rejected
-            </h3>
+            <h3 className="mb-2 text-xl font-bold text-red-600">Registration Rejected</h3>
             <p className="text-muted-foreground">
-              Unfortunately, your application was rejected. Please review your
-              details and try again or contact support for assistance.
+              Unfortunately, your application was rejected. Please review your details and try again or contact support
+              for assistance.
             </p>
           </div>
-          <Button
-            type="button"
-            onClick={() => window.open("https://richharbor.com/", "_blank")}
-          >
+          <Button type="button" onClick={() => window.open("https://richharbor.com/", "_blank")}>
             Go to website
           </Button>
         </div>
@@ -589,18 +682,12 @@ export default function Onboarding() {
             <Check className="h-8 w-8 text-emerald-600" aria-hidden="true" />
           </div>
           <div>
-            <h3 className="mb-2 text-xl font-bold text-emerald-600">
-              Registration Completed!
-            </h3>
+            <h3 className="mb-2 text-xl font-bold text-emerald-600">Registration Completed!</h3>
             <p className="text-muted-foreground">
-              Your partner account has been created successfully. You will
-              receive a confirmation email shortly.
+              Your partner account has been created successfully. You will receive a confirmation email shortly.
             </p>
           </div>
-          <Button
-            type="button"
-            onClick={() => window.open("https://richharbor.com/", "_blank")}
-          >
+          <Button type="button" onClick={() => window.open("https://richharbor.com/", "_blank")}>
             Go to website
           </Button>
         </div>
@@ -612,9 +699,7 @@ export default function Onboarding() {
       <header className="sticky top-0 z-40 border-b bg-background/90 backdrop-blur-sm">
         <div className="mx-auto w-full max-w-5xl px-4 py-4">
           <div className="flex items-center justify-between">
-            <h1 className="text-lg md:text-xl font-semibold text-foreground">
-              Partner Registration
-            </h1>
+            <h1 className="text-lg md:text-xl font-semibold text-foreground">Partner Registration</h1>
             <div className="text-xs md:text-sm text-muted-foreground">
               Step {currentStep} of {steps.length}
             </div>
@@ -623,9 +708,7 @@ export default function Onboarding() {
           <Progress value={progress} className="mt-2 h-2" />
 
           <div className="mt-3 -mb-2">
-            <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
-              {steps.map((_, i) => stepBadge(i))}
-            </div>
+            <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">{steps.map((_, i) => stepBadge(i))}</div>
           </div>
         </div>
       </header>
@@ -645,6 +728,7 @@ export default function Onboarding() {
                 currentStatus={currentStatus}
                 inviteEmail={inviteEmail}
                 accountRoles={accountRoles}
+                err={err}
                 validators={{
                   isEmail,
                   isIFSC,
@@ -653,29 +737,19 @@ export default function Onboarding() {
                   isMobile,
                   isPostalCode,
                 }}
+                setErrs={setErrs}
               />
 
               {currentStep < steps.length && (
                 <div className="mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex items-center gap-5">
-                    <Button
-                      variant="ghost"
-                      onClick={() => router.push("/dashboard")}
-                      disabled={loading}
-                    >
+                    <Button variant="ghost" onClick={() => router.push("/dashboard")} disabled={loading}>
                       Skip for now
                     </Button>
 
-                    <Button
-                      onClick={handleNext}
-                      disabled={!canGoNext || loading}
-                    >
-                      {loading && (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      )}
-                      {currentStep === steps.length - 1
-                        ? "Complete Registration"
-                        : "Save & Continue"}
+                    <Button onClick={handleNext} disabled={loading}>
+                      {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      {currentStep === steps.length - 1 ? "Complete Registration" : "Save & Continue"}
                     </Button>
                   </div>
                 </div>
@@ -685,7 +759,7 @@ export default function Onboarding() {
         </div>
       </div>
     </div>
-  );
+  )
 }
 
 function StepView({
@@ -700,26 +774,37 @@ function StepView({
   inviteEmail,
   accountRoles,
   validators,
+  err,
+  setErrs,
 }: {
-  step?: number;
-  formData: FormDataState;
-  setFormData: React.Dispatch<React.SetStateAction<FormDataState>>;
-  handleFileUpload: (field: DocsKey, file: File | null) => void;
-  handleUpload: (field: DocsKey) => void;
-  handleDelete: (field: DocsKey) => void;
-  uploading: Record<DocsKey, boolean>;
-  currentStatus: string | null;
-  inviteEmail: string | null;
-  accountRoles: any;
+  step?: number
+  formData: FormDataState
+  setFormData: React.Dispatch<React.SetStateAction<FormDataState>>
+  handleFileUpload: (field: DocsKey, file: File | null) => void
+  handleUpload: (field: DocsKey) => void
+  handleDelete: (field: DocsKey) => void
+  uploading: Record<DocsKey, boolean>
+  currentStatus: string | null
+  inviteEmail: string | null
+  accountRoles: any
   validators?: {
-    isEmail: (val: string) => boolean;
-    isIFSC: (val: string) => boolean;
-    isAadhar: (val: string) => boolean;
-    isPAN: (val: string) => boolean;
-    isMobile: (val: string) => boolean;
-    isPostalCode: (val: string) => boolean;
-  };
+    isEmail: (val: string) => boolean
+    isIFSC: (val: string) => boolean
+    isAadhar: (val: string) => boolean
+    isPAN: (val: string) => boolean
+    isMobile: (val: string) => boolean
+    isPostalCode: (val: string) => boolean
+  }
+  err: Record<string, string>
+  setErrs: React.Dispatch<React.SetStateAction<Record<string, string>>>
 }) {
+  const clearError = (fieldName: string) => {
+    setErrs((prev) => {
+      const newErrs = { ...prev }
+      delete newErrs[fieldName]
+      return newErrs
+    })
+  }
   if (step === 1) {
     return (
       <div className="space-y-4">
@@ -727,9 +812,7 @@ function StepView({
           <div>
             <Label htmlFor="accountType">Account Roles</Label>
             <div className="mt-2 p-2 rounded-md bg-muted text-sm min-h-[40px]">
-              {accountRoles.length > 0
-                ? accountRoles.map((r: any) => r.name).join(", ")
-                : ""}
+              {accountRoles.length > 0 ? accountRoles.map((r: any) => r.name).join(", ") : ""}
             </div>
           </div>
         </div>
@@ -739,12 +822,12 @@ function StepView({
           <Input
             id="fullName"
             value={formData.fullName}
-            onChange={(e) =>
-              setFormData((prev) => ({ ...prev, fullName: e.target.value }))
-            }
+            onChange={(e) => setFormData((prev) => ({ ...prev, fullName: e.target.value }))}
             placeholder="Enter your full name"
             className="mt-2"
+            onClick={() => clearError("fullName")}
           />
+          {err?.fullName && <p className="text-sm text-red-500 mt-1">{err?.fullName}</p>}
         </div>
 
         <div>
@@ -754,12 +837,12 @@ function StepView({
             type="email"
             value={formData.email}
             readOnly={!!inviteEmail} // now using state instead of cookie
-            onChange={(e) =>
-              setFormData((prev) => ({ ...prev, email: e.target.value }))
-            }
+            onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
             placeholder="Enter email address"
             className="mt-2"
+            onClick={() => clearError("email")}
           />
+          {err?.email && <p className="text-sm text-red-500 mt-1">{err?.email}</p>}
         </div>
 
         <div>
@@ -768,15 +851,15 @@ function StepView({
             id="password"
             type="password"
             value={formData.password}
-            onChange={(e) =>
-              setFormData((prev) => ({ ...prev, password: e.target.value }))
-            }
+            onChange={(e) => setFormData((prev) => ({ ...prev, password: e.target.value }))}
             placeholder="Enter password (min 8 characters)"
             className="mt-2"
+            onClick={() => clearError("password")}
           />
+          {err?.password && <p className="text-sm text-red-500 mt-1">{err?.password}</p>}
         </div>
       </div>
-    );
+    )
   }
 
   if (step === 2) {
@@ -788,47 +871,49 @@ function StepView({
             <Input
               id="name"
               value={formData.name}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, name: e.target.value }))
-              }
+              onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
               placeholder="Enter full name"
               className="mt-2"
+              onClick={() => clearError("name")}
             />
+            {err?.name && <p className="text-xs text-red-600 dark:text-red-400 font-medium">{err?.name}</p>}
           </div>
-          <StateSelect
+          <div onClick={() => clearError("state")}>
+            <StateSelect
             id="state"
             label="State of Operation"
             value={formData.state}
-            onChange={(e) =>
-              setFormData((prev) => ({ ...prev, state: e.target.value }))
-            }
+            
+            onChange={(e) => setFormData((prev) => ({ ...prev, state: e.target.value }))}
           />
+          {err?.state && <p className="text-xs text-red-600 dark:text-red-400 font-medium">{err?.state}</p>}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <ValidationInput
-            id="aadhar"
-            label="Aadhar Card"
-            value={formData.aadharCard}
-            onChange={(e) =>
-              setFormData((prev) => ({ ...prev, aadharCard: e.target.value }))
-            }
-            placeholder="Enter 12-digit Aadhar number"
-            inputMode="numeric"
-            validator={validators?.isAadhar}
-            helperText="Format: 12 digits (e.g., 123456789012)"
-          />
-          <ValidationInput
-            id="pan"
-            label="PAN Card"
-            value={formData.panCard}
-            onChange={(e) =>
-              setFormData((prev) => ({ ...prev, panCard: e.target.value }))
-            }
-            placeholder="Enter PAN number"
-            validator={validators?.isPAN}
-            helperText="Format: 5 letters, 4 digits, 1 letter (e.g., ABCDE1234F)"
-          />
+          <div>
+            <ValidationInput
+              id="aadhar"
+              label="Aadhar Card"
+              value={formData.aadharCard}
+              onChange={(e) => setFormData((prev) => ({ ...prev, aadharCard: e.target.value }))}
+              placeholder="Enter 12-digit Aadhar number"
+              inputMode="numeric"
+              validator={validators?.isAadhar}
+              helperText="Format: 12 digits (e.g., 123456789012)"
+            />
+          </div>
+          <div>
+            <ValidationInput
+              id="pan"
+              label="PAN Card"
+              value={formData.panCard}
+              onChange={(e) => setFormData((prev) => ({ ...prev, panCard: e.target.value }))}
+              placeholder="Enter PAN number"
+              validator={validators?.isPAN}
+              helperText="Format: 5 letters, 4 digits, 1 letter (e.g., ABCDE1234F)"
+            />
+          </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -838,9 +923,8 @@ function StepView({
               id="email"
               type="email"
               value={formData.email}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, email: e.target.value }))
-              }
+              readOnly
+              onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
               placeholder="Enter email address"
               className="mt-2"
             />
@@ -868,12 +952,12 @@ function StepView({
             <Input
               id="bankName"
               value={formData.bankName}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, bankName: e.target.value }))
-              }
+              onChange={(e) => setFormData((prev) => ({ ...prev, bankName: e.target.value }))}
               placeholder="Enter bank name"
+              onClick={() => clearError("bankName")}
               className="mt-2"
             />
+            {err?.bankName && <p className="text-xs text-red-600 dark:text-red-400 font-medium">{err?.bankName}</p>}
           </div>
           <div>
             <Label htmlFor="accountNumber">Bank A/C No.</Label>
@@ -881,6 +965,7 @@ function StepView({
               id="accountNumber"
               inputMode="numeric"
               value={formData.accountNumber}
+              onClick={() => clearError("accountNumber")}
               onChange={(e) =>
                 setFormData((prev) => ({
                   ...prev,
@@ -890,14 +975,15 @@ function StepView({
               placeholder="Enter account number"
               className="mt-2"
             />
+            {err?.accountNumber && (
+              <p className="text-xs text-red-600 dark:text-red-400 font-medium">{err?.accountNumber}</p>
+            )}
           </div>
           <ValidationInput
             id="ifsc"
             label="IFSC Code"
             value={formData.ifscCode}
-            onChange={(e) =>
-              setFormData((prev) => ({ ...prev, ifscCode: e.target.value }))
-            }
+            onChange={(e) => setFormData((prev) => ({ ...prev, ifscCode: e.target.value }))}
             placeholder="Enter IFSC code"
             validator={validators?.isIFSC}
             helperText="Format: 4 letters, 0, 6 alphanumeric (e.g., ABCD0123456)"
@@ -912,13 +998,14 @@ function StepView({
               <Input
                 id="country"
                 value={formData.country}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, country: e.target.value }))
-                }
+                onChange={(e) => setFormData((prev) => ({ ...prev, country: e.target.value }))}
                 className="mt-2"
+                onClick={() => clearError("country")}
               />
+              {err?.country && <p className="text-xs text-red-600 dark:text-red-400 font-medium">{err?.country}</p>}
             </div>
-            <StateSelect
+            <div  onClick={() => clearError("addressState")}>
+              <StateSelect
               id="addressState"
               label="State"
               value={formData.addressState}
@@ -929,6 +1016,10 @@ function StepView({
                 }))
               }
             />
+            {err?.addressState && (
+              <p className="text-xs text-red-600 dark:text-red-400 font-medium">{err?.addressState}</p>
+            )}
+            </div>
           </div>
 
           <div>
@@ -942,9 +1033,13 @@ function StepView({
                   addressLine1: e.target.value,
                 }))
               }
+              onClick={() => clearError("addressLine1")}
               placeholder="Enter address line 1"
               className="mt-2"
             />
+            {err?.addressLine1 && (
+              <p className="text-xs text-red-600 dark:text-red-400 font-medium">{err?.addressLine1}</p>
+            )}
           </div>
           <div>
             <Label htmlFor="addressLine2">Address Line 2</Label>
@@ -968,20 +1063,18 @@ function StepView({
               <Input
                 id="city"
                 value={formData.city}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, city: e.target.value }))
-                }
+                onChange={(e) => setFormData((prev) => ({ ...prev, city: e.target.value }))}
                 placeholder="Enter city"
+                 onClick={() => clearError("city")}
                 className="mt-2"
               />
+              {err?.city && <p className="text-xs text-red-600 dark:text-red-400 font-medium">{err?.city}</p>}
             </div>
             <ValidationInput
               id="zipCode"
               label="Zip / Postal Code"
               value={formData.zipCode}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, zipCode: e.target.value }))
-              }
+              onChange={(e) => setFormData((prev) => ({ ...prev, zipCode: e.target.value }))}
               placeholder="Enter zip code"
               inputMode="numeric"
               validator={validators?.isPostalCode}
@@ -990,7 +1083,7 @@ function StepView({
           </div>
         </div>
       </div>
-    );
+    )
   }
 
   if (step === 3) {
@@ -1015,20 +1108,16 @@ function StepView({
         label: "Signature",
         formats: ".png,.jpeg,.jpg",
       },
-    ];
+    ]
 
     return (
       <div className="space-y-6">
-        <p className="text-sm text-muted-foreground">
-          {"If you need more info, please contact at +91 9211265558"}
-        </p>
+        <p className="text-sm text-muted-foreground">{"If you need more info, please contact at +91 9211265558"}</p>
         {docs.map((doc) => (
           <div key={doc.key} className="rounded-lg border p-4">
             <div className="mb-2 flex items-center justify-between">
               <Label className="font-medium">{doc.label}</Label>
-              <span className="text-xs sm:text-sm text-muted-foreground">
-                Allowed ({doc.formats}) file-types only
-              </span>
+              <span className="text-xs sm:text-sm text-muted-foreground">Allowed ({doc.formats}) file-types only</span>
             </div>
 
             {formData.uploadedFiles[doc.key] ? (
@@ -1036,9 +1125,7 @@ function StepView({
                 <div className="flex items-center gap-2">
                   <FileText className="h-4 w-4 text-emerald-600" />
                   <span className="text-sm font-medium text-emerald-700">
-                    {formData.uploadedFiles[doc.key]?.key ||
-                      formData.uploadedFiles[doc.key]?.name ||
-                      "Unknown file"}
+                    {formData.uploadedFiles[doc.key]?.key || formData.uploadedFiles[doc.key]?.name || "Unknown file"}
                   </span>
                 </div>
                 <Button
@@ -1056,9 +1143,7 @@ function StepView({
                 <Input
                   type="file"
                   accept={doc.formats}
-                  onChange={(e) =>
-                    handleFileUpload(doc.key, e.target.files?.[0] || null)
-                  }
+                  onChange={(e) => handleFileUpload(doc.key, e.target.files?.[0] || null)}
                   className="flex-1"
                   aria-label={`Upload ${doc.label}`}
                   disabled={uploading[doc.key]}
@@ -1069,12 +1154,15 @@ function StepView({
                     Uploading...
                   </div>
                 )}
+
+                {/* 👇 show validation error (if any) */}
+                {err[doc.key] && <p className="text-sm text-red-500 mt-1">{err[doc.key]}</p>}
               </div>
             )}
           </div>
         ))}
       </div>
-    );
+    )
   }
 
   if (step === 4) {
@@ -1083,9 +1171,7 @@ function StepView({
         <div>
           <h3 className="mb-2 text-lg font-medium">Franchise Agreement</h3>
           <p className="text-muted-foreground">
-            {
-              "Download the franchise agreement, sign it, and upload the signed document."
-            }
+            {"Download the franchise agreement, sign it, and upload the signed document."}
           </p>
         </div>
 
@@ -1095,10 +1181,10 @@ function StepView({
             className="w-full bg-transparent"
             type="button"
             onClick={() => {
-              const link = document.createElement("a");
-              link.href = "/Empanelment-Agreement-RH.pdf";
-              link.download = "Empanelment_Agreement_RH.pdf"; // optional custom name
-              link.click();
+              const link = document.createElement("a")
+              link.href = "/Empanelment-Agreement-RH.pdf"
+              link.download = "Empanelment_Agreement_RH.pdf" // optional custom name
+              link.click()
             }}
           >
             <Download className="mr-2 h-4 w-4" />
@@ -1112,9 +1198,7 @@ function StepView({
                 <div className="flex items-center gap-2">
                   <FileText className="h-4 w-4 text-emerald-600" />
                   <span className="text-sm font-medium text-emerald-700">
-                    {formData.uploadedFiles.agreement?.key ||
-                      formData.uploadedFiles.agreement?.name ||
-                      "Unknown file"}
+                    {formData.uploadedFiles.agreement?.key || formData.uploadedFiles.agreement?.name || "Unknown file"}
                   </span>
                 </div>
                 <Button
@@ -1132,9 +1216,7 @@ function StepView({
                 <Input
                   type="file"
                   accept=".pdf"
-                  onChange={(e) =>
-                    handleFileUpload("agreement", e.target.files?.[0] || null)
-                  }
+                  onChange={(e) => handleFileUpload("agreement", e.target.files?.[0] || null)}
                   className="flex-1"
                   aria-label="Upload signed franchise agreement"
                   disabled={uploading.agreement}
@@ -1145,15 +1227,257 @@ function StepView({
                     Uploading...
                   </div>
                 )}
+
+                {err.agreement && <p className="text-sm text-red-500 mt-1">{err.agreement}</p>}
               </div>
             )}
           </div>
         </div>
       </div>
-    );
+    )
   }
 
   if (step === 5) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h3 className="text-lg font-semibold mb-2">Add Referrals</h3>
+          <p className="text-sm text-muted-foreground">
+            Please provide at least 3 referrals. You can add up to 5 referrals.
+          </p>
+        </div>
+
+
+
+        <div className="space-y-6">
+          {formData.referrals.map((referral, index) => (
+            <div key={index} className="rounded-lg border p-4 bg-card">
+              <div className="mb-4 flex items-center justify-between">
+                <h4 className="font-medium">Referral {index + 1}</h4>
+                <span className="text-xs text-muted-foreground">{referral.referralName ? "Filled" : "Empty"}</span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor={`referral_${index}_name`}>Referral Name *</Label>
+                  <Input
+                    id={`referral_${index}_name`}
+                    value={referral.referralName}
+                    onChange={(e) => {
+                      const newReferrals = [...formData.referrals]
+                      newReferrals[index].referralName = e.target.value
+                      setFormData((prev) => ({
+                        ...prev,
+                        referrals: newReferrals,
+                      }))
+                    }}
+                    onClick={() => clearError(`referral_${index}_name`)}
+                    placeholder="Enter referral name"
+                    className="mt-2"
+                  />
+                  {err[`referral_${index}_name`] && (
+                    <p className="text-xs text-red-600 mt-1">{err[`referral_${index}_name`]}</p>
+                  )}
+                </div>
+
+                <div>
+                  <Label htmlFor={`referral_${index}_designation`}>Designation *</Label>
+                  <Input
+                    id={`referral_${index}_designation`}
+                    value={referral.designation}
+                    onChange={(e) => {
+                      const newReferrals = [...formData.referrals]
+                      newReferrals[index].designation = e.target.value
+                      setFormData((prev) => ({
+                        ...prev,
+                        referrals: newReferrals,
+                      }))
+                    }}
+                    onClick={() => clearError(`referral_${index}_designation`)}
+                    placeholder="Enter designation"
+                    className="mt-2"
+                  />
+                  {err[`referral_${index}_designation`] && (
+                    <p className="text-xs text-red-600 mt-1">{err[`referral_${index}_designation`]}</p>
+                  )}
+                </div>
+
+                <div>
+                  <Label htmlFor={`referral_${index}_firmName`}>Firm Name *</Label>
+                  <Input
+                    id={`referral_${index}_firmName`}
+                    value={referral.firmName}
+                    onChange={(e) => {
+                      const newReferrals = [...formData.referrals]
+                      newReferrals[index].firmName = e.target.value
+                      setFormData((prev) => ({
+                        ...prev,
+                        referrals: newReferrals,
+                      }))
+                    }}
+                    onClick={() => clearError(`referral_${index}_firmName`)}
+                    placeholder="Enter firm name"
+                    className="mt-2"
+                  />
+                  {err[`referral_${index}_firmName`] && (
+                    <p className="text-xs text-red-600 mt-1">{err[`referral_${index}_firmName`]}</p>
+                  )}
+                </div>
+
+                <div>
+                  <Label htmlFor={`referral_${index}_natureOfBusiness`}>Nature of Business *</Label>
+                  <Input
+                    id={`referral_${index}_natureOfBusiness`}
+                    value={referral.natureOfBusiness}
+                    onChange={(e) => {
+                      const newReferrals = [...formData.referrals]
+                      newReferrals[index].natureOfBusiness = e.target.value
+                      setFormData((prev) => ({
+                        ...prev,
+                        referrals: newReferrals,
+                      }))
+                    }}
+                    onClick={() => clearError(`referral_${index}_natureOfBusiness`)}
+                    placeholder="Enter nature of business"
+                    className="mt-2"
+                  />
+                  {err[`referral_${index}_natureOfBusiness`] && (
+                    <p className="text-xs text-red-600 mt-1">{err[`referral_${index}_natureOfBusiness`]}</p>
+                  )}
+                </div>
+
+                <div onClick={() => clearError(`referral_${index}_entityType`)}>
+                  <Label htmlFor={`referral_${index}_entityType`}>Entity Type *</Label>
+                  <select
+                    id={`referral_${index}_entityType`}
+                    value={referral.entityType}
+                    onChange={(e) => {
+                      const newReferrals = [...formData.referrals]
+                      newReferrals[index].entityType = e.target.value as any
+                      setFormData((prev) => ({
+                        ...prev,
+                        referrals: newReferrals,
+                      }))
+                    }}
+                    className="mt-2 bg-transparent w-full px-3 py-2 border border-input rounded-md text-foreground"
+                  >
+                    <option className="dark:bg-background" value="">Select entity type</option>
+                    <option className="dark:bg-background" value="broker">Broker</option>
+                    <option className="dark:bg-background" value="wealth firm">Wealth Firm</option>
+                    <option className="dark:bg-background" value="institution">Institution</option>
+                  </select>
+                  {err[`referral_${index}_entityType`] && (
+                    <p className="text-xs text-red-600 mt-1">{err[`referral_${index}_entityType`]}</p>
+                  )}
+                </div>
+
+                <div>
+                  <Label htmlFor={`referral_${index}_contact`}>Contact *</Label>
+                  <Input
+                    id={`referral_${index}_contact`}
+                    value={referral.contact}
+                    onChange={(e) => {
+
+                      const value = e.target.value.replace(/\D/g, "");
+                      const newReferrals = [...formData.referrals]
+                      newReferrals[index].contact = value;
+                      setFormData((prev) => ({
+                        ...prev,
+                        referrals: newReferrals,
+                      }))
+                    }}
+                    onClick={() => clearError(`referral_${index}_contact`)}
+                    placeholder="Enter 10-digit contact"
+                    inputMode="tel"
+                    className="mt-2"        // helps browsers restrict input
+                    maxLength={10}          // optional: limit to 10 digits
+                  />
+                  {err[`referral_${index}_contact`] && (
+                    <p className="text-xs text-red-600 mt-1">{err[`referral_${index}_contact`]}</p>
+                  )}
+                </div>
+
+                <div>
+                  <Label htmlFor={`referral_${index}_mailId`}>Email ID *</Label>
+                  <Input
+                    id={`referral_${index}_mailId`}
+                    type="email"
+                    value={referral.mailId}
+                    onChange={(e) => {
+                      const newReferrals = [...formData.referrals]
+                      newReferrals[index].mailId = e.target.value
+                      setFormData((prev) => ({
+                        ...prev,
+                        referrals: newReferrals,
+                      }))
+                    }}
+                    onClick={() => clearError(`referral_${index}_mailId`)}
+                    placeholder="Enter email address"
+                    className="mt-2"
+                  />
+                  {err[`referral_${index}_mailId`] && (
+                    <p className="text-xs text-red-600 mt-1">{err[`referral_${index}_mailId`]}</p>
+                  )}
+                </div>
+
+                <div>
+                  <Label htmlFor={`referral_${index}_location`}>Location *</Label>
+                  <Input
+                    id={`referral_${index}_location`}
+                    value={referral.location}
+                    onChange={(e) => {
+                      const newReferrals = [...formData.referrals]
+                      newReferrals[index].location = e.target.value
+                      setFormData((prev) => ({
+                        ...prev,
+                        referrals: newReferrals,
+                      }))
+                    }}
+                    onClick={() => clearError(`referral_${index}_location`)}
+                    placeholder="Enter location"
+                    className="mt-2"
+                  />
+                  {err[`referral_${index}_location`] && (
+                    <p className="text-xs text-red-600 mt-1">{err[`referral_${index}_location`]}</p>
+                  )}
+                </div>
+
+                <div>
+                  <Label htmlFor={`referral_${index}_totalTradeExecution`}>Total Trade Execution *</Label>
+                  <Input
+                    id={`referral_${index}_totalTradeExecution`}
+                    value={referral.totalTradeExecution}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, "");
+                      const newReferrals = [...formData.referrals]
+                      newReferrals[index].totalTradeExecution = value;
+                      setFormData((prev) => ({
+                        ...prev,
+                        referrals: newReferrals,
+                      }))
+                    }}
+                    onClick={() => clearError(`referral_${index}_totalTradeExecution`)}
+                    placeholder="Enter total trade execution"
+                    className="mt-2"
+                  />
+                  {err[`referral_${index}_totalTradeExecution`] && (
+                    <p className="text-xs text-red-600 mt-1">{err[`referral_${index}_totalTradeExecution`]}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+        {err.referrals && (
+          <div className="p-3 rounded-lg bg-red-50 border border-red-200">
+            <p className="text-sm text-red-600 font-medium">{err.referrals}</p>
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  if (step === 6) {
     if (currentStatus === "rejected") {
       return (
         <div className="space-y-6 text-center">
@@ -1161,22 +1485,17 @@ function StepView({
             <X className="h-8 w-8 text-red-600" aria-hidden="true" />
           </div>
           <div>
-            <h3 className="mb-2 text-xl font-bold text-red-600">
-              Registration Rejected
-            </h3>
+            <h3 className="mb-2 text-xl font-bold text-red-600">Registration Rejected</h3>
             <p className="text-muted-foreground">
-              Unfortunately, your application was rejected. Please review your
-              details and try again or contact support for assistance.
+              Unfortunately, your application was rejected. Please review your details and try again or contact support
+              for assistance.
             </p>
           </div>
-          <Button
-            type="button"
-            onClick={() => window.open("https://richharbor.com/", "_blank")}
-          >
+          <Button type="button" onClick={() => window.open("https://richharbor.com/", "_blank")}>
             Go to website
           </Button>
         </div>
-      );
+      )
     } else {
       // success UI (status !== rejected)
       return (
@@ -1185,24 +1504,18 @@ function StepView({
             <Check className="h-8 w-8 text-emerald-600" aria-hidden="true" />
           </div>
           <div>
-            <h3 className="mb-2 text-xl font-bold text-emerald-600">
-              Registration Completed!
-            </h3>
+            <h3 className="mb-2 text-xl font-bold text-emerald-600">Registration Completed!</h3>
             <p className="text-muted-foreground">
-              Your partner account has been created successfully. You will
-              receive a confirmation email shortly.
+              Your partner account has been created successfully. You will receive a confirmation email shortly.
             </p>
           </div>
-          <Button
-            type="button"
-            onClick={() => window.open("https://richharbor.com/", "_blank")}
-          >
+          <Button type="button" onClick={() => window.open("https://richharbor.com/", "_blank")}>
             Go to website
           </Button>
         </div>
-      );
+      )
     }
   }
 
-  return null;
+  return null
 }
