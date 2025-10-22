@@ -44,7 +44,7 @@ export default function Verify() {
           error?.response?.data?.message || "An unexpected error occurred"
         );
         setIsTokenValid(false);
-        // router.push("/auth/login");
+        router.push("/auth/login");
       }
     };
 
@@ -109,8 +109,7 @@ export default function Verify() {
 
       <form
         className="flex flex-col gap-4 w-full max-w-sm"
-        onSubmit={handlePasswordSubmit}
-      >
+        onSubmit={handlePasswordSubmit}>
         <h2 className="text-2xl font-semibold text-center mb-6">
           Set New Password
         </h2>
@@ -143,8 +142,7 @@ export default function Verify() {
         <button
           type="submit"
           disabled={loading}
-          className="bg-primary text-primary-foreground px-4 py-2 rounded-md font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed mt-2"
-        >
+          className="bg-primary text-primary-foreground px-4 py-2 rounded-md font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed mt-2">
           {loading ? "Updating..." : "Update Password"}
         </button>
       </form>

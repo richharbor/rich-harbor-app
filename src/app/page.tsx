@@ -1,10 +1,10 @@
 "use client";
+
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import Cookies from "js-cookie";
 import Loading from "./loading";
 import { getUserDetails } from "@/services/Auth/authServices";
-
 import useAuthStore from "@/helpers/authStore";
 
 export default function Home() {
@@ -14,44 +14,47 @@ export default function Home() {
   const getUserDetailsFn = async () => {
     try {
       const response = await getUserDetails();
-      console.log("User details:", response);
+      const user = response.user;
+      const { setAuth, setOnboardingStatus, setCurrentRole } =
+        useAuthStore.getState();
 
-      const setAuth = useAuthStore.getState().setAuth;
-      const setOnboardingStatus = useAuthStore.getState().setOnboardingStatus;
+      if (!user) {
+        router.push("/auth/login");
+        return;
+      }
 
-      //  Onboarding redirect
-      if (response.onboarding?.required || !response.user?.emailVerified) {
+      if (response.onboarding?.required || !user.emailVerified) {
         setOnboardingStatus(response.onboarding);
         router.push("/auth/onboarding");
         return;
       }
 
-      if (response.user) {
-        const roles = response.user.roles || [];
+      const roles = user.roles || [];
+      setAuth(user, authToken || "", roles);
 
-        // Save user + roles in store
-        setAuth(response.user, Cookies.get("authToken") || "", roles);
+      let redirectUrl = "";
+      let roleCookie = "";
+      let franchiseCookie = "";
 
-        // Set currentRole in store
-        if (response.user.currentRole) {
-          useAuthStore.getState().setCurrentRole(response.user.currentRole.id);
-        }
-
-        // Redirect based on role
-        if (
-          response.user.isSuperAdmin &&
-          response.user.currentRole?.name.toLowerCase() === "superadmin"
-        ) {
-          router.push("/superadmin/dashboard");
-        } else if (response.user.currentRole) {
-          router.push(
-            `/${response.user.currentRole.name.toLowerCase()}/dashboard`
-          );
-        } else {
-          // fallback: no role → login
-          router.push("/auth/login");
-        }
+      if (user.tier === 1 || user.tier === 2) {
+        redirectUrl = `/a/${user.currentRole?.name.toLowerCase()}/dashboard`;
+        roleCookie = user.currentRole?.name.toLowerCase() || "";
+      } else if (user.tier === 3) {
+        redirectUrl = `/b/${user.franchiseName.toLowerCase()}/superadmin/dashboard`;
+        roleCookie = "superadmin";
+        franchiseCookie = user.franchiseName.toLowerCase();
+      } else if (user.tier === 4) {
+        redirectUrl = `/b/${user.franchiseName.toLowerCase()}/${user.currentRole?.name.toLowerCase()}/dashboard`;
+        roleCookie = user.currentRole?.name.toLowerCase() || "";
+        franchiseCookie = user.franchiseName.toLowerCase();
       }
+
+      Cookies.set("currentRole", roleCookie);
+      if (franchiseCookie) Cookies.set("franchiseName", franchiseCookie);
+      Cookies.set("tier", String(user.tier || 0));
+
+      setCurrentRole(user.currentRole?.id || 0);
+      router.push(redirectUrl);
     } catch (error) {
       console.error("Failed to fetch user details:", error);
       useAuthStore.getState().clearAuth();
@@ -60,17 +63,12 @@ export default function Home() {
   };
 
   useEffect(() => {
-    if (authToken) {
-      getUserDetailsFn();
-    } else {
+    if (authToken) getUserDetailsFn();
+    else {
       Cookies.remove("authToken");
       router.push("/auth/login");
     }
   }, []);
 
-  return (
-    <>
-      <Loading />
-    </>
-  );
+  return <Loading />;
 }
