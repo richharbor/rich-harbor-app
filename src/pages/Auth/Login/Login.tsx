@@ -10,6 +10,8 @@ import { useState } from "react";
 import { z } from "zod";
 import { postLogin } from "@/services/Auth/authServices";
 import Cookies from "js-cookie";
+import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 interface ILoginBody {
   email: string;
@@ -23,6 +25,7 @@ const loginSchema = z.object({
 
 export default function Login({ className, ...props }: React.ComponentProps<"div">) {
   const router = useRouter();
+  const [loading, setLoading] = useState(false);
   const [form, setForm] = useState<ILoginBody>({
     email: "",
     password: "",
@@ -35,20 +38,37 @@ export default function Login({ className, ...props }: React.ComponentProps<"div
 
   const postLoginFn = async (requestBody: ILoginBody) => {
     try {
+      setLoading(true);
       const response = await postLogin(requestBody);
 
       console.log(response);
       Cookies.set("authToken", response.token);
       // Cookies.set("currentRole","wq")
       // Cookies.set("refreshToken", response.refreshToken);
+      toast.success("Login successfully")
       router.push("/");
     } catch (error) {
       console.log(error);
+      const status =
+        (error as any)?.status ??
+        (error as any)?.response?.status ??
+        (error as any)?.response?.statusCode;
+
+      const backendError = (error as any)?.response?.data?.error;
+
+      if (status === 401) {
+        toast.error(backendError || "Unauthorized");
+      } else {
+        toast.error(backendError || "Internal server error, Please try again later");
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
 
     const result = loginSchema.safeParse(form);
     if (!result.success) {
@@ -63,6 +83,7 @@ export default function Login({ className, ...props }: React.ComponentProps<"div
 
     setErrors({});
     console.log("Form Data:", result.data);
+
     postLoginFn(result.data);
   };
 
@@ -111,8 +132,8 @@ export default function Login({ className, ...props }: React.ComponentProps<"div
                 )}
               </div>
 
-              <Button type="submit" className="w-full">
-                Login
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? <Loader2 className="animate-spin" size={32} /> : "Login"}
               </Button>
             </div>
           </form>

@@ -58,6 +58,7 @@ import {
 } from "@/services/Role/partnerServices";
 import useAuthStore from "@/helpers/authStore";
 import { permission } from "process";
+import Loading from "@/app/loading";
 
 type PartnerRow = {
   id: number;
@@ -213,8 +214,6 @@ export default function Partners() {
       }
     } catch (err) {
       console.error("Error fetching franchises:", err);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -226,8 +225,6 @@ export default function Partners() {
       }
     } catch (error) {
       console.error("Error fetching roles:", error);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -335,7 +332,7 @@ export default function Partners() {
 
   const handleCreateRole = async () => {
     // console.log("Before:", customRoles);
-    // setSaveLoading(true);
+    setSaveLoading(true);
 
     if (newRoleName && selectedAccess.length > 0 && selectedFranchiseId) {
       const value = {
@@ -405,6 +402,15 @@ export default function Partners() {
         : [...prev, roleId]
     );
   };
+
+
+  if (loading) {
+    return (
+      <div className="h-[calc(100vh-4.7rem)] flex flex-col relative overflow-hidden rounded-md">
+        <Loading areaOnly={true} />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 p-6">
@@ -649,9 +655,9 @@ export default function Partners() {
                 >
                   {selectedRoles.length > 0
                     ? customRoles
-                        .filter((role) => selectedRoles.includes(role.id))
-                        .map((role) => role.name)
-                        .join(", ")
+                      .filter((role) => selectedRoles.includes(role.id))
+                      .map((role) => role.name)
+                      .join(", ")
                     : "Select roles"}
                   <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
                 </button>
@@ -775,6 +781,7 @@ export default function Partners() {
             <Button
               variant="outline"
               onClick={() => setCreateRoleModalOpen(false)}
+              disabled={saveLoading}
             >
               Cancel
             </Button>

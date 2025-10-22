@@ -47,6 +47,7 @@ import {
   getTeamRoles,
   inviteTeamMember,
 } from "@/services/Role/teamService";
+import Loading from "@/app/loading";
 // import {
 //   getAllTeamMembers,
 //   inviteTeamMember,
@@ -132,7 +133,6 @@ export default function Teams() {
 
   const fetchAllRoles = async () => {
     try {
-      setLoading(true);
       const response = await getTeamRoles();
       if (response?.success) {
         setCustomRoles(response.roles || []);
@@ -141,14 +141,11 @@ export default function Teams() {
       }
     } catch (error) {
       console.error("Error fetching roles:", error);
-    } finally {
-      setLoading(false);
     }
   };
 
   const fetchTeamsMembers = async () => {
     try {
-      setLoading(true);
       const data = await getAllTeamMembers();
       console.log(data);
 
@@ -159,10 +156,10 @@ export default function Teams() {
       }
     } catch (err) {
       toast.error("Failed to load team members");
-    } finally {
+    }finally {
       setLoading(false);
     }
-  };
+  }
 
   const handleDeactivate = async (id: string) => {
     try {
@@ -321,7 +318,7 @@ export default function Teams() {
     }
 
     try {
-      setLoading(true);
+      setSaveLoading(true);
 
       await inviteTeamMember({
         email,
@@ -342,9 +339,17 @@ export default function Teams() {
       console.error("Error inviting partner:", error);
       toast.error("Failed to send invitation");
     } finally {
-      setLoading(false);
+      setSaveLoading(false);
     }
   };
+
+   if (loading) {
+      return (
+        <div className="h-[calc(100vh-4.7rem)] flex flex-col relative overflow-hidden rounded-md">
+          <Loading areaOnly={true} />
+        </div>
+      );
+    }
 
   return (
     <div className=" relative space-y-6 p-6">
@@ -561,12 +566,12 @@ export default function Teams() {
             <Button
               variant="outline"
               onClick={() => setIsInviteOpen(false)}
-              disabled={loading}
+              disabled={saveLoading}
             >
               Cancel
             </Button>
-            <Button onClick={invitePartner} disabled={loading}>
-              {loading ? "Sending..." : "Send Invite"}
+            <Button onClick={invitePartner} disabled={saveLoading}>
+              {saveLoading ? "Sending..." : "Send Invite"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -643,6 +648,7 @@ export default function Teams() {
             <Button
               variant="outline"
               onClick={() => setCreateRoleModalOpen(false)}
+              disabled={saveLoading}
             >
               Cancel
             </Button>

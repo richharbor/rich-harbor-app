@@ -9,6 +9,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Search, ChevronRight } from "lucide-react";
 
 import { getAllSellShares } from "@/services/sell/sellService";
+import Loading from "@/app/loading";
 
 interface ShareItem {
   id: number;
@@ -50,7 +51,11 @@ export default function Buying() {
             fixed: sell.fixedPrice,
             moq: String(sell.minimumOrderQuatity),
           }));
-          setShares(mappedShares);
+          // ✅ Remove duplicates by shareName
+          const uniqueShares = Array.from(
+            new Map(mappedShares.map((item) => [item.shareName, item])).values()
+          );
+          setShares(uniqueShares);
         }
       } catch (error) {
         console.error("Failed to fetch shares:", error);
@@ -62,8 +67,17 @@ export default function Buying() {
     fetchShares();
   }, []);
 
-  if (loading) return <div>Loading...</div>;
-  if (!shares.length) return <div>No shares found.</div>;
+  if (loading) {
+    return (
+      <div className="h-[calc(100vh-4.7rem)] flex flex-col relative overflow-hidden rounded-md">
+        <Loading areaOnly={true} />
+      </div>
+    );
+  }
+
+  if (!shares.length) {
+    return <div className="h-[calc(100vh-4.7rem)] flex flex-col relative justify-center items-center overflow-hidden rounded-md">No shares found.</div>;
+  }
 
   return (
     <div className="h-[calc(100vh-4.7rem)] flex flex-col relative overflow-hidden space-y-6">
