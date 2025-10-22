@@ -23,6 +23,18 @@ import {
   XCircle,
 } from "lucide-react";
 
+interface Referral {
+  mailId: string;
+  contact: string;
+  firmName: string;
+  location: string;
+  entityType: string;
+  designation: string;
+  referralName: string;
+  natureOfBusiness: string;
+  totalTradeExecution: string;
+};
+
 interface PartnerApplication {
   id: number;
   userId: number;
@@ -51,6 +63,7 @@ interface PartnerApplication {
       addressState: string;
       accountNumber: string;
     };
+    step5?: Referral[];
   };
   documents: {
     cmlCopy?: string;
@@ -181,12 +194,12 @@ export default function PartnerDetails({
                       {step === 1
                         ? "Basic Information"
                         : step === 2
-                        ? "Personal & Bank Details"
-                        : step === 3
-                        ? "Document Upload"
-                        : step === 4
-                        ? "Verification"
-                        : "Agreement & Approval"}
+                          ? "Personal & Bank Details"
+                          : step === 3
+                            ? "Document Upload"
+                            : step === 4
+                              ? "Verification"
+                              : "Agreement & Approval"}
                     </span>
                   </div>
                 ))}
@@ -371,14 +384,14 @@ export default function PartnerDetails({
                         {key === "cmlCopy"
                           ? "CML Copy"
                           : key === "panCard"
-                          ? "PAN Card"
-                          : key === "signature"
-                          ? "Signature"
-                          : key === "cancelCheque"
-                          ? "Cancelled Cheque"
-                          : key === "agreement"
-                          ? "Agreement"
-                          : key}
+                            ? "PAN Card"
+                            : key === "signature"
+                              ? "Signature"
+                              : key === "cancelCheque"
+                                ? "Cancelled Cheque"
+                                : key === "agreement"
+                                  ? "Agreement"
+                                  : key}
                       </span>
                     </div>
                     <Button variant="outline" size="sm" asChild>
@@ -392,6 +405,75 @@ export default function PartnerDetails({
               </div>
             </CardContent>
           </Card>
+
+          {/* Refferal */}
+          {application.formData.step5 && application.formData.step5.length > 0 && (
+            <>
+              {application.formData.step5.map((referral, index) => (
+                <Card key={index}>
+                  <CardHeader>
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      <User className="h-4 w-4" />
+                      Referral {index + 1}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <span className="text-xs text-muted-foreground">Referral Name</span>
+                        <p className="text-sm font-medium">{referral.referralName}</p>
+                      </div>
+                      <div>
+                        <span className="text-xs text-muted-foreground">Firm Name</span>
+                        <p className="text-sm font-medium">{referral.firmName}</p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <span className="text-xs text-muted-foreground">Email</span>
+                        <p className="text-sm font-medium">{referral.mailId}</p>
+                      </div>
+                      <div>
+                        <span className="text-xs text-muted-foreground">Contact</span>
+                        <p className="text-sm font-medium">{referral.contact}</p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <span className="text-xs text-muted-foreground">Location</span>
+                        <p className="text-sm font-medium">{referral.location}</p>
+                      </div>
+                      <div>
+                        <span className="text-xs text-muted-foreground">Entity Type</span>
+                        <p className="text-sm font-medium">{referral.entityType}</p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <span className="text-xs text-muted-foreground">Designation</span>
+                        <p className="text-sm font-medium">{referral.designation}</p>
+                      </div>
+                      <div>
+                        <span className="text-xs text-muted-foreground">Nature of Business</span>
+                        <p className="text-sm font-medium">{referral.natureOfBusiness}</p>
+                      </div>
+                    </div>
+
+                    <div>
+                      <span className="text-xs text-muted-foreground">Total Trade Execution</span>
+                      <p className="text-sm font-medium">{referral.totalTradeExecution}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </>
+          )}
+
+
+
 
           {/* Review Information */}
           {application.reviewedAt && (

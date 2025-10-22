@@ -289,16 +289,20 @@ export default function Partners() {
 
   const approvePartner = async (applicationId: number) => {
     try {
+      setLoading(true);
       await updateApplicationStatus(applicationId, "approved");
       toast.success("Partner approved!");
       await fetchPartners();
     } catch (error) {
       toast.error("Failed to approve partner");
+    }finally{
+      setLoading(false)
     }
   };
 
   const rejectPartner = async (applicationId: number) => {
     try {
+      setLoading(true);
       await updateApplicationStatus(
         applicationId,
         "rejected",
@@ -308,6 +312,8 @@ export default function Partners() {
       await fetchPartners();
     } catch (error) {
       toast.error("Failed to reject partner");
+    }finally{
+      setLoading(false);
     }
   };
 
@@ -407,7 +413,7 @@ export default function Partners() {
   if (loading) {
     return (
       <div className="h-[calc(100vh-4.7rem)] flex flex-col relative overflow-hidden rounded-md">
-        <Loading areaOnly={true} />
+        <Loading areaOnly />
       </div>
     );
   }

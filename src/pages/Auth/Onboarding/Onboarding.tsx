@@ -98,6 +98,7 @@ export default function Onboarding() {
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const [currentStatus, setCurrentStatus] = useState<string | null>(null);
   const [err, setErrs] = useState<Record<string, string>>({});
+  const route = useRouter();
   const [formData, setFormData] = useState<FormDataState>({
     // Step 1
     accountType: [],
@@ -394,6 +395,12 @@ export default function Onboarding() {
     }
   };
 
+  const handleLogout = () => {
+    Cookies.remove("authToken");
+    route.push("/");
+    
+  }
+
   const handlePrevious = () => {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
@@ -688,8 +695,8 @@ export default function Onboarding() {
           "flex items-center gap-2 px-3 py-2 rounded-full text-sm whitespace-nowrap transition-colors",
           isActive && "bg-primary/10 text-primary border border-primary/20",
           !isActive &&
-            isDone &&
-            "bg-muted text-muted-foreground hover:bg-muted/80",
+          isDone &&
+          "bg-muted text-muted-foreground hover:bg-muted/80",
           !isActive && !isDone && "bg-muted text-muted-foreground",
           !isClickable && "cursor-not-allowed opacity-60"
         )}
@@ -700,8 +707,8 @@ export default function Onboarding() {
             isActive && "border-primary text-primary bg-primary/5",
             isDone && "border-primary text-primary bg-primary/10",
             !isActive &&
-              !isDone &&
-              "border-muted-foreground/30 bg-background text-muted-foreground"
+            !isDone &&
+            "border-muted-foreground/30 bg-background text-muted-foreground"
           )}>
           {isDone ? <Check className="h-3.5 w-3.5" /> : stepNumber}
         </span>
@@ -879,6 +886,15 @@ function StepView({
   err: Record<string, string>;
   setErrs: React.Dispatch<React.SetStateAction<Record<string, string>>>;
 }) {
+  const route = useRouter();
+
+
+  const handleLogout = () => {
+    Cookies.remove("authToken");
+    route.push("/");
+    
+  }
+  
   const clearError = (fieldName: string) => {
     setErrs((prev) => {
       const newErrs = { ...prev };
@@ -1695,6 +1711,7 @@ function StepView({
             onClick={() => window.open("https://richharbor.com/", "_blank")}>
             Go to website
           </Button>
+          
         </div>
       );
     } else {
@@ -1717,6 +1734,12 @@ function StepView({
             type="button"
             onClick={() => window.open("https://richharbor.com/", "_blank")}>
             Go to website
+          </Button>
+          <Button
+            type="button"
+            className="ml-5"
+            onClick={handleLogout}>
+            Go to Login
           </Button>
         </div>
       );
