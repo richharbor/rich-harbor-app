@@ -1,22 +1,23 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import type React from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { verifyEmailAndSetNewPassword } from "@/services/Auth/authServices";
+import Image from "next/image";
 
 export default function Verify() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const token = searchParams?.get("token");
 
-  const [isTokenValid, setIsTokenValid] = useState<boolean | null>(null); // null = loading
+  const [isTokenValid, setIsTokenValid] = useState<boolean | null>(null);
   const [tempPassword, setTempPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Step 1: Verify token
   useEffect(() => {
     const verifyToken = async () => {
       if (!token) {
@@ -43,14 +44,13 @@ export default function Verify() {
           error?.response?.data?.message || "An unexpected error occurred"
         );
         setIsTokenValid(false);
-        router.push("/auth/login");
+        // router.push("/auth/login");
       }
     };
 
     verifyToken();
   }, [token, router]);
 
-  // Step 2: Handle password submission
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -88,29 +88,39 @@ export default function Verify() {
     }
   };
 
-  // Loading spinner while verifying token
   if (isTokenValid === null) {
     return (
-      <div className="flex items-center justify-center h-screen">
+      <div className="flex items-center justify-center min-h-screen">
         <div className="w-16 h-16 border-4 border-gray-300 border-t-blue-500 rounded-full animate-spin"></div>
       </div>
     );
   }
 
-  // Password form once token is valid
   return (
-    <div className="flex items-center justify-center h-screen">
+    <div className="flex flex-col items-center justify-center min-h-screen px-4">
+      <div className="mb-8">
+        <img
+          src="https://richharbor.com/_next/image?url=%2F_next%2Fstatic%2Fmedia%2FRH-Logo.dfcfd1c1.png&w=3840&q=75"
+          alt="Rich Harbor Logo"
+          width={180}
+          height={180}
+        />
+      </div>
+
       <form
-        className="flex flex-col gap-4 w-full max-w-sm p-6 border rounded-md shadow-md"
-        onSubmit={handlePasswordSubmit}>
-        <h2 className="text-xl font-semibold text-center">Set New Password</h2>
+        className="flex flex-col gap-4 w-full max-w-sm"
+        onSubmit={handlePasswordSubmit}
+      >
+        <h2 className="text-2xl font-semibold text-center mb-6">
+          Set New Password
+        </h2>
 
         <input
           type="password"
           placeholder="Temporary Password"
           value={tempPassword}
           onChange={(e) => setTempPassword(e.target.value)}
-          className="border p-2 rounded"
+          className="border border-input bg-background px-3 py-2 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring"
           required
         />
         <input
@@ -118,7 +128,7 @@ export default function Verify() {
           placeholder="New Password"
           value={newPassword}
           onChange={(e) => setNewPassword(e.target.value)}
-          className="border p-2 rounded"
+          className="border border-input bg-background px-3 py-2 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring"
           required
         />
         <input
@@ -126,14 +136,15 @@ export default function Verify() {
           placeholder="Confirm New Password"
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
-          className="border p-2 rounded"
+          className="border border-input bg-background px-3 py-2 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring"
           required
         />
 
         <button
           type="submit"
           disabled={loading}
-          className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600">
+          className="bg-primary text-primary-foreground px-4 py-2 rounded-md font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+        >
           {loading ? "Updating..." : "Update Password"}
         </button>
       </form>
