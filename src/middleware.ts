@@ -1,52 +1,71 @@
-// middleware.ts
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 function getBasePath(pathname: string): string {
-  const parts = pathname.split("/");
-  return parts[1] || "";
+  const parts = pathname.split("/").filter(Boolean);
+  return parts[0] || "";
+}
+
+function getRedirectPath(
+  currentRole: string | undefined,
+  franchiseName: string | undefined,
+  tier: string | undefined
+): string {
+  if (!currentRole) return "";
+
+  const tierNum = parseInt(tier || "0", 10);
+
+  // Tier 3 → b/[franchise]/superadmin
+  if (tierNum === 3 && franchiseName) {
+    return `b/${franchiseName.toLowerCase()}/superadmin`;
+  }
+
+  // Tier 4 → b/[franchise]/[role]
+  if (tierNum === 4 && franchiseName && currentRole) {
+    return `b/${franchiseName.toLowerCase()}/${currentRole.toLowerCase()}`;
+  }
+
+  // Tier 2 & Tier 1 (superadmin) → a/[role]
+  return `a/${currentRole.toLowerCase()}`;
 }
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
   const authToken = request.cookies.get("authToken")?.value;
   const currentRole = request.cookies.get("currentRole")?.value;
+  const franchiseName = request.cookies.get("franchiseName")?.value;
+  const tier = request.cookies.get("tier")?.value;
 
   const publicRoutes = ["/auth/login", "/auth/onboarding", "/auth/verify"];
 
-  // 1️⃣ Allow public routes
+  // Public routes
   if (publicRoutes.some((route) => pathname.startsWith(route))) {
     if (authToken && pathname.startsWith("/auth/login") && currentRole) {
+      const redirectPath = getRedirectPath(currentRole, franchiseName, tier);
       return NextResponse.redirect(
-        new URL(`/${currentRole}/dashboard`, request.url)
+        new URL(`/${redirectPath}/dashboard`, request.url)
       );
     }
     return NextResponse.next();
   }
 
-  // 2️⃣ Home page → let client-side handle redirection
-  if (pathname === "/") {
-    return NextResponse.next();
-  }
+  //  Home path → handled client-side
+  if (pathname === "/") return NextResponse.next();
 
-  // 3️⃣ If not authenticated → redirect to login
-  if (!authToken || !currentRole) {
+  // Not authenticated → redirect login
+  if (!authToken || !currentRole)
     return NextResponse.redirect(new URL("/auth/login", request.url));
-  }
 
-  // 4️⃣ Special case: if user tries `/dashboard` without role → redirect
-  if (pathname === "/dashboard") {
-    return NextResponse.redirect(
-      new URL(`/${currentRole}/dashboard`, request.url)
-    );
-  }
-
-  // 5️⃣ Role enforcement: only allow access under currentRole
+  //  Check route access
+  const redirectPath = getRedirectPath(currentRole, franchiseName, tier);
+  const targetUrl = `/${redirectPath}/dashboard`.replace(/\/+$/, "");
+  const normalizedPath = pathname.replace(/\/+$/, "");
   const basePath = getBasePath(pathname);
-  if (basePath && basePath !== currentRole) {
-    return NextResponse.redirect(
-      new URL(`/${currentRole}/dashboard`, request.url)
-    );
+
+  // If user hits the wrong route, redirect them to their area
+  if (!normalizedPath.startsWith(`/${redirectPath}`)) {
+    return NextResponse.redirect(new URL(targetUrl, request.url));
   }
 
   return NextResponse.next();

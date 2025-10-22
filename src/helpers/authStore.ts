@@ -14,10 +14,12 @@ export interface User {
   email: string;
   firstName: string;
   lastName: string;
-  isSuperAdmin: boolean;
   isActive: boolean;
+  franchiseName: string;
   franchiseId: number;
+  isSuperAdmin: boolean;
   tier?: number;
+  currentRole?: Role;
 }
 
 interface OnboardingStatus {
@@ -30,18 +32,12 @@ interface OnboardingStatus {
 }
 
 interface AuthState {
-  // User data
   user: User | null;
   token: string | null;
-
-  // Roles
   allRoles: Role[];
   currentRole: Role | null;
-
-  // Onboarding
   onboardingStatus: OnboardingStatus | null;
 
-  // Actions
   setAuth: (user: User, token: string, roles: Role[]) => void;
   setCurrentRole: (roleId: number) => void;
   setOnboardingStatus: (status: OnboardingStatus) => void;
@@ -55,50 +51,50 @@ interface AuthState {
 const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
-      // Initial state
       user: null,
       token: null,
       allRoles: [],
       currentRole: null,
       onboardingStatus: null,
 
-      // Set authentication data
       setAuth: (user, token, roles) => {
-        // Save token to cookie
-        // Cookies.set("token", token, { expires: 7 });
-
-        // Find primary role or first role
         const primaryRole = roles.find((r) => r.isPrimary) || roles[0] || null;
+        let cookieRole = primaryRole?.name.toLowerCase() || "";
+        let cookieFranchise = "";
+        let currentRoleToSet = primaryRole;
 
-        set({
-          user,
-          token,
-          allRoles: roles,
-          currentRole: primaryRole,
-        });
-      },
-
-      // Switch current role
-      setCurrentRole: (roleId) => {
-        const { allRoles } = get();
-        const role = allRoles.find((r) => r.id === roleId);
-
-        if (role) {
-          set({ currentRole: role });
-          // Optionally save to cookie for persistence
-          Cookies.set("currentRole", role.name);
+        if (user.tier === 3 && user.franchiseName) {
+          cookieRole = "superadmin";
+          cookieFranchise = user.franchiseName.toLowerCase();
+        } else if (user.tier === 4 && user.franchiseName && primaryRole) {
+          cookieRole = primaryRole.name.toLowerCase();
+          cookieFranchise = user.franchiseName.toLowerCase();
         }
+
+        Cookies.set("currentRole", cookieRole);
+        if (cookieFranchise) Cookies.set("franchiseName", cookieFranchise);
+        Cookies.set("tier", String(user.tier || 0));
+
+        set({ user, token, allRoles: roles, currentRole: currentRoleToSet });
       },
 
-      // Set onboarding status
-      setOnboardingStatus: (status) => {
-        set({ onboardingStatus: status });
+      setCurrentRole: (roleId: number) => {
+        const { allRoles, user } = get();
+        if (!user) return;
+        const role = allRoles.find((r) => r.id === roleId);
+        if (!role) return;
+
+        Cookies.set("currentRole", role.name.toLowerCase());
+        set({ currentRole: role });
       },
 
-      // Clear all auth data (logout)
+      setOnboardingStatus: (status) => set({ onboardingStatus: status }),
+
       clearAuth: () => {
-        Cookies.remove("token");
+        Cookies.remove("authToken");
         Cookies.remove("currentRole");
+        Cookies.remove("franchiseName");
+        Cookies.remove("tier");
 
         set({
           user: null,
@@ -109,31 +105,14 @@ const useAuthStore = create<AuthState>()(
         });
       },
 
-      // Update user data
-      updateUser: (userData) => {
+      updateUser: (data) => {
         const { user } = get();
-        if (user) {
-          set({ user: { ...user, ...userData } });
-        }
+        if (user) set({ user: { ...user, ...data } });
       },
 
-      // Check if user has a specific role
-      hasRole: (roleName) => {
-        const { allRoles } = get();
-        return allRoles.some((role) => role.name === roleName);
-      },
-
-      // Get primary role
-      getPrimaryRole: () => {
-        const { allRoles } = get();
-        return allRoles.find((role) => role.isPrimary) || null;
-      },
-
-      // Check if authenticated
-      isAuthenticated: () => {
-        const { user, token } = get();
-        return !!(user && token);
-      },
+      hasRole: (roleName) => get().allRoles.some((r) => r.name === roleName),
+      getPrimaryRole: () => get().allRoles.find((r) => r.isPrimary) || null,
+      isAuthenticated: () => !!(get().user && get().token),
     }),
     {
       name: "auth-storage",
@@ -142,7 +121,6 @@ const useAuthStore = create<AuthState>()(
         user: state.user,
         allRoles: state.allRoles,
         currentRole: state.currentRole,
-        // Don't persist token in localStorage, keep it in cookies only
       }),
     }
   )

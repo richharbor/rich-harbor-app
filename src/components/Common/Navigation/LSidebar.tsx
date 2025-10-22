@@ -1,18 +1,13 @@
 "use client";
-
 import * as React from "react";
 import {
   BanknoteArrowDown,
   BanknoteArrowUp,
   Sparkles,
   SquareTerminal,
-  Users,
-  FileText,
-  ShoppingCart,
   UserCog,
   Building2,
 } from "lucide-react";
-
 import { NavMain } from "@/components/Common/Providers/nav-main";
 import { NavUser } from "@/components/Common/Providers/nav-user";
 import { RoleSwitcher } from "@/components/Common/Providers/team-switcher";
@@ -22,7 +17,6 @@ import {
   SidebarFooter,
   SidebarHeader,
 } from "@/components/ui/sidebar";
-
 import { switchRole } from "@/services/Role/roleServices";
 import Cookies from "js-cookie";
 import { ComponentProps, useEffect, useState } from "react";
@@ -35,27 +29,41 @@ export function LSidebar(props: ComponentProps<typeof Sidebar>) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user && allRoles.length > 0) {
-      setLoading(false);
-    }
+    if (user && allRoles.length > 0) setLoading(false);
   }, [user, allRoles]);
+
+  // Determine URL segment based on tier
+  const getRoleUrlSegment = (role: Role) => {
+    if (!user) return "";
+
+    if (user.tier === 3) {
+      return `b/${user.franchiseName.toLowerCase()}/superadmin`;
+    }
+
+    if (user.tier === 4 && user.franchiseName) {
+      return `b/${user.franchiseName.toLowerCase()}/${role.name.toLowerCase()}`;
+    }
+
+    return `a/${role.name.toLowerCase()}`;
+  };
 
   const handleRoleChange = async (role: Role) => {
     if (!user) return;
     try {
       const response = await switchRole({ roleId: role.id });
-
       Cookies.set("authToken", response.token);
-      Cookies.set("currentRole", role.name);
+
+      const urlSegment = getRoleUrlSegment(role);
+      Cookies.set("currentRole", urlSegment);
       useAuthStore.getState().setCurrentRole(role.id);
 
-      router.push(`/${role.name}/dashboard`);
+      router.push(`/${urlSegment}/dashboard`);
     } catch (error) {
       console.error("Failed to switch role", error);
     }
   };
 
-  if (loading) {
+  if (loading)
     return (
       <Sidebar {...props}>
         <SidebarHeader>
@@ -65,92 +73,75 @@ export function LSidebar(props: ComponentProps<typeof Sidebar>) {
         </SidebarHeader>
       </Sidebar>
     );
-  }
 
-  const role = useAuthStore.getState().currentRole;
+  const roleNameForUrl = getRoleUrlSegment(currentRole!);
 
-  // All possible nav items with required permissions
   const allNavItems = [
     {
       title: "Dashboard",
-      url: `/${role?.name}/dashboard`,
+      url: `/${roleNameForUrl}/dashboard`,
       icon: SquareTerminal,
       permission: "dashboard",
     },
     {
       title: "Buy",
-      url: `/${role?.name}/buy`,
+      url: `/${roleNameForUrl}/buy`,
       icon: BanknoteArrowUp,
       permission: "buying",
     },
     {
       title: "Sell",
-      url: `/${role?.name}/sell`,
+      url: `/${roleNameForUrl}/sell`,
       icon: BanknoteArrowDown,
       permission: "selling",
     },
     {
       title: "Best Deals",
-      url: `/${role?.name}/best-deals`,
+      url: `/${roleNameForUrl}/best-deals`,
       icon: Sparkles,
       permission: "best_deals",
     },
-    // {
-    //   title: "Products",
-    //   url: `/${role?.name}/products`,
-    //   icon: ShoppingCart,
-    //   permission: "manage_products",
-    // },
-    // {
-    //   title: "Users",
-    //   url: `/${role?.name}/users`,
-    //   icon: Users,
-    //   permission: "manage_users",
-    // },
-    // {
-    //   title: "Reports",
-    //   url: `/${role?.name}/reports`,
-    //   icon: FileText,
-    //   permission: "view_reports",
-    // },
     {
       title: "Teams",
-      url: `/${role?.name}/teams`,
+      url: `/${roleNameForUrl}/teams`,
       icon: UserCog,
-      permission: "manage_team", // visible to Super Admin & Admin
+      permission: "manage_team",
     },
     {
       title: "Franchises",
-      url: `/${role?.name}/franchises`,
+      url: `/${roleNameForUrl}/franchises`,
       icon: Building2,
-      permission: "manage_franchise", // visible to Super Admin, Admin, Franchise Admin
+      permission: "manage_franchise",
     },
     {
       title: "Partners",
-      url: `/${role?.name}/partners`,
+      url: `/${roleNameForUrl}/partners`,
       icon: Sparkles,
-      permission: "manage_partners", // visible to Super Admin only
+      permission: "manage_partners",
     },
   ];
 
-  // SuperAdmin → all permissions
-  // Filter nav items based on role
-  let navMain = [];
+  let navMain: typeof allNavItems = [];
 
-  if (role?.name === "superadmin") {
-    // SuperAdmin → all items
-    navMain = allNavItems;
-  } else if (role?.name === "franchise-admin") {
-    // Franchises Admin → all except Teams & Franchises
-    navMain = allNavItems.filter(
-      (item) =>
-        item.permission !== "manage_team" &&
-        item.permission !== "manage_franchise"
-    );
-  } else {
-    // Other roles → filter based on permissions
+  // Tier 3 → franchise-admin → hardcoded permissions
+  const tier3AllowedPermissions = [
+    "dashboard",
+    "buying",
+    "selling",
+    "best_deals",
+    "manage_partners",
+  ];
+
+  if (user?.tier === 3) {
     navMain = allNavItems.filter((item) =>
-      role?.permissions?.includes(item.permission)
+      tier3AllowedPermissions.includes(item.permission)
+    );
+  } else if (currentRole?.name.toLowerCase() === "superadmin") {
+    navMain = allNavItems;
+  } else if (currentRole) {
+    // For Tier 2, Tier 4, others → use role permissions
+    navMain = allNavItems.filter((item) =>
+      currentRole.permissions?.includes(item.permission)
     );
   }
 

@@ -50,11 +50,13 @@ export interface IUserProfile {
     id: number;
     email: string;
     emailVerified: boolean;
+    franchiseName: string;
     firstName: string;
     lastName: string;
     isSuperAdmin: boolean;
     isActive: boolean;
     franchiseId: number;
+    tier: number;
     roles: Array<{
       id: number;
       name: string;
