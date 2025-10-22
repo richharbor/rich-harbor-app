@@ -1,40 +1,68 @@
-"use client"
+"use client";
 
-import { useMemo } from "react"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import * as z from "zod"
+import { useMemo } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Switch } from "@/components/ui/switch"
-import { Label } from "@/components/ui/label"
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
-import { Form, FormField, FormItem, FormControl, FormLabel, FormMessage } from "@/components/ui/form"
-import { useRouter } from "next/navigation"
-import Cookies from "js-cookie"
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormControl,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { useRouter } from "next/navigation";
+import Cookies from "js-cookie";
+import { createSell } from "@/services/sell/sellService";
 
-const deliveryTimelineOptions = ["t", "t+1", "t+2", "t+3", "t+4", "t+5"] as const
+const deliveryTimelineOptions = [
+  "t",
+  "t+1",
+  "t+2",
+  "t+3",
+  "t+4",
+  "t+5",
+] as const;
 
 const baseSchema = z.object({
-  shareName: z
-    .string()
-    .min(1, "Please Enter the share name"),
+  shareName: z.string().min(1, "Please Enter the share name"),
   quantityAvailable: z
     .string()
     .min(1, "Quantity is required")
-    .refine((v) => !isNaN(Number(v)) && Number(v) > 0, "Must be a positive number"),
+    .refine(
+      (v) => !isNaN(Number(v)) && Number(v) > 0,
+      "Must be a positive number"
+    ),
   price: z
     .string()
     .min(1, "Price is required")
-    .refine((v) => !isNaN(Number(v)) && Number(v) > 0, "Must be a positive number"),
+    .refine(
+      (v) => !isNaN(Number(v)) && Number(v) > 0,
+      "Must be a positive number"
+    ),
   deliveryTimeline: z.enum(deliveryTimelineOptions, {
     error: "Select a timeline",
   }),
   moq: z
     .string()
     .min(1, "Min quantity is required")
-    .refine((v)=> !isNaN(Number(v)) && Number(v) > 0, "Must be a positive number"),
+    .refine(
+      (v) => !isNaN(Number(v)) && Number(v) > 0,
+      "Must be a positive number"
+    ),
   fixed: z.boolean(),
   confirmDelivery: z.boolean(),
   shareInStock: z.boolean(),
@@ -42,7 +70,7 @@ const baseSchema = z.object({
   endSellerName: z.string().optional(),
   endSellerProfile: z.string().optional(),
   endSellerLocation: z.string().optional(),
-})
+});
 
 const formSchema = baseSchema.superRefine((data, ctx) => {
   // If share is NOT in stock, require end-seller details
@@ -52,34 +80,32 @@ const formSchema = baseSchema.superRefine((data, ctx) => {
         code: z.ZodIssueCode.custom,
         path: ["endSellerName"],
         message: "End-Seller name is required",
-      })
+      });
     }
     if (!data.endSellerProfile || data.endSellerProfile.trim().length < 2) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["endSellerProfile"],
         message: "End-Seller profile is required",
-      })
+      });
     }
     if (!data.endSellerLocation || data.endSellerLocation.trim().length < 2) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["endSellerLocation"],
         message: "End-Seller location is required",
-      })
+      });
     }
   }
-})
+});
 
-type FormValues = z.infer<typeof formSchema>
+type FormValues = z.infer<typeof formSchema>;
 
 interface AddSharePageProps {
   shareName?: string;
 }
 
-
-export default function AddStockForm( {shareName} : AddSharePageProps) {
-
+export default function AddStockForm({ shareName }: AddSharePageProps) {
   const currentRole = Cookies.get("currentRole");
 
   const route = useRouter();
@@ -93,8 +119,8 @@ export default function AddStockForm( {shareName} : AddSharePageProps) {
       quantityAvailable: "",
       price: "",
       deliveryTimeline: "t",
-      moq:"",
-      fixed:false,
+      moq: "",
+      fixed: false,
       confirmDelivery: false,
       shareInStock: true,
       preShareTransfer: false,
@@ -103,28 +129,49 @@ export default function AddStockForm( {shareName} : AddSharePageProps) {
       endSellerLocation: "",
     },
     mode: "onTouched",
-  })
+  });
 
-  const shareInStock = form.watch("shareInStock")
+  const shareInStock = form.watch("shareInStock");
 
-  const onSubmit = (values: FormValues) => {
-    // Normalize data for efficient usage (numbers as numbers)
-    const payload = {
-      ...values,
-      quantityAvailable: Number(values.quantityAvailable),
-      price: Number(values.price),
+  const onSubmit = async (values: FormValues) => {
+    try {
+      // Map frontend form fields to backend API field names
+      const payload = {
+        shareName: values.shareName,
+        quantityAvailable: Number(values.quantityAvailable),
+        price: Number(values.price),
+        deliveryTimeline: values.deliveryTimeline,
+        moq: values.moq ? Number(values.moq) : undefined,
+        fixedPrice: values.fixed,
+        confirmDelivery: values.confirmDelivery,
+        shareInStock: values.shareInStock,
+        preShareTransfer: values.preShareTransfer,
+        endSellerName: values.endSellerName,
+        endSellerProfile: values.endSellerProfile,
+        endSellerLocation: values.endSellerLocation,
+      };
+
+      console.log("[addStock] payload:", payload);
+
+      const result = await createSell(payload);
+
+      if (result.success) {
+        // Redirect to selling page after successful creation
+        route.push(`/${currentRole}/selling`);
+      }
+    } catch (error: any) {
+      console.error("Failed to create sell:", error);
+      alert("Failed to create sell. Please try again.");
     }
-    // eslint-disable-next-line no-console
-    console.log("[addStock] formData:", payload)
+  };
 
-    route.push(`/${currentRole}/selling`)
-  }
-
-  const timelineItems = useMemo(() => deliveryTimelineOptions, [])
+  const timelineItems = useMemo(() => deliveryTimelineOptions, []);
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 p-6 max-w-3xl mx-auto rounded-lg">
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="space-y-6 p-6 max-w-3xl mx-auto rounded-lg">
         {/* Quantity + Price */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField
@@ -166,12 +213,10 @@ export default function AddStockForm( {shareName} : AddSharePageProps) {
               </FormItem>
             )}
           />
-
-          
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <FormField
+          <FormField
             control={form.control}
             name="price"
             render={({ field }) => (
@@ -190,36 +235,37 @@ export default function AddStockForm( {shareName} : AddSharePageProps) {
               </FormItem>
             )}
           />
-          
 
-        {/* Delivery timeline */}
-        <FormField
-          control={form.control}
-          name="deliveryTimeline"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Delivery timeline</FormLabel>
-              <FormControl>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select timeline" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {timelineItems.map((opt) => (
-                      <SelectItem key={opt} value={opt}>
-                        {opt.toUpperCase()}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+          {/* Delivery timeline */}
+          <FormField
+            control={form.control}
+            name="deliveryTimeline"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Delivery timeline</FormLabel>
+                <FormControl>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select timeline" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {timelineItems.map((opt) => (
+                        <SelectItem key={opt} value={opt}>
+                          {opt.toUpperCase()}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <FormField
+          <FormField
             control={form.control}
             name="moq"
             render={({ field }) => (
@@ -238,17 +284,18 @@ export default function AddStockForm( {shareName} : AddSharePageProps) {
               </FormItem>
             )}
           />
-          
 
-        {/* Delivery timeline */}
-        <FormField
+          {/* Delivery timeline */}
+          <FormField
             control={form.control}
             name="fixed"
             render={({ field }) => (
               <FormItem className="flex items-center gap-2 justify-between rounded-md border p-3">
                 <div className="space-y-1">
                   <FormLabel>Fixed price</FormLabel>
-                  <p className="text-sm text-muted-foreground">The price of share is fixed.</p>
+                  <p className="text-sm text-muted-foreground">
+                    The price of share is fixed.
+                  </p>
                 </div>
                 <FormControl>
                   <div className="flex items-center gap-2">
@@ -281,7 +328,9 @@ export default function AddStockForm( {shareName} : AddSharePageProps) {
               <FormItem className="flex items-center gap-2 justify-between rounded-md border p-3">
                 <div className="space-y-1">
                   <FormLabel>Confirm Delivery</FormLabel>
-                  <p className="text-sm text-muted-foreground">Confirm you can deliver as per timeline.</p>
+                  <p className="text-sm text-muted-foreground">
+                    Confirm you can deliver as per timeline.
+                  </p>
                 </div>
                 <FormControl>
                   <div className="flex items-center gap-2">
@@ -311,7 +360,9 @@ export default function AddStockForm( {shareName} : AddSharePageProps) {
               <FormItem className="flex items-center gap-2 justify-between rounded-md border p-3">
                 <div className="space-y-1">
                   <FormLabel>Share in stock</FormLabel>
-                  <p className="text-sm text-muted-foreground">Do you currently hold the shares?</p>
+                  <p className="text-sm text-muted-foreground">
+                    Do you currently hold the shares?
+                  </p>
                 </div>
                 <FormControl>
                   <div className="flex items-center gap-2">
@@ -391,7 +442,9 @@ export default function AddStockForm( {shareName} : AddSharePageProps) {
             <FormItem className="flex items-center justify-between rounded-md border p-3">
               <div className="space-y-1">
                 <FormLabel>Pre-share transfer</FormLabel>
-                <p className="text-sm text-muted-foreground">Toggle if pre-transfer is required.</p>
+                <p className="text-sm text-muted-foreground">
+                  Toggle if pre-transfer is required.
+                </p>
               </div>
               <FormControl>
                 <div className="flex items-center gap-3">
@@ -419,5 +472,5 @@ export default function AddStockForm( {shareName} : AddSharePageProps) {
         </Button>
       </form>
     </Form>
-  )
+  );
 }
