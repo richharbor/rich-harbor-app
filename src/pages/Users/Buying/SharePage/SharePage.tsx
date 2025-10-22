@@ -14,9 +14,11 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useShareStore } from "@/store/useShareStore";
 import { useSearchParams } from "next/navigation";
 import { getSellsByShareId } from "@/services/sell/sellService";
+import Loading from "@/app/loading";
 
 interface SharePageProps {
   id: string;
+  owner?:boolean;
 }
 
 export interface Seller {
@@ -43,13 +45,13 @@ interface Bid {
   quantity: number; // number of shares
   count: number; // number of bids by this user for this stock
 }
-export default function SharePage({ id }: SharePageProps) {
+export default function SharePage({ id, owner }: SharePageProps) {
   const [share, setShare] = useState<any>(null);
   const { dummyBids } = useShareStore() as { dummyBids: Bid[] };
   const [loading, setLoading] = useState(true);
   const [bids, setBids] = useState<Bid[] | []>([]);
-  const params = useSearchParams() ?? new URLSearchParams(); // URLSearchParams object
-  const owner = params.get("owner");
+  // const params = useSearchParams() ?? new URLSearchParams(); // URLSearchParams object
+  // const owner = params.get("owner");
 
   useEffect(() => {
     const fetchSells = async () => {
@@ -80,8 +82,14 @@ export default function SharePage({ id }: SharePageProps) {
     fetchSells();
   }, [id]);
 
-  if (loading) return <div>Loading...</div>;
-  if (!share) return <div>Share not found!</div>;
+    if (loading) {
+      return (
+        <div className="h-[calc(100vh-4.7rem)] flex flex-col relative overflow-hidden rounded-md">
+          <Loading areaOnly={true} />
+        </div>
+      );
+    }
+  if (!share) return <div className="h-[calc(100vh-4.7rem)] flex flex-col relative justify-center items-center overflow-hidden rounded-md">No shares found.</div>;
 
   // Get all prices as numbers
   let prices = share.sellers.map((seller: Seller) => parseFloat(seller.price));

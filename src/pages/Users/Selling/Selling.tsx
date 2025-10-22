@@ -33,6 +33,7 @@ import {
   getUsersAllShares,
   updateSell,
 } from "@/services/sell/sellService";
+import Loading from "@/app/loading";
 
 export interface ShareDetail {
   id: number;
@@ -69,7 +70,7 @@ interface AllShareItem {
 export default function Selling() {
   const [search, setSearch] = useState("");
   const [teams, setTeams] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [isFormOpen, setIsFormOpen] = useState(false);
   //   const { dummyShares } = useShareStore() as { dummyShares: ShareItem[] };
   const [editShare, setEditShare] = useState<ShareItem | null>(null);
@@ -122,6 +123,8 @@ export default function Selling() {
       setMyShares(response?.data);
     } catch (error) {
       console.log("failed to get shares");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -140,10 +143,10 @@ export default function Selling() {
           prev?.map((share) =>
             share.id === editShare.id
               ? ({
-                  ...share,
-                  price: Number(updatedData.price),
-                  quantityAvailable: Number(updatedData.quantityAvailable),
-                } as unknown as ShareItem)
+                ...share,
+                price: Number(updatedData.price),
+                quantityAvailable: Number(updatedData.quantityAvailable),
+              } as unknown as ShareItem)
               : share
           ) || []
       );
@@ -153,6 +156,15 @@ export default function Selling() {
       console.error("Failed to update share:", error);
     }
   };
+
+
+  if (loading) {
+    return (
+      <div className="h-[calc(100vh-4.7rem)] flex flex-col relative overflow-hidden rounded-md">
+        <Loading areaOnly={true} />
+      </div>
+    );
+  }
 
   return (
     <div className=" h-[calc(100vh-4.7rem)] flex flex-col relative overflow-hidden space-y-6 p-6">
@@ -173,7 +185,7 @@ export default function Selling() {
             <Settings className="h-4 w-4" />
           </Button> */}
           <Button
-            onClick={() => route.push(`/${currentRole}/selling/addShare`)}>
+            onClick={() => route.push(`/${currentRole}/sell/addShare`)}>
             <Plus className="h-4 w-4 mr-2" /> Add New Share
           </Button>
         </div>
@@ -182,10 +194,9 @@ export default function Selling() {
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-3">
         <Card
-          className={`${
-            isMyShares &&
+          className={`${isMyShares &&
             "dark:bg-background bg-white cursor-pointer hover:scale-105 transition-all duration-200 ease-in-out"
-          }`}
+            }`}
           onClick={() => setIsMyShares(false)}>
           <CardHeader>
             <CardTitle>Total Shares</CardTitle>
@@ -195,10 +206,9 @@ export default function Selling() {
           </CardContent>
         </Card>
         <Card
-          className={`${
-            !isMyShares &&
+          className={`${!isMyShares &&
             "dark:bg-background bg-white cursor-pointer hover:scale-105 transition-all duration-200 ease-in-out"
-          }`}
+            }`}
           onClick={() => setIsMyShares(true)}>
           <CardHeader>
             <CardTitle>My Shares</CardTitle>
@@ -259,11 +269,11 @@ export default function Selling() {
                       )
                       .map((t: any) => (
                         <TableRow
-                          key={t.share.name}
+                          key={t.id}
                           className="cursor-pointer"
                           onClick={() =>
                             route.push(
-                              `/${currentRole}/share/${t.share.id}?owner=true`
+                              `/${currentRole}/sell/${t.share.id}`
                             )
                           }>
                           <TableCell className="hover:underline">
@@ -318,11 +328,9 @@ export default function Selling() {
                 <TableHeader className="sticky top-0 z-10">
                   <TableRow>
                     <TableHead>Share Name</TableHead>
-
                     <TableHead>Price</TableHead>
                   </TableRow>
                 </TableHeader>
-
                 <TableBody>
                   {loading ? (
                     <TableRow>
@@ -341,7 +349,7 @@ export default function Selling() {
                           className="cursor-pointer"
                           onClick={() =>
                             route.push(
-                              `/${currentRole}/selling/${t.name.replace(
+                              `/${currentRole}/sell/${t.name.replace(
                                 / /g,
                                 "_"
                               )}`

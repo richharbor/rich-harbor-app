@@ -78,14 +78,14 @@ export function LSidebar(props: ComponentProps<typeof Sidebar>) {
       permission: "dashboard",
     },
     {
-      title: "Buying",
-      url: `/${role?.name}/buying`,
+      title: "Buy",
+      url: `/${role?.name}/buy`,
       icon: BanknoteArrowUp,
       permission: "buying",
     },
     {
-      title: "Selling",
-      url: `/${role?.name}/selling`,
+      title: "Sell",
+      url: `/${role?.name}/sell`,
       icon: BanknoteArrowDown,
       permission: "selling",
     },

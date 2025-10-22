@@ -26,11 +26,13 @@ import {
   getFranchiseMembers,
   inviteFranchisesAdmin,
 } from "@/services/Role/franchisesServices";
+import Loading from "@/app/loading";
 
 export default function Franchises() {
   const [search, setSearch] = useState("");
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [saveLoading, setSaveLoading] = useState(false);
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
     franchiseName: "",
@@ -70,6 +72,7 @@ export default function Franchises() {
 
   const inviteFranchises = async () => {
     try {
+      setSaveLoading(true);
       console.log("Form Data:", formData);
       await inviteFranchisesAdmin(formData); // Ensure this function is defined
       await fetchMembers();
@@ -78,8 +81,18 @@ export default function Franchises() {
     } catch (error) {
       console.error(error);
       toast.error("Failed to send invitation");
+    }finally{
+      setSaveLoading(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="h-[calc(100vh-4.7rem)] flex flex-col relative overflow-hidden rounded-md">
+        <Loading areaOnly={true} />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 p-6">
@@ -137,9 +150,8 @@ export default function Franchises() {
                     {`${u.firstName || ""} ${u.lastName || ""}`}
                   </TableCell>
                   <TableCell>{u.creator?.email || u.email}</TableCell>
-                  <TableCell>{`${u.franchise?.creator?.firstName || ""} ${
-                    u.franchise?.creator?.lastName || ""
-                  }`}</TableCell>
+                  <TableCell>{`${u.franchise?.creator?.firstName || ""} ${u.franchise?.creator?.lastName || ""
+                    }`}</TableCell>
                   <TableCell>{u.tier || "N/A"}</TableCell>
                   <TableCell>
                     <Badge
@@ -185,7 +197,7 @@ export default function Franchises() {
                     franchiseName: e.target.value,
                   }))
                 }
-                // disabled={isInviting}
+              // disabled={isInviting}
               />
             </div>
             <div className="flex flex-col space-y-2">
@@ -200,7 +212,7 @@ export default function Franchises() {
                     firstName: e.target.value,
                   }))
                 }
-                // disabled={isInviting}
+              // disabled={isInviting}
               />
             </div>
             <div className="flex flex-col space-y-2">
@@ -215,7 +227,7 @@ export default function Franchises() {
                     lastName: e.target.value,
                   }))
                 }
-                // disabled={isInviting}
+              // disabled={isInviting}
               />
             </div>
             <div className="flex flex-col space-y-2">
@@ -230,7 +242,7 @@ export default function Franchises() {
                     inviteEmail: e.target.value,
                   }))
                 }
-                // disabled={isInviting}
+              // disabled={isInviting}
               />
             </div>
           </div>
@@ -238,15 +250,15 @@ export default function Franchises() {
             <Button
               variant="outline"
               onClick={() => setIsInviteDialogOpen(false)}
-              // disabled={isInviting}
+              disabled={saveLoading}
             >
               Cancel
             </Button>
             <Button
               onClick={inviteFranchises}
-              //  disabled={isInviting}
+              disabled={saveLoading}
             >
-              Send Invite
+              {saveLoading?"Sending..." : "Send Invite"}
             </Button>
           </DialogFooter>
         </DialogContent>

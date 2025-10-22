@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -27,6 +27,8 @@ import {
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 import { createSell } from "@/services/sell/sellService";
+import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 
 const deliveryTimelineOptions = [
   "t",
@@ -107,6 +109,7 @@ interface AddSharePageProps {
 
 export default function AddStockForm({ shareName }: AddSharePageProps) {
   const currentRole = Cookies.get("currentRole");
+  const [loading, setLoading] = useState(false);
 
   const route = useRouter();
 
@@ -134,6 +137,7 @@ export default function AddStockForm({ shareName }: AddSharePageProps) {
   const shareInStock = form.watch("shareInStock");
 
   const onSubmit = async (values: FormValues) => {
+    setLoading(true);
     try {
       // Map frontend form fields to backend API field names
       const payload = {
@@ -157,11 +161,14 @@ export default function AddStockForm({ shareName }: AddSharePageProps) {
 
       if (result.success) {
         // Redirect to selling page after successful creation
-        route.push(`/${currentRole}/selling`);
+        toast.success("Share is created successfully");
+        route.push(`/${currentRole}/sell`);
       }
     } catch (error: any) {
       console.error("Failed to create sell:", error);
-      alert("Failed to create sell. Please try again.");
+      toast.error("Failed to create sell. Please try again.")
+    }finally{
+      setLoading(false);
     }
   };
 
@@ -467,8 +474,8 @@ export default function AddStockForm({ shareName }: AddSharePageProps) {
           )}
         />
 
-        <Button type="submit" className="w-full">
-          Submit
+        <Button type="submit" disabled={loading} className="w-full">
+          {loading ? <Loader2 className="animate-spin" size={32} /> :'Submit'}
         </Button>
       </form>
     </Form>
