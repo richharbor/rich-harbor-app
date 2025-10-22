@@ -6,10 +6,15 @@ import {
 } from "@/components/ui/sidebar";
 import { ThemeModeToggle } from "@/components/Common/Providers/ThemeModeToggle";
 import { LSidebar } from "@/components/Common/Navigation/LSidebar";
+import { cookies } from "next/headers";
 
-export const metadata: Metadata = {
-  title: "Rich Harbor | Broker",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const cookieStore = cookies();
+  const franchiseName = cookieStore.get("franchiseName")?.value || "Broker";
+  return {
+    title: `Rich Harbor | ${franchiseName}`,
+  };
+}
 
 export default function BrokerLayout({
   children,
