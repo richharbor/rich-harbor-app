@@ -159,7 +159,7 @@ export default function Onboarding() {
             setFormData((prev) => ({
               ...prev,
               email: res.data.partnerEmail,
-              accountType: res.data.partnerRoles.map((r: any) => r.id),
+              accountType: res.data.partnerRoles.map((r: any) => r.name),
             }));
             setInviteEmail(res.data.partnerEmail);
             setAccountRoles(res.data.partnerRoles);
