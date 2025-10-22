@@ -71,13 +71,21 @@ export default function Franchises() {
   const inviteFranchises = async () => {
     try {
       console.log("Form Data:", formData);
-      await inviteFranchisesAdmin(formData); // Ensure this function is defined
+      await inviteFranchisesAdmin(formData);
       await fetchMembers();
       setIsInviteDialogOpen(false);
       toast.success("Invitation sent successfully");
-    } catch (error) {
-      console.error(error);
-      toast.error("Failed to send invitation");
+    } catch (error: any) {
+      console.error("Failed to invite team member:", error);
+
+      // Axios puts the server message in error.response.data
+      const serverMessage =
+        error?.response?.data?.error || // backend explicit error field
+        error?.response?.data?.message || // sometimes backend sends 'message'
+        error?.message || // generic network/axios message
+        "Failed to send invitation."; // fallback message
+
+      toast.error(serverMessage);
     }
   };
 
