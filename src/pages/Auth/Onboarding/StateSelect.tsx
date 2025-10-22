@@ -77,9 +77,9 @@ export default function StateSelect({
           "disabled:opacity-50 disabled:cursor-not-allowed",
         )}
       >
-        <option value="">{placeholder}</option>
+        <option className="dark:bg-background" value="">{placeholder}</option>
         {INDIAN_STATES.map((state) => (
-          <option key={state} value={state}>
+          <option className="dark:bg-background" key={state} value={state}>
             {state}
           </option>
         ))}

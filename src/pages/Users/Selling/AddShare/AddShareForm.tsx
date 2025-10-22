@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/form";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
-import { createSell } from "@/services/sell/sellService";
+import { createSell, getUsersAllShares } from "@/services/sell/sellService";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
@@ -106,14 +106,60 @@ type FormValues = z.infer<typeof formSchema>;
 interface AddSharePageProps {
   shareName?: string;
 }
+export interface ShareDetail {
+  id: number;
+  name: string;
+  symbol: string | null;
+  price: string;
+}
+
+export interface ShareItem {
+  id: number;
+  userId: number;
+  shareId: number;
+  price: string;
+  quantityAvailable: number;
+  minimumOrderQuatity: number;
+  shareInStock: boolean;
+  preShareTransfer: boolean;
+  fixedPrice: boolean;
+  confirmDelivery: boolean;
+  deliveryTimeline: string;
+  endSellerLocation: string;
+  endSellerName: string;
+  endSellerProfile: string;
+  createdAt: string; // ISO date string
+  updatedAt: string; // ISO date string
+  share: ShareDetail;
+}
 
 export default function AddStockForm({ shareName }: AddSharePageProps) {
   const currentRole = Cookies.get("currentRole");
   const [loading, setLoading] = useState(false);
+  const [myShares, setMyShares] = useState<ShareItem[] | null>(null);
 
   const route = useRouter();
 
   const isNewShare = String(shareName) === "addShare";
+
+
+
+  useEffect(() => {
+    getUsersShares();
+  }, []);
+
+
+  const getUsersShares = async () => {
+    try {
+      const response = await getUsersAllShares();
+      console.log(response.data);
+      setMyShares(response?.data);
+    } catch (error) {
+      console.log("failed to get shares");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -157,6 +203,14 @@ export default function AddStockForm({ shareName }: AddSharePageProps) {
 
       console.log("[addStock] payload:", payload);
 
+      const found = myShares?.find((item) => item.share.name === payload.shareName);
+
+      if(found){
+        toast.error("You alread have that share");
+        setLoading(false);
+        return;
+      }
+
       const result = await createSell(payload);
 
       if (result.success) {
@@ -167,7 +221,7 @@ export default function AddStockForm({ shareName }: AddSharePageProps) {
     } catch (error: any) {
       console.error("Failed to create sell:", error);
       toast.error("Failed to create sell. Please try again.")
-    }finally{
+    } finally {
       setLoading(false);
     }
   };
@@ -475,7 +529,7 @@ export default function AddStockForm({ shareName }: AddSharePageProps) {
         />
 
         <Button type="submit" disabled={loading} className="w-full">
-          {loading ? <Loader2 className="animate-spin" size={32} /> :'Submit'}
+          {loading ? <Loader2 className="animate-spin" size={32} /> : 'Submit'}
         </Button>
       </form>
     </Form>
