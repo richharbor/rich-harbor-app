@@ -143,6 +143,19 @@ export const postAgreement = async (requestBody: IAgreementBody) => {
   }
 };
 
+export const postBusinessInfo = async (requestBody: any) => {
+  try {
+    const response = await PrivateAxios.post(
+      `/auth/onboard/step5`,
+      requestBody
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Submit business info failed", error);
+    throw error;
+  }
+};
+
 export const completeOnboarding = async () => {
   try {
     const response = await PrivateAxios.post(`/auth/onboard/complete`);

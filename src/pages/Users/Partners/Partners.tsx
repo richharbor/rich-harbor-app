@@ -284,7 +284,7 @@ export default function Partners() {
   };
 
   const getStepBadge = (step: number) => (
-    <Badge variant={step === 5 ? "default" : "outline"}>Step {step}/5</Badge>
+    <Badge variant={step === 6 ? "default" : "outline"}>Step {step}/6</Badge>
   );
 
   const approvePartner = async (applicationId: number) => {
