@@ -29,6 +29,7 @@ import Cookies from "js-cookie";
 import { createSell, getUsersAllShares } from "@/services/sell/sellService";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { getTieredPath } from "@/helpers/getTieredPath";
 
 const deliveryTimelineOptions = [
   "t",
@@ -142,12 +143,9 @@ export default function AddStockForm({ shareName }: AddSharePageProps) {
 
   const isNewShare = String(shareName) === "addShare";
 
-
-
   useEffect(() => {
     getUsersShares();
   }, []);
-
 
   const getUsersShares = async () => {
     try {
@@ -203,9 +201,11 @@ export default function AddStockForm({ shareName }: AddSharePageProps) {
 
       console.log("[addStock] payload:", payload);
 
-      const found = myShares?.find((item) => item.share.name === payload.shareName);
+      const found = myShares?.find(
+        (item) => item.share.name === payload.shareName
+      );
 
-      if(found){
+      if (found) {
         toast.error("You alread have that share");
         setLoading(false);
         return;
@@ -216,11 +216,12 @@ export default function AddStockForm({ shareName }: AddSharePageProps) {
       if (result.success) {
         // Redirect to selling page after successful creation
         toast.success("Share is created successfully");
-        route.push(`/${currentRole}/sell`);
+        const base = getTieredPath();
+        route.push(`/${base}/sell`);
       }
     } catch (error: any) {
       console.error("Failed to create sell:", error);
-      toast.error("Failed to create sell. Please try again.")
+      toast.error("Failed to create sell. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -529,7 +530,7 @@ export default function AddStockForm({ shareName }: AddSharePageProps) {
         />
 
         <Button type="submit" disabled={loading} className="w-full">
-          {loading ? <Loader2 className="animate-spin" size={32} /> : 'Submit'}
+          {loading ? <Loader2 className="animate-spin" size={32} /> : "Submit"}
         </Button>
       </form>
     </Form>

@@ -10,6 +10,7 @@ import { Search, ChevronRight } from "lucide-react";
 
 import { getAllSellShares } from "@/services/sell/sellService";
 import Loading from "@/app/loading";
+import { getTieredPath } from "@/helpers/getTieredPath";
 
 interface ShareItem {
   id: number;
@@ -76,7 +77,11 @@ export default function Buying() {
   }
 
   if (!shares.length) {
-    return <div className="h-[calc(100vh-4.7rem)] flex flex-col relative justify-center items-center overflow-hidden rounded-md">No shares found.</div>;
+    return (
+      <div className="h-[calc(100vh-4.7rem)] flex flex-col relative justify-center items-center overflow-hidden rounded-md">
+        No shares found.
+      </div>
+    );
   }
 
   return (
@@ -103,9 +108,10 @@ export default function Buying() {
             {shares.map((share, index) => (
               <Card
                 key={index}
-                onClick={() =>
-                  route.push(`/${currentRole}/share/${share.shareId}`)
-                }
+                onClick={() => {
+                  const base = getTieredPath();
+                  route.push(`/${base}/share/${share.shareId}`);
+                }}
                 className="group relative cursor-pointer border border-border/50 bg-card hover:shadow-lg hover:border-primary/40 transition-all duration-300 rounded-2xl p-4">
                 {/* Top Row */}
                 <div className="flex items-center justify-between mb-2">
