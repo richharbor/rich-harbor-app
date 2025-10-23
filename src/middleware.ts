@@ -50,7 +50,7 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  //  Home path → handled client-side
+  //  Home path → handled client-side --
   if (pathname === "/") return NextResponse.next();
 
   // Not authenticated → redirect login
