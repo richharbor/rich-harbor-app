@@ -77,21 +77,21 @@ const availableAccess = [
     label: "Best Deals",
     description: "View product listings, deals, and promotions",
   },
-  {
-    id: "manage_products",
-    label: "Products",
-    description: "Add, edit, and manage product inventory",
-  },
-  {
-    id: "manage_users",
-    label: "Users",
-    description: "Manage leads, contacts, and team members",
-  },
-  {
-    id: "view_reports",
-    label: "Reports",
-    description: "Generate and view business and performance reports",
-  },
+  // {
+  //   id: "manage_products",
+  //   label: "Products",
+  //   description: "Add, edit, and manage product inventory",
+  // },
+  // {
+  //   id: "manage_users",
+  //   label: "Users",
+  //   description: "Manage leads, contacts, and team members",
+  // },
+  // {
+  //   id: "view_reports",
+  //   label: "Reports",
+  //   description: "Generate and view business and performance reports",
+  // },
   {
     id: "manage_franchise",
     label: "Franchises",
@@ -116,6 +116,8 @@ export default function Teams() {
   const [newRoleDescription, setNewRoleDescription] = useState("");
   const [selectedAccess, setSelectedAccess] = useState<string[]>([]);
   const [rolesModalOpen, setRolesModalOpen] = useState(false);
+
+  const [removingRole, setRemovingRole] = useState(-1);
 
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
@@ -291,11 +293,7 @@ export default function Teams() {
         return;
       }
 
-      // Optionally confirm before deleting
-      const confirmDelete = window.confirm(
-        "Are you sure you want to delete this role?"
-      );
-      if (!confirmDelete) return;
+      setRemovingRole(roleId);
 
       // Call API
       const response = await deleteTeamRole(roleId);
@@ -320,6 +318,8 @@ export default function Teams() {
         error?.response?.data?.error ||
           "An error occurred while deleting the role"
       );
+    }finally{
+      setRemovingRole(-1);
     }
   };
 
@@ -697,8 +697,9 @@ export default function Teams() {
                     variant="ghost"
                     size="sm"
                     className="text-destructive"
+                    disabled={removingRole === role.id}
                     onClick={() => handleRoleDelete(role.id)}>
-                    Remove
+                     {removingRole === role.id ? 'Removing...': 'Remove'}
                   </Button>
                 </div>
               );
