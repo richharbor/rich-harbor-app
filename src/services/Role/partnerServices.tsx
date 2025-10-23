@@ -22,6 +22,18 @@ export const createNewRoleForPartner = async (requestBody: CreateRoleBody) => {
   }
 };
 
+export const deletePartnerRole = async (roleId: number) => {
+  try {
+    const response = await PrivateAxios.delete(
+      `${API_URL}/partners/delete-role/${roleId}`
+    );
+    return response.data;
+  } catch (error: any) {
+    console.error("Failed to delete partner role:", error);
+    throw error;
+  }
+};
+
 // Get all onboarding applications with filters & pagination
 export const getPartnerApplications = async (params?: {
   status?: string;

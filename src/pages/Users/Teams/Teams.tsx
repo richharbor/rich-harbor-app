@@ -43,6 +43,7 @@ import { cn } from "@/lib/utils";
 import { id } from "zod/v4/locales";
 import {
   createNewRoleForTeams,
+  deleteTeamRole,
   getAllTeamMembers,
   getTeamRoles,
   inviteTeamMember,
@@ -156,10 +157,10 @@ export default function Teams() {
       }
     } catch (err) {
       toast.error("Failed to load team members");
-    }finally {
+    } finally {
       setLoading(false);
     }
-  }
+  };
 
   const handleDeactivate = async (id: string) => {
     try {
@@ -283,24 +284,43 @@ export default function Teams() {
     }
   };
 
-  const handleRoleDelete = async (name: string) => {
-    // try {
-    //   const response = await deleteRole(name);
-    //   // Check if the deleted role was part of current user's roles
-    //   const roleWasAssigned = currentUserRoles.includes(name);
-    //   if (roleWasAssigned) {
-    //     toast.info("Your assigned role was deleted. Redirecting...");
-    //     router.push("/"); // redirect to home
-    //     return;
-    //   }
-    //   await getAllUsers();
-    //   // Otherwise, just delete the role
-    //   toast.success(`Role "${name}" removed.`);
-    //   await fetchAllRoles();
-    // } catch (err) {
-    //   console.error(err);
-    //   toast.error(`Failed to remove role "${name}".`);
-    // }
+  const handleRoleDelete = async (roleId: number) => {
+    try {
+      if (!roleId) {
+        toast.error("Invalid role ID");
+        return;
+      }
+
+      // Optionally confirm before deleting
+      const confirmDelete = window.confirm(
+        "Are you sure you want to delete this role?"
+      );
+      if (!confirmDelete) return;
+
+      // Call API
+      const response = await deleteTeamRole(roleId);
+
+      if (response?.success) {
+        toast.success(response.message || "Role deleted successfully");
+
+        // Refresh roles after deletion
+        await fetchAllRoles();
+
+        // Optional: check if deleted role was current user's role
+        // if (currentUserRoles.includes(roleId)) {
+        //   toast.info("Your assigned role was deleted. Redirecting...");
+        //   router.push("/");
+        // }
+      } else {
+        toast.error(response?.error || "Failed to delete role");
+      }
+    } catch (error: any) {
+      console.error("Delete role failed:", error);
+      toast.error(
+        error?.response?.data?.error ||
+          "An error occurred while deleting the role"
+      );
+    }
   };
 
   const handleToggleRole = (roleId: number) => {
@@ -343,13 +363,13 @@ export default function Teams() {
     }
   };
 
-   if (loading) {
-      return (
-        <div className="h-[calc(100vh-4.7rem)] flex flex-col relative overflow-hidden rounded-md">
-          <Loading areaOnly={true} />
-        </div>
-      );
-    }
+  if (loading) {
+    return (
+      <div className="h-[calc(100vh-4.7rem)] flex flex-col relative overflow-hidden rounded-md">
+        <Loading areaOnly={true} />
+      </div>
+    );
+  }
 
   return (
     <div className=" relative space-y-6 p-6">
@@ -364,8 +384,7 @@ export default function Teams() {
           <Button
             variant="outline"
             onClick={() => setRolesModalOpen(true)}
-            className="flex items-center gap-2"
-          >
+            className="flex items-center gap-2">
             Roles
             <Settings className="h-4 w-4" />
           </Button>
@@ -438,8 +457,7 @@ export default function Teams() {
                   <TableCell>{t.tier}</TableCell>
                   <TableCell>
                     <Badge
-                      variant={t.emailVerified ? "default" : "destructive"}
-                    >
+                      variant={t.emailVerified ? "default" : "destructive"}>
                       {t.emailVerified ? "Acceprted" : "Pending"}
                     </Badge>
                   </TableCell>
@@ -448,8 +466,7 @@ export default function Teams() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleDeactivate(t.id)}
-                      >
+                        onClick={() => handleDeactivate(t.id)}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
@@ -517,8 +534,7 @@ export default function Teams() {
                 <button
                   type="button"
                   onClick={() => setOpen(!open)}
-                  className="flex w-full items-center justify-between border rounded-md px-3 py-2 text-sm bg-background hover:bg-muted transition-colors"
-                >
+                  className="flex w-full items-center justify-between border rounded-md px-3 py-2 text-sm bg-background hover:bg-muted transition-colors">
                   {selectedRoles.length > 0
                     ? customRoles
                         .filter((role) => selectedRoles.includes(role.id))
@@ -539,8 +555,7 @@ export default function Teams() {
                           className={cn(
                             "flex items-center p-2 rounded-md cursor-pointer hover:bg-muted",
                             selectedRoles.includes(role.id) && "bg-muted"
-                          )}
-                        >
+                          )}>
                           <div className="mr-2">
                             {selectedRoles.includes(role.id) ? (
                               <Check className="h-4 w-4 text-primary" />
@@ -566,8 +581,7 @@ export default function Teams() {
             <Button
               variant="outline"
               onClick={() => setIsInviteOpen(false)}
-              disabled={saveLoading}
-            >
+              disabled={saveLoading}>
               Cancel
             </Button>
             <Button onClick={invitePartner} disabled={saveLoading}>
@@ -630,8 +644,7 @@ export default function Teams() {
                     <div className="grid gap-1.5 leading-none">
                       <Label
                         htmlFor={access.id}
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                      >
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                         {access.label}
                       </Label>
                       <p className="text-xs text-muted-foreground">
@@ -648,16 +661,14 @@ export default function Teams() {
             <Button
               variant="outline"
               onClick={() => setCreateRoleModalOpen(false)}
-              disabled={saveLoading}
-            >
+              disabled={saveLoading}>
               Cancel
             </Button>
             <Button
               onClick={handleCreateRole}
               disabled={
                 !newRoleName || selectedAccess.length === 0 || saveLoading
-              }
-            >
+              }>
               {saveLoading ? "Creating..." : "Create Role"}
             </Button>
           </DialogFooter>
@@ -680,15 +691,13 @@ export default function Teams() {
               return (
                 <div
                   key={role.name}
-                  className="flex justify-between items-center p-2 rounded-md border hover:bg-muted"
-                >
+                  className="flex justify-between items-center p-2 rounded-md border hover:bg-muted">
                   <span>{role.name}</span>
                   <Button
                     variant="ghost"
                     size="sm"
                     className="text-destructive"
-                    onClick={() => handleRoleDelete(role.name)}
-                  >
+                    onClick={() => handleRoleDelete(role.id)}>
                     Remove
                   </Button>
                 </div>
@@ -704,8 +713,7 @@ export default function Teams() {
               onClick={() => {
                 // setRolesModalOpen(false);
                 setCreateRoleModalOpen(true); // open Create Role modal
-              }}
-            >
+              }}>
               Create Role
             </Button>
           </DialogFooter>

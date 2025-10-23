@@ -55,6 +55,7 @@ import {
   getPartnerRoles,
   fetchAllFranshisesForAdmin,
   updateApplicationStatus,
+  deletePartnerRole,
 } from "@/services/Role/partnerServices";
 import useAuthStore from "@/helpers/authStore";
 import { permission } from "process";
@@ -295,8 +296,8 @@ export default function Partners() {
       await fetchPartners();
     } catch (error) {
       toast.error("Failed to approve partner");
-    }finally{
-      setLoading(false)
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -312,7 +313,7 @@ export default function Partners() {
       await fetchPartners();
     } catch (error) {
       toast.error("Failed to reject partner");
-    }finally{
+    } finally {
       setLoading(false);
     }
   };
@@ -382,25 +383,40 @@ export default function Partners() {
     }
   };
 
-  const handleRoleDelete = async (name: string) => {
-    // try {
-    //   const response = await deleteRole(name);
-    //   // Check if the deleted role was part of current user's roles
-    //   const roleWasAssigned = currentUserRoles.includes(name);
-    //   if (roleWasAssigned) {
-    //     toast.info("Your assigned role was deleted. Redirecting...");
-    //     router.push("/"); // redirect to home
-    //     return;
-    //   }
-    //   await getAllUsers();
-    //   // Otherwise, just delete the role
-    //   toast.success(`Role "${name}" removed.`);
-    //   await fetchAllRoles();
-    // } catch (err) {
-    //   console.error(err);
-    //   toast.error(`Failed to remove role "${name}".`);
-    // }
+  const handleRoleDelete = async (roleId: number) => {
+    try {
+      if (!roleId) {
+        toast.error("Invalid role ID");
+        return;
+      }
+
+      const confirmDelete = window.confirm(
+        "Are you sure you want to delete this partner role?"
+      );
+      if (!confirmDelete) return;
+
+      const response = await deletePartnerRole(roleId);
+
+      if (response?.success) {
+        toast.success(response.message || "Partner role deleted successfully");
+
+        // Refresh your roles list (if you have a fetch function)
+        await fetchAllRoles();
+
+        // Optional: if you want to refresh related users or roles data
+        // await getAllUsers?.();
+      } else {
+        toast.error(response?.error || "Failed to delete partner role");
+      }
+    } catch (err: any) {
+      console.error("Failed to delete partner role:", err);
+      toast.error(
+        err?.response?.data?.error ||
+          "An error occurred while deleting the partner role"
+      );
+    }
   };
+
   const handleToggleRole = (roleId: number) => {
     setSelectedRoles((prev) =>
       prev.includes(roleId)
@@ -408,7 +424,6 @@ export default function Partners() {
         : [...prev, roleId]
     );
   };
-
 
   if (loading) {
     return (
@@ -440,8 +455,7 @@ export default function Partners() {
                   setSelectedFranchiseId(fid);
                   fetchAllRoles(fid);
                   fetchPartners(fid);
-                }}
-              >
+                }}>
                 <SelectTrigger className="w-64">
                   <SelectValue placeholder="Select Franchise" />
                 </SelectTrigger>
@@ -459,8 +473,7 @@ export default function Partners() {
           <Button
             variant="outline"
             onClick={() => setRolesModalOpen(true)}
-            className="flex items-center gap-2"
-          >
+            className="flex items-center gap-2">
             Roles
             <Settings className="h-4 w-4" />
           </Button>
@@ -584,8 +597,7 @@ export default function Partners() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleViewDetails(partner)}
-                      >
+                        onClick={() => handleViewDetails(partner)}>
                         <Eye className="h-4 w-4" />
                       </Button>
                       {partner.status === "pending" && (
@@ -594,16 +606,14 @@ export default function Partners() {
                             variant="outline"
                             size="sm"
                             onClick={() => approvePartner(partner.userId)}
-                            className="text-green-600 hover:text-green-700"
-                          >
+                            className="text-green-600 hover:text-green-700">
                             <Check className="h-4 w-4" />
                           </Button>
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => rejectPartner(partner.userId)}
-                            className="text-red-600 hover:text-red-700"
-                          >
+                            className="text-red-600 hover:text-red-700">
                             <X className="h-4 w-4" />
                           </Button>
                         </>
@@ -657,13 +667,12 @@ export default function Partners() {
                 <button
                   type="button"
                   onClick={() => setOpen(!open)}
-                  className="flex w-full items-center justify-between border rounded-md px-3 py-2 text-sm bg-background hover:bg-muted transition-colors"
-                >
+                  className="flex w-full items-center justify-between border rounded-md px-3 py-2 text-sm bg-background hover:bg-muted transition-colors">
                   {selectedRoles.length > 0
                     ? customRoles
-                      .filter((role) => selectedRoles.includes(role.id))
-                      .map((role) => role.name)
-                      .join(", ")
+                        .filter((role) => selectedRoles.includes(role.id))
+                        .map((role) => role.name)
+                        .join(", ")
                     : "Select roles"}
                   <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
                 </button>
@@ -679,8 +688,7 @@ export default function Partners() {
                           className={cn(
                             "flex items-center p-2 rounded-md cursor-pointer hover:bg-muted",
                             selectedRoles.includes(role.id) && "bg-muted"
-                          )}
-                        >
+                          )}>
                           <div className="mr-2">
                             {selectedRoles.includes(role.id) ? (
                               <Check className="h-4 w-4 text-primary" />
@@ -705,8 +713,7 @@ export default function Partners() {
             <Button
               variant="outline"
               onClick={() => setIsInviteDialogOpen(false)}
-              disabled={isInviting}
-            >
+              disabled={isInviting}>
               Cancel
             </Button>
             <Button onClick={invitePartner} disabled={isInviting}>
@@ -769,8 +776,7 @@ export default function Partners() {
                     <div className="grid gap-1.5 leading-none">
                       <Label
                         htmlFor={access.id}
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                      >
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                         {access.label}
                       </Label>
                       <p className="text-xs text-muted-foreground">
@@ -787,16 +793,14 @@ export default function Partners() {
             <Button
               variant="outline"
               onClick={() => setCreateRoleModalOpen(false)}
-              disabled={saveLoading}
-            >
+              disabled={saveLoading}>
               Cancel
             </Button>
             <Button
               onClick={handleCreateRole}
               disabled={
                 !newRoleName || selectedAccess.length === 0 || saveLoading
-              }
-            >
+              }>
               {saveLoading ? "Creating..." : "Create Role"}
             </Button>
           </DialogFooter>
@@ -819,15 +823,13 @@ export default function Partners() {
               return (
                 <div
                   key={role.name}
-                  className="flex justify-between items-center p-2 rounded-md border hover:bg-muted"
-                >
+                  className="flex justify-between items-center p-2 rounded-md border hover:bg-muted">
                   <span>{role.name}</span>
                   <Button
                     variant="ghost"
                     size="sm"
                     className="text-destructive"
-                    onClick={() => handleRoleDelete(role.name)}
-                  >
+                    onClick={() => handleRoleDelete(role.id)}>
                     Remove
                   </Button>
                 </div>
@@ -843,8 +845,7 @@ export default function Partners() {
               onClick={() => {
                 // setRolesModalOpen(false);
                 setCreateRoleModalOpen(true); // open Create Role modal
-              }}
-            >
+              }}>
               Create Role
             </Button>
           </DialogFooter>
