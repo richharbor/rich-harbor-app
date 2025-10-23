@@ -48,6 +48,10 @@ interface AuthState {
   isAuthenticated: () => boolean;
 }
 
+const formatFranchiseName = (name: string): string => {
+  return name.trim().toLowerCase().replace(/\s+/g, "-");
+};
+
 const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
@@ -65,10 +69,10 @@ const useAuthStore = create<AuthState>()(
 
         if (user.tier === 3 && user.franchiseName) {
           cookieRole = "superadmin";
-          cookieFranchise = user.franchiseName.toLowerCase();
+          cookieFranchise = formatFranchiseName(user.franchiseName);
         } else if (user.tier === 4 && user.franchiseName && primaryRole) {
           cookieRole = primaryRole.name.toLowerCase();
-          cookieFranchise = user.franchiseName.toLowerCase();
+          cookieFranchise = formatFranchiseName(user.franchiseName);
         }
 
         Cookies.set("currentRole", cookieRole);

@@ -7,6 +7,10 @@ import Loading from "./loading";
 import { getUserDetails } from "@/services/Auth/authServices";
 import useAuthStore from "@/helpers/authStore";
 
+const formatFranchiseName = (name: string): string => {
+  return name.trim().toLowerCase().replace(/\s+/g, "-");
+};
+
 export default function Home() {
   const router = useRouter();
   const authToken = Cookies.get("authToken");
@@ -36,17 +40,22 @@ export default function Home() {
       let roleCookie = "";
       let franchiseCookie = "";
 
+      // Format franchise name properly
+      const formattedFranchise = user.franchiseName
+        ? formatFranchiseName(user.franchiseName)
+        : "";
+
       if (user.tier === 1 || user.tier === 2) {
         redirectUrl = `/a/${user.currentRole?.name.toLowerCase()}/dashboard`;
         roleCookie = user.currentRole?.name.toLowerCase() || "";
       } else if (user.tier === 3) {
-        redirectUrl = `/b/${user.franchiseName.toLowerCase()}/superadmin/dashboard`;
+        redirectUrl = `/b/${formattedFranchise}/superadmin/dashboard`;
         roleCookie = "superadmin";
-        franchiseCookie = user.franchiseName.toLowerCase();
+        franchiseCookie = formattedFranchise;
       } else if (user.tier === 4) {
-        redirectUrl = `/b/${user.franchiseName.toLowerCase()}/${user.currentRole?.name.toLowerCase()}/dashboard`;
+        redirectUrl = `/b/${formattedFranchise}/${user.currentRole?.name.toLowerCase()}/dashboard`;
         roleCookie = user.currentRole?.name.toLowerCase() || "";
-        franchiseCookie = user.franchiseName.toLowerCase();
+        franchiseCookie = formattedFranchise;
       }
 
       Cookies.set("currentRole", roleCookie);

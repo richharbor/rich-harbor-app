@@ -34,6 +34,7 @@ import {
   updateSell,
 } from "@/services/sell/sellService";
 import Loading from "@/app/loading";
+import { getTieredPath } from "@/helpers/getTieredPath";
 
 export interface ShareDetail {
   id: number;
@@ -143,10 +144,10 @@ export default function Selling() {
           prev?.map((share) =>
             share.id === editShare.id
               ? ({
-                ...share,
-                price: Number(updatedData.price),
-                quantityAvailable: Number(updatedData.quantityAvailable),
-              } as unknown as ShareItem)
+                  ...share,
+                  price: Number(updatedData.price),
+                  quantityAvailable: Number(updatedData.quantityAvailable),
+                } as unknown as ShareItem)
               : share
           ) || []
       );
@@ -156,7 +157,6 @@ export default function Selling() {
       console.error("Failed to update share:", error);
     }
   };
-
 
   if (loading) {
     return (
@@ -185,7 +185,10 @@ export default function Selling() {
             <Settings className="h-4 w-4" />
           </Button> */}
           <Button
-            onClick={() => route.push(`/${currentRole}/sell/addShare`)}>
+            onClick={() => {
+              const base = getTieredPath();
+              route.push(`/${base}/sell/addShare`);
+            }}>
             <Plus className="h-4 w-4 mr-2" /> Add New Share
           </Button>
         </div>
@@ -194,9 +197,10 @@ export default function Selling() {
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-3">
         <Card
-          className={`${isMyShares &&
+          className={`${
+            isMyShares &&
             "dark:bg-background bg-white cursor-pointer hover:scale-105 transition-all duration-200 ease-in-out"
-            }`}
+          }`}
           onClick={() => setIsMyShares(false)}>
           <CardHeader>
             <CardTitle>Total Shares</CardTitle>
@@ -206,9 +210,10 @@ export default function Selling() {
           </CardContent>
         </Card>
         <Card
-          className={`${!isMyShares &&
+          className={`${
+            !isMyShares &&
             "dark:bg-background bg-white cursor-pointer hover:scale-105 transition-all duration-200 ease-in-out"
-            }`}
+          }`}
           onClick={() => setIsMyShares(true)}>
           <CardHeader>
             <CardTitle>My Shares</CardTitle>
@@ -271,11 +276,10 @@ export default function Selling() {
                         <TableRow
                           key={t.id}
                           className="cursor-pointer"
-                          onClick={() =>
-                            route.push(
-                              `/${currentRole}/sell/${t.share.id}`
-                            )
-                          }>
+                          onClick={() => {
+                            const base = getTieredPath();
+                            route.push(`/${base}/sell/${t.share.id}`);
+                          }}>
                           <TableCell className="hover:underline">
                             {t.share.name}
                           </TableCell>
@@ -347,14 +351,12 @@ export default function Selling() {
                         <TableRow
                           key={t.name}
                           className="cursor-pointer"
-                          onClick={() =>
+                          onClick={() => {
+                            const base = getTieredPath();
                             route.push(
-                              `/${currentRole}/sell/${t.name.replace(
-                                / /g,
-                                "_"
-                              )}`
-                            )
-                          }>
+                              `/${base}/sell/${t.name.replace(/ /g, "_")}`
+                            );
+                          }}>
                           <TableCell className="p-3 hover:underline">
                             {t.name}
                           </TableCell>

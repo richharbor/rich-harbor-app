@@ -23,6 +23,11 @@ import { ComponentProps, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import useAuthStore, { Role } from "@/helpers/authStore";
 
+// Helper to normalize franchise name for URLs and cookies
+const formatFranchiseName = (name: string): string => {
+  return name.trim().toLowerCase().replace(/\s+/g, "-");
+};
+
 export function LSidebar(props: ComponentProps<typeof Sidebar>) {
   const router = useRouter();
   const { user, allRoles, currentRole } = useAuthStore();
@@ -32,21 +37,26 @@ export function LSidebar(props: ComponentProps<typeof Sidebar>) {
     if (user && allRoles.length > 0) setLoading(false);
   }, [user, allRoles]);
 
-  // Determine URL segment based on tier
+  // ✅ Determine URL segment based on tier
   const getRoleUrlSegment = (role: Role) => {
     if (!user) return "";
 
+    const formattedFranchise = user.franchiseName
+      ? formatFranchiseName(user.franchiseName)
+      : "";
+
     if (user.tier === 3) {
-      return `b/${user.franchiseName.toLowerCase()}/superadmin`;
+      return `b/${formattedFranchise}/superadmin`;
     }
 
     if (user.tier === 4 && user.franchiseName) {
-      return `b/${user.franchiseName.toLowerCase()}/${role.name.toLowerCase()}`;
+      return `b/${formattedFranchise}/${role.name.toLowerCase()}`;
     }
 
     return `a/${role.name.toLowerCase()}`;
   };
 
+  // ✅ Role switching with updated franchise cookie format
   const handleRoleChange = async (role: Role) => {
     if (!user) return;
     try {
@@ -54,7 +64,13 @@ export function LSidebar(props: ComponentProps<typeof Sidebar>) {
       Cookies.set("authToken", response.token);
 
       const urlSegment = getRoleUrlSegment(role);
-      Cookies.set("currentRole", urlSegment);
+      const formattedFranchise = user.franchiseName
+        ? formatFranchiseName(user.franchiseName)
+        : "";
+
+      Cookies.set("currentRole", role.name.toLowerCase());
+      if (formattedFranchise) Cookies.set("franchiseName", formattedFranchise);
+
       useAuthStore.getState().setCurrentRole(role.id);
 
       router.push(`/${urlSegment}/dashboard`);
@@ -76,6 +92,7 @@ export function LSidebar(props: ComponentProps<typeof Sidebar>) {
 
   const roleNameForUrl = getRoleUrlSegment(currentRole!);
 
+  // ✅ Navigation items with correctly formatted URLs
   const allNavItems = [
     {
       title: "Dashboard",
@@ -121,9 +138,9 @@ export function LSidebar(props: ComponentProps<typeof Sidebar>) {
     },
   ];
 
+  // ✅ Role-based nav filtering
   let navMain: typeof allNavItems = [];
 
-  // Tier 3 → franchise-admin → hardcoded permissions
   const tier3AllowedPermissions = [
     "dashboard",
     "buying",
@@ -139,7 +156,6 @@ export function LSidebar(props: ComponentProps<typeof Sidebar>) {
   } else if (currentRole?.name.toLowerCase() === "superadmin") {
     navMain = allNavItems;
   } else if (currentRole) {
-    // For Tier 2, Tier 4, others → use role permissions
     navMain = allNavItems.filter((item) =>
       currentRole.permissions?.includes(item.permission)
     );
