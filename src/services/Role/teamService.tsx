@@ -27,6 +27,18 @@ export const createNewRoleForTeams = async (requestBody: CreateRoleBody) => {
   }
 };
 
+export const deleteTeamRole = async (roleId: number) => {
+  try {
+    const response = await PrivateAxios.delete(
+      `${API_URL}/teams/delete-role/${roleId}`
+    );
+    return response.data;
+  } catch (error: any) {
+    console.error("Failed to delete team role:", error);
+    throw error;
+  }
+};
+
 export const getTeamRoles = async () => {
   try {
     const response = await PrivateAxios.get(`${API_URL}/teams/roles`);
