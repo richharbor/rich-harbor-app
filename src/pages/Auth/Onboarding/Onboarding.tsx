@@ -398,8 +398,7 @@ export default function Onboarding() {
   const handleLogout = () => {
     Cookies.remove("authToken");
     route.push("/");
-
-  }
+  };
 
   const handlePrevious = () => {
     if (currentStep > 1) {
@@ -524,6 +523,12 @@ export default function Onboarding() {
   };
 
   const isEmail = (val: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
+  function isStrongPassword(password: string): boolean {
+    const regex =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    return regex.test(password);
+  }
+
   const isIFSC = (val: string) => /^[A-Za-z]{4}0[A-Za-z0-9]{6}$/.test(val);
   const isAadhar = (val: string) => /^\d{12}$/.test(val.replace(/\s/g, ""));
   const isPAN = (val: string) =>
@@ -694,6 +699,104 @@ export default function Onboarding() {
     return true;
   }
 
+  function isStepFilled(step: number): boolean {
+    if (step === 1) {
+      return (
+        formData.accountType.length > 0 &&
+        !!formData.email &&
+        formData.password.length >= 8 &&
+        formData.fullName.trim().length > 2
+      );
+    }
+    if (step === 2) {
+      return (
+        !!formData.name &&
+        !!formData.state &&
+        !!formData.aadharCard &&
+        !!formData.panCard &&
+        !!formData.mobile &&
+        !!formData.bankName &&
+        !!formData.accountNumber &&
+        !!formData.ifscCode &&
+        !!formData.country &&
+        !!formData.addressState &&
+        !!formData.addressLine1 &&
+        !!formData.city &&
+        !!formData.zipCode
+      );
+    }
+    if (step === 3) {
+      return (
+        !!formData.uploadedFiles.cmlCopy &&
+        !!formData.uploadedFiles.panCard &&
+        !!formData.uploadedFiles.cancelCheque &&
+        !!formData.uploadedFiles.signature
+      );
+    }
+    if (step === 4) {
+      return !!formData.uploadedFiles.agreement;
+    }
+    if (step === 5) {
+      const filled = formData.referrals.filter(
+        (r) => r.referralName.trim() !== ""
+      );
+      return filled.length >= 3;
+    }
+    return true;
+  }
+
+  function canGoNext(step: number): boolean {
+    // 1️⃣ Must be filled
+    const filled = isStepFilled(step);
+
+    // 2️⃣ Must pass validation (but don't trigger re-render loops)
+    let valid = true;
+    if (step === 1) {
+      return (
+        formData.accountType.length > 0 &&
+        isEmail(formData.email) &&
+        isStrongPassword(formData.password) && //  new check
+        formData.fullName.trim().length > 2
+      );
+    }
+
+    if (step === 2) {
+      valid =
+        formData.name.trim().length > 1 &&
+        formData.state.trim().length > 0 &&
+        isAadhar(formData.aadharCard) &&
+        isPAN(formData.panCard) &&
+        isMobile(formData.mobile) &&
+        formData.bankName.trim().length > 0 &&
+        /^\d+$/.test(formData.accountNumber.trim()) &&
+        formData.accountNumber.trim().length >= 8 &&
+        isIFSC(formData.ifscCode) &&
+        formData.country.trim().length > 0 &&
+        formData.addressState.trim().length > 0 &&
+        formData.addressLine1.trim().length > 0 &&
+        formData.city.trim().length > 0 &&
+        formData.zipCode.trim().length >= 4;
+    }
+    if (step === 3) {
+      valid =
+        !!formData.uploadedFiles.cmlCopy &&
+        !!formData.uploadedFiles.panCard &&
+        !!formData.uploadedFiles.cancelCheque &&
+        !!formData.uploadedFiles.signature;
+    }
+    if (step === 4) {
+      valid = !!formData.uploadedFiles.agreement;
+    }
+    if (step === 5) {
+      const filledReferrals = formData.referrals.filter(
+        (r) => r.referralName.trim() !== ""
+      );
+      valid = filledReferrals.length >= 3;
+    }
+
+    return filled && valid;
+  }
+
   // const canGoNext = isStepValid(currentStep);
 
   const stepBadge = (index: number) => {
@@ -711,8 +814,8 @@ export default function Onboarding() {
           "flex items-center gap-2 px-3 py-2 rounded-full text-sm whitespace-nowrap transition-colors",
           isActive && "bg-primary/10 text-primary border border-primary/20",
           !isActive &&
-          isDone &&
-          "bg-muted text-muted-foreground hover:bg-muted/80",
+            isDone &&
+            "bg-muted text-muted-foreground hover:bg-muted/80",
           !isActive && !isDone && "bg-muted text-muted-foreground",
           !isClickable && "cursor-not-allowed opacity-60"
         )}
@@ -723,8 +826,8 @@ export default function Onboarding() {
             isActive && "border-primary text-primary bg-primary/5",
             isDone && "border-primary text-primary bg-primary/10",
             !isActive &&
-            !isDone &&
-            "border-muted-foreground/30 bg-background text-muted-foreground"
+              !isDone &&
+              "border-muted-foreground/30 bg-background text-muted-foreground"
           )}>
           {isDone ? <Check className="h-3.5 w-3.5" /> : stepNumber}
         </span>
@@ -853,7 +956,10 @@ export default function Onboarding() {
                       Skip for now
                     </Button>
 
-                    <Button onClick={handleNext} disabled={loading}>
+                    <Button
+                      onClick={handleNext}
+                      disabled={loading || !canGoNext(currentStep)} // ⬅️ disable if invalid
+                    >
                       {loading && (
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       )}
@@ -910,12 +1016,10 @@ function StepView({
 }) {
   const route = useRouter();
 
-
   const handleLogout = () => {
     Cookies.remove("authToken");
     route.push("/");
-
-  }
+  };
 
   const clearError = (fieldName: string) => {
     setErrs((prev) => {
@@ -983,12 +1087,49 @@ function StepView({
             onChange={(e) =>
               setFormData((prev) => ({ ...prev, password: e.target.value }))
             }
-            placeholder="Enter password (min 8 characters)"
+            placeholder="Enter password"
             className="mt-2"
             onClick={() => clearError("password")}
           />
-          {err?.password && (
-            <p className="text-sm text-red-500 mt-1">{err?.password}</p>
+          {err?.password ? (
+            <p className="text-sm text-red-500 mt-1">{err.password}</p>
+          ) : (
+            formData.password && (
+              <ul className="text-xs text-gray-500 mt-1 space-y-0.5">
+                <li
+                  className={
+                    formData.password.length >= 8
+                      ? "text-green-600"
+                      : "text-gray-500"
+                  }>
+                  • At least 8 characters
+                </li>
+                <li
+                  className={
+                    /[A-Z]/.test(formData.password)
+                      ? "text-green-600"
+                      : "text-gray-500"
+                  }>
+                  • At least one uppercase letter
+                </li>
+                <li
+                  className={
+                    /\d/.test(formData.password)
+                      ? "text-green-600"
+                      : "text-gray-500"
+                  }>
+                  • At least one number
+                </li>
+                <li
+                  className={
+                    /[@$!%*?&]/.test(formData.password)
+                      ? "text-green-600"
+                      : "text-gray-500"
+                  }>
+                  • At least one symbol (@$!%*?&)
+                </li>
+              </ul>
+            )
           )}
         </div>
       </div>
@@ -1765,7 +1906,9 @@ function StepView({
             onClick={() => window.open("https://richharbor.com/", "_blank")}>
             Go to website
           </Button>
-
+          <Button type="button" className="ml-5" onClick={handleLogout}>
+            Go to Login
+          </Button>
         </div>
       );
     } else {
@@ -1789,10 +1932,7 @@ function StepView({
             onClick={() => window.open("https://richharbor.com/", "_blank")}>
             Go to website
           </Button>
-          <Button
-            type="button"
-            className="ml-5"
-            onClick={handleLogout}>
+          <Button type="button" className="ml-5" onClick={handleLogout}>
             Go to Login
           </Button>
         </div>
