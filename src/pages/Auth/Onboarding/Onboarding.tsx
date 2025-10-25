@@ -545,8 +545,24 @@ export default function Onboarding() {
     if (!isEmail(formData.email)) {
       newErrors.email = "Enter a valid email address";
     }
-    if (formData.password.length < 8) {
-      newErrors.password = "Password must be at least 8 characters";
+    const password = formData.password;
+    const errors = [];
+
+    if (password.length < 8) {
+      errors.push("min. 8 characters");
+    }
+    if (!/[A-Z]/.test(password)) {
+      errors.push("min. 1 uppercase letter");
+    }
+    if (!/[0-9]/.test(password)) {
+      errors.push("min. 1 number");
+    }
+    if (!/[!@#$%^&*()_\-+=\[\]{};:'",.<>?/\\|`~]/.test(password)) {
+      errors.push("min. 1 special character");
+    }
+
+    if (errors.length > 0) {
+      newErrors.password = errors.join(", ");
     }
     if (formData.fullName.trim().length <= 2) {
       newErrors.fullName = "Full name must be at least 3 characters";
@@ -563,11 +579,11 @@ export default function Onboarding() {
     if (formData.name.trim().length <= 1) newErrors.name = "Name is required";
     if (formData.state.trim().length === 0)
       newErrors.state = "State is required";
-    if (!isAadhar(formData.aadharCard))
-      newErrors.aadharCard = "Aadhar must be 12 digits";
-    if (!isPAN(formData.panCard)) newErrors.panCard = "Invalid PAN format";
-    if (!isMobile(formData.mobile))
-      newErrors.mobile = "Mobile must be 10 digits";
+    if (formData.aadharCard.trim().length === 0)
+      newErrors.aadharCard = "Aadhar is required";
+    if (formData.panCard.trim().length === 0) newErrors.panCard = "PAN is required";
+    if (formData.mobile.trim().length === 0)
+      newErrors.mobile = "Mobile number is required";
     if (formData.bankName.trim().length === 0)
       newErrors.bankName = "Bank name is required";
     if (formData.accountNumber.trim().length === 0) {
@@ -577,7 +593,7 @@ export default function Onboarding() {
     } else if (formData.accountNumber.trim().length < 8) {
       newErrors.accountNumber = "Account number must be at least 8 digits long";
     }
-    if (!isIFSC(formData.ifscCode)) newErrors.ifscCode = "Invalid IFSC code";
+    if (formData.ifscCode.trim().length === 0) newErrors.ifscCode = "IFSC code is required";
     if (formData.country.trim().length === 0)
       newErrors.country = "Country is required";
     if (formData.addressState.trim().length === 0)
@@ -585,8 +601,8 @@ export default function Onboarding() {
     if (formData.addressLine1.trim().length === 0)
       newErrors.addressLine1 = "Address Line 1 is required";
     if (formData.city.trim().length === 0) newErrors.city = "City is required";
-    if (formData.zipCode.trim().length < 4)
-      newErrors.zipCode = "Zip code too short";
+    if (formData.zipCode.trim().length === 0)
+      newErrors.zipCode = "Zip code is required";
 
     setErrs(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -870,7 +886,10 @@ export default function Onboarding() {
             onClick={() => window.open("https://richharbor.com/", "_blank")}>
             Go to website
           </Button>
-          <Button type="button" className="ml-5" onClick={handleLogout}>
+          <Button
+            type="button"
+            className="ml-5"
+            onClick={handleLogout}>
             Go to Login
           </Button>
         </div>
@@ -1156,8 +1175,8 @@ function StepView({
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4" >
+          <div onClick={()=> clearError("aadharCard")}>
             <ValidationInput
               id="aadhar"
               label="Aadhar Card"
@@ -1170,8 +1189,13 @@ function StepView({
               validator={validators?.isAadhar}
               helperText="Format: 12 digits (e.g., 123456789012)"
             />
+            {err?.aadharCard && (
+              <p className="text-xs text-red-600 dark:text-red-400 font-medium">
+                {err?.aadharCard}
+              </p>
+            )}
           </div>
-          <div>
+          <div onClick={()=> clearError('panCard')}>
             <ValidationInput
               id="pan"
               label="PAN Card"
@@ -1183,6 +1207,11 @@ function StepView({
               validator={validators?.isPAN}
               helperText="Format: 5 letters, 4 digits, 1 letter (e.g., ABCDE1234F)"
             />
+            {err?.panCard && (
+              <p className="text-xs text-red-600 dark:text-red-400 font-medium">
+                {err?.panCard}
+              </p>
+            )}
           </div>
         </div>
 
@@ -1201,7 +1230,8 @@ function StepView({
               className="mt-2"
             />
           </div>
-          <ValidationInput
+          <div onClick={()=> clearError("mobile")}>
+            <ValidationInput
             id="mobile"
             label="Mobile No."
             value={formData.mobile}
@@ -1216,6 +1246,12 @@ function StepView({
             validator={validators?.isMobile}
             helperText="Format: 10 digits (e.g., 9876543210)"
           />
+          {err?.mobile && (
+              <p className="text-xs text-red-600 dark:text-red-400 font-medium">
+                {err?.mobile}
+              </p>
+            )}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -1259,7 +1295,8 @@ function StepView({
               </p>
             )}
           </div>
-          <ValidationInput
+          <div onClick={()=> clearError('ifscCode')}>
+            <ValidationInput
             id="ifsc"
             label="IFSC Code"
             value={formData.ifscCode}
@@ -1270,6 +1307,12 @@ function StepView({
             validator={validators?.isIFSC}
             helperText="Format: 4 letters, 0, 6 alphanumeric (e.g., ABCD0123456)"
           />
+           {err?.ifscCode && (
+              <p className="text-xs text-red-600 dark:text-red-400 font-medium">
+                {err?.ifscCode}
+              </p>
+            )}
+          </div>
         </div>
 
         <div className="space-y-4">
@@ -1368,7 +1411,8 @@ function StepView({
                 </p>
               )}
             </div>
-            <ValidationInput
+            <div onClick={()=> clearError('zipCode')}>
+              <ValidationInput
               id="zipCode"
               label="Zip / Postal Code"
               value={formData.zipCode}
@@ -1380,6 +1424,13 @@ function StepView({
               validator={validators?.isPostalCode}
               helperText="Format: 4-6 digits (e.g., 110001)"
             />
+            {err?.zipCode && (
+                <p className="text-xs text-red-600 dark:text-red-400 font-medium">
+                  {err?.zipCode}
+                </p>
+              )}
+
+            </div>
           </div>
         </div>
       </div>

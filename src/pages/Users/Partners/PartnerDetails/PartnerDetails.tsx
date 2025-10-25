@@ -169,7 +169,7 @@ export default function PartnerDetails({
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">Current Step:</span>
                 <Badge variant="outline">
-                  Step {application.currentStep}/5
+                  Step {application.currentStep}/6
                 </Badge>
               </div>
               <div className="flex items-center justify-between">
@@ -186,7 +186,7 @@ export default function PartnerDetails({
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {[1, 2, 3, 4, 5].map((step) => (
+                {[1, 2, 3, 4, 5, 6].map((step) => (
                   <div key={step} className="flex items-center gap-3">
                     {getStepStatus(step)}
                     <span className="text-sm">
@@ -199,7 +199,9 @@ export default function PartnerDetails({
                             ? "Document Upload"
                             : step === 4
                               ? "Verification"
-                              : "Agreement & Approval"}
+                              : step === 5
+                                ? "Referrals"
+                                : "Agreement & Approval"}
                     </span>
                   </div>
                 ))}
@@ -365,7 +367,8 @@ export default function PartnerDetails({
           )}
 
           {/* Documents */}
-          <Card>
+          {!(!application.documents || Object.keys(application.documents).length === 0) && (
+            <Card>
             <CardHeader>
               <CardTitle className="text-sm flex items-center gap-2">
                 <FileText className="h-4 w-4" />
@@ -405,6 +408,7 @@ export default function PartnerDetails({
               </div>
             </CardContent>
           </Card>
+          )}
 
           {/* Refferal */}
           {application.formData.step5 && application.formData.step5.length > 0 && (
