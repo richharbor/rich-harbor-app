@@ -20,10 +20,12 @@ import { Role } from "@/helpers/authStore";
 export function RoleSwitcher({
   currentRole,
   availableRoles,
+  franchiseName,
   onRoleChange,
 }: {
   currentRole: Role;
   availableRoles: Role[];
+  franchiseName:string;
   onRoleChange: (role: Role) => void;
 }) {
   const { isMobile } = useSidebar();
@@ -41,7 +43,7 @@ export function RoleSwitcher({
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium capitalize">
-                  {currentRole.name}
+                  {franchiseName}
                 </span>
                 <span className="truncate text-xs text-muted-foreground">
                   {/* {currentRole.description} */}

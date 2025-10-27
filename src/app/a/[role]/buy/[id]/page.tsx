@@ -1,5 +1,5 @@
 import React from 'react'
-import SharePage from '@/pages/Users/Buying/SharePage/SharePage'
+import SharePage from '@/pages/Users/SharePage/SharePage'
 
 interface PageProps {
   params: {
