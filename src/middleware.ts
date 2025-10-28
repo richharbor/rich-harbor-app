@@ -37,7 +37,12 @@ export function middleware(request: NextRequest) {
   const franchiseName = request.cookies.get("franchiseName")?.value;
   const tier = request.cookies.get("tier")?.value;
 
-  const publicRoutes = ["/auth/login", "/auth/onboarding", "/auth/verify"];
+  const publicRoutes = [
+    "/auth/login",
+    "/auth/onboarding",
+    "/auth/verify",
+    "/auth/forgot-password",
+  ];
 
   // Public routes
   if (publicRoutes.some((route) => pathname.startsWith(route))) {
