@@ -6,11 +6,12 @@ import Cookies from "js-cookie";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Search, ChevronRight } from "lucide-react";
+import { Search, ChevronRight, Plus } from "lucide-react";
 
 import { getAllSellShares } from "@/services/sell/sellService";
 import Loading from "@/app/loading";
 import { getTieredPath } from "@/helpers/getTieredPath";
+import { Button } from "@/components/ui/button";
 
 interface ShareItem {
   id: number;
@@ -26,133 +27,9 @@ interface ShareItem {
   shareId: number;
 }
 
-// const dummyShares: ShareItem[] = [
-//   {
-//     id: 5,
-//     userId: 2,
-//     shareId: 4,
-//     price: "50.000",
-//     quantityAvailable: 4544,
-//     minimumOrderQuatity: 45,
-//     shareInStock: true,
-//     preShareTransfer: false,
-//     fixedPrice: false,
-//     confirmDelivery: false,
-//     deliveryTimeline: "t+2",
-//     endSellerLocation: "",
-//     endSellerName: "",
-//     endSellerProfile: "",
-//     createdAt: "2025-10-25T07:35:34.972Z",
-//     updatedAt: "2025-10-25T07:35:34.972Z",
-//     share: {
-//       id: 4,
-//       name: "BOAT",
-//       symbol: null,
-//       price: "0.00",
-//     },
-//     seller: {
-//       id: 2,
-//       firstName: "Prabhat",
-//       lastName: "Patra",
-//       email: "prabhat@rhinontech.com",
-//     },
-//   },
-//   {
-//     id: 4,
-//     userId: 2,
-//     shareId: 3,
-//     price: "23.000",
-//     quantityAvailable: 2332,
-//     minimumOrderQuatity: 232,
-//     shareInStock: true,
-//     preShareTransfer: false,
-//     fixedPrice: false,
-//     confirmDelivery: false,
-//     deliveryTimeline: "t+1",
-//     endSellerLocation: "",
-//     endSellerName: "",
-//     endSellerProfile: "",
-//     createdAt: "2025-10-25T06:54:55.015Z",
-//     updatedAt: "2025-10-25T06:54:55.015Z",
-//     share: {
-//       id: 3,
-//       name: "Gamma Investments",
-//       symbol: null,
-//       price: "0.00",
-//     },
-//     seller: {
-//       id: 2,
-//       firstName: "Prabhat",
-//       lastName: "Patra",
-//       email: "prabhat@rhinontech.com",
-//     },
-//   },
-//   {
-//     id: 3,
-//     userId: 2,
-//     shareId: 2,
-//     price: "43.000",
-//     quantityAvailable: 12,
-//     minimumOrderQuatity: 1214,
-//     shareInStock: true,
-//     preShareTransfer: false,
-//     fixedPrice: false,
-//     confirmDelivery: false,
-//     deliveryTimeline: "t",
-//     endSellerLocation: "",
-//     endSellerName: "",
-//     endSellerProfile: "",
-//     createdAt: "2025-10-23T06:53:20.560Z",
-//     updatedAt: "2025-10-23T06:53:20.560Z",
-//     share: {
-//       id: 2,
-//       name: "Apple",
-//       symbol: null,
-//       price: "0.00",
-//     },
-//     seller: {
-//       id: 2,
-//       firstName: "Prabhat",
-//       lastName: "Patra",
-//       email: "prabhat@rhinontech.com",
-//     },
-//   },
-//   {
-//     id: 1,
-//     userId: 2,
-//     shareId: 1,
-//     price: "45.000",
-//     quantityAvailable: 4545,
-//     minimumOrderQuatity: null,
-//     shareInStock: true,
-//     preShareTransfer: false,
-//     fixedPrice: false,
-//     confirmDelivery: false,
-//     deliveryTimeline: "t+1",
-//     endSellerLocation: "",
-//     endSellerName: "",
-//     endSellerProfile: "",
-//     createdAt: "2025-10-23T06:39:34.547Z",
-//     updatedAt: "2025-10-23T06:39:34.547Z",
-//     share: {
-//       id: 1,
-//       name: "Beta Holdings",
-//       symbol: null,
-//       price: "0.00",
-//     },
-//     seller: {
-//       id: 2,
-//       firstName: "Prabhat",
-//       lastName: "Patra",
-//       email: "prabhat@rhinontech.com",
-//     },
-//   },
-// ];
-
-export default function Buying() {
+export default function BestDeals() {
   const [shares, setShares] = useState<ShareItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isAll, setIsAll] = useState(true);
 
   const currentRole = Cookies.get("currentRole");
   const route = useRouter();
@@ -209,41 +86,30 @@ export default function Buying() {
   }
 
   return (
-    <div className="h-[calc(100vh-4.7rem)] flex flex-col relative overflow-hidden gap-6">
-      <div className="flex items-center justify-between px-6 pt-6">
+    <div className="h-[calc(100vh-4.7rem)] flex flex-col relative overflow-hidden space-y-6">
+      <div className="flex items-center justify-between px-6 py-3">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Buy</h2>
+          <h2 className="text-3xl font-bold tracking-tight">Best Deals</h2>
           <p className="text-muted-foreground">
-            Manage super admin and admin users
+            Explore best deal shares available for purchase.
           </p>
         </div>
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={() => {
+              const base = getTieredPath();
+              route.push(`/${base}/best-deals/addShare`);
+            }}>
+            <Plus className="h-4 w-4 mr-2" /> Add Best Deal
+          </Button>
+        </div>
+
       </div>
 
       {/* Search */}
       <div className="relative ml-6 max-w-xl">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
         <Input placeholder="Search Shares..." className="pl-10" />
-      </div>
-
-      <div className="-mb-6 flex gap-2">
-        <button
-          onClick={()=> setIsAll(true)}
-          className={`px-3 py-1 border-b font-medium transition-all duration-300 ease-in-out ${isAll
-              ? 'border-primary text-primary'
-              : 'border-transparent text-muted-foreground cursor-pointer hover:scale-105'
-            }`}
-        >
-          All
-        </button>
-        <button 
-          onClick={()=> setIsAll(false)}
-          className={`px-3 py-1 border-b font-medium transition-all duration-300 ease-in-out ${!isAll
-              ? 'border-primary text-primary'
-              : 'border-transparent text-muted-foreground cursor-pointer hover:scale-105'
-            }`}
-        >
-          Best Deals
-        </button>
       </div>
 
       {/* Table / Cards */}
@@ -255,7 +121,7 @@ export default function Buying() {
                 key={index}
                 onClick={() => {
                   const base = getTieredPath();
-                  route.push(`/${base}/buy/${share.shareId}`);
+                  route.push(`/${base}/share/${share.shareId}`);
                 }}
                 className="group relative cursor-pointer border border-border/50 bg-card hover:shadow-lg hover:border-primary/40 transition-all duration-300 rounded-2xl p-4">
                 {/* Top Row */}

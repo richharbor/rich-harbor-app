@@ -18,7 +18,7 @@ import Loading from "@/app/loading";
 
 interface SharePageProps {
   id: string;
-  owner?:boolean;
+  owner?: boolean;
 }
 
 export interface Seller {
@@ -50,8 +50,19 @@ export default function SharePage({ id, owner }: SharePageProps) {
   const { dummyBids } = useShareStore() as { dummyBids: Bid[] };
   const [loading, setLoading] = useState(true);
   const [bids, setBids] = useState<Bid[] | []>([]);
-  // const params = useSearchParams() ?? new URLSearchParams(); // URLSearchParams object
-  // const owner = params.get("owner");
+  const [userId, setUserId] = useState<number | null>(null);
+  const [userName, setUserName] = useState<string | null>(null);
+
+  useEffect(() => {
+    const authStorage = localStorage.getItem("auth-storage");
+    if (authStorage) {
+      const parsed = JSON.parse(authStorage);
+      setUserId(parsed?.state?.user?.id ?? null);
+      setUserName(
+        `${parsed?.state?.user?.firstName ?? ""} ${parsed?.state?.user?.lastName ?? ""}`.trim()
+      );
+    }
+  }, []);
 
   useEffect(() => {
     const fetchSells = async () => {
@@ -82,13 +93,13 @@ export default function SharePage({ id, owner }: SharePageProps) {
     fetchSells();
   }, [id]);
 
-    if (loading) {
-      return (
-        <div className="h-[calc(100vh-4.7rem)] flex flex-col relative overflow-hidden rounded-md">
-          <Loading areaOnly={true} />
-        </div>
-      );
-    }
+  if (loading) {
+    return (
+      <div className="h-[calc(100vh-4.7rem)] flex flex-col relative overflow-hidden rounded-md">
+        <Loading areaOnly={true} />
+      </div>
+    );
+  }
   if (!share) return <div className="h-[calc(100vh-4.7rem)] flex flex-col relative justify-center items-center overflow-hidden rounded-md">No shares found.</div>;
 
   // Get all prices as numbers
@@ -212,7 +223,7 @@ export default function SharePage({ id, owner }: SharePageProps) {
               <TableBody>
                 {share.sellers.map((seller: Seller, index: any) => (
                   <TableRow key={index}>
-                    <TableCell>{seller.sellerId}</TableCell>
+                    <TableCell>{userId != null ? userName  : seller.sellerId}</TableCell>
                     <TableCell>{seller.quantity}</TableCell>
                     <TableCell>{seller.price}</TableCell>
                     <TableCell>
@@ -230,10 +241,10 @@ export default function SharePage({ id, owner }: SharePageProps) {
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-2">
-                        <Button size="sm" variant="default">
+                        <Button disabled={userId != null} size="sm" variant="default">
                           Book
                         </Button>
-                        <Button size="sm" variant="outline">
+                        <Button disabled={userId != null} size="sm" variant="outline">
                           Bid
                         </Button>
                       </div>

@@ -23,6 +23,7 @@ import { ComponentProps, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import useAuthStore, { Role } from "@/helpers/authStore";
 
+
 // Helper to normalize franchise name for URLs and cookies
 const formatFranchiseName = (name: string): string => {
   return name.trim().toLowerCase().replace(/\s+/g, "-");
@@ -32,6 +33,14 @@ export function LSidebar(props: ComponentProps<typeof Sidebar>) {
   const router = useRouter();
   const { user, allRoles, currentRole } = useAuthStore();
   const [loading, setLoading] = useState(true);
+  const [franchiseName, setFranchiseName] = useState("Broker");
+
+  useEffect(() => {
+    const cookieValue = Cookies.get("franchiseName");
+    if (cookieValue) {
+      setFranchiseName(cookieValue);
+    }
+  }, []);
 
   useEffect(() => {
     if (user && allRoles.length > 0) setLoading(false);
@@ -166,6 +175,7 @@ export function LSidebar(props: ComponentProps<typeof Sidebar>) {
       <SidebarHeader>
         {user && currentRole && (
           <RoleSwitcher
+            franchiseName = {franchiseName}
             currentRole={currentRole}
             availableRoles={allRoles}
             onRoleChange={handleRoleChange}

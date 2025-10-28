@@ -187,7 +187,7 @@ export default function Selling() {
           <Button
             onClick={() => {
               const base = getTieredPath();
-              route.push(`/${base}/sell/addShare`);
+              route.push(`/${base}/sell/add`);
             }}>
             <Plus className="h-4 w-4 mr-2" /> Add New Share
           </Button>
@@ -354,7 +354,7 @@ export default function Selling() {
                           onClick={() => {
                             const base = getTieredPath();
                             route.push(
-                              `/${base}/sell/${t.name.replace(/ /g, "_")}`
+                              `/${base}/sell/add/${t.name.replace(/ /g, "_")}`
                             );
                           }}>
                           <TableCell className="p-3 hover:underline">

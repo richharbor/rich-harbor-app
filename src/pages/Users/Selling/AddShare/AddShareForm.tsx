@@ -105,7 +105,8 @@ const formSchema = baseSchema.superRefine((data, ctx) => {
 type FormValues = z.infer<typeof formSchema>;
 
 interface AddSharePageProps {
-  shareName?: string;
+  id?: string;
+  bestDeal?: boolean;
 }
 export interface ShareDetail {
   id: number;
@@ -134,14 +135,15 @@ export interface ShareItem {
   share: ShareDetail;
 }
 
-export default function AddStockForm({ shareName }: AddSharePageProps) {
+export default function AddStockForm({ id, bestDeal }: AddSharePageProps) {
   const currentRole = Cookies.get("currentRole");
   const [loading, setLoading] = useState(false);
   const [myShares, setMyShares] = useState<ShareItem[] | null>(null);
+  // console.log("ShareName =>", shareName)
 
   const route = useRouter();
 
-  const isNewShare = String(shareName) === "addShare";
+  const isNewShare = id == null || id === "addShare";
 
   useEffect(() => {
     getUsersShares();
@@ -162,7 +164,7 @@ export default function AddStockForm({ shareName }: AddSharePageProps) {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      shareName: isNewShare ? "" : shareName?.replace(/_/g, " "),
+      shareName: isNewShare ? "" : id?.replace(/_/g, " "),
       quantityAvailable: "",
       price: "",
       deliveryTimeline: "t",
@@ -210,6 +212,16 @@ export default function AddStockForm({ shareName }: AddSharePageProps) {
         setLoading(false);
         return;
       }
+
+
+
+
+      // we need to call adding best deal function over here base on the condition like best deal is true or false
+
+
+
+
+
 
       const result = await createSell(payload);
 
