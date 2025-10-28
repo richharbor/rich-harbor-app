@@ -15,10 +15,13 @@ import { useShareStore } from "@/store/useShareStore";
 import { useSearchParams } from "next/navigation";
 import { getSellsByShareId } from "@/services/sell/sellService";
 import Loading from "@/app/loading";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { set } from "zod";
 
 interface SharePageProps {
   id: string;
-  owner?: boolean;
 }
 
 export interface Seller {
@@ -45,13 +48,31 @@ interface Bid {
   quantity: number; // number of shares
   count: number; // number of bids by this user for this stock
 }
-export default function SharePage({ id, owner }: SharePageProps) {
+
+interface BidData{
+  amount: string;
+  quantity: string;
+  sellerId:string;
+  buyerId:string;
+  shareId:string;
+}
+
+export default function SharePage({ id }: SharePageProps) {
   const [share, setShare] = useState<any>(null);
   const { dummyBids } = useShareStore() as { dummyBids: Bid[] };
   const [loading, setLoading] = useState(true);
   const [bids, setBids] = useState<Bid[] | []>([]);
-  const [userId, setUserId] = useState<number | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
+  const [isBidOpen, setIsBidOpen] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const [bidData, setBidData] = useState<BidData>({
+    amount: "",
+    quantity: "",
+    sellerId: "",
+    buyerId: "",
+    shareId: id,
+  });
 
   useEffect(() => {
     const authStorage = localStorage.getItem("auth-storage");
@@ -63,6 +84,10 @@ export default function SharePage({ id, owner }: SharePageProps) {
       );
     }
   }, []);
+
+  useEffect(() => {
+    console.log("userId changed:", userId);
+  }, [userId])
 
   useEffect(() => {
     const fetchSells = async () => {
@@ -116,6 +141,31 @@ export default function SharePage({ id, owner }: SharePageProps) {
   const minQuantity = Math.min(...quantity);
   const maxQuantity = Math.max(...quantity);
 
+
+  const handleBid = (sellerId:string) => {
+    setBidData({
+      ...bidData,
+      sellerId: sellerId,
+      buyerId: userId ? userId : "",
+    });
+    setIsBidOpen(true);
+  }
+
+  const handleBidSubmit = () =>{
+    setIsSending(true);
+    console.log("Bid Data Submitted: ", bidData);
+
+    setIsBidOpen(false);
+
+    setBidData({
+      ...bidData,
+      amount:"",
+      quantity:"",
+      sellerId:"",
+    })
+    setIsSending(false);
+  }
+
   return (
     <div className=" h-[calc(100vh-4.7rem)] flex flex-col overflow-hidden p-6 space-y-6">
       {/* Share Details */}
@@ -140,16 +190,16 @@ export default function SharePage({ id, owner }: SharePageProps) {
                 Available Quantity
               </span>
               <span className="text-lg font-semibold">
-                {minQuantity} - {maxQuantity}
+                {minQuantity !== maxQuantity ? minQuantity + " - " + maxQuantity : maxQuantity}
               </span>
             </div>
             <div className="flex flex-col">
               <span className="text-muted-foreground text-sm">Price</span>
               <span className="text-lg font-semibold">
-                ₹{minPrice} - ₹{maxPrice}
+                {minPrice !== maxPrice ? "₹" + minPrice + " - ₹" + maxPrice : maxPrice}
               </span>
             </div>
-            <div className="flex flex-col">
+            {/* <div className="flex flex-col">
               <span className="text-muted-foreground text-sm">
                 Delivery Timeline
               </span>
@@ -172,128 +222,139 @@ export default function SharePage({ id, owner }: SharePageProps) {
               <span className="text-lg font-semibold">
                 {share.preShareTransfer ? "Yes" : "No"}
               </span>
-            </div>
+            </div> */}
           </div>
         </div>
-        {!owner && (
-          <div className="w-[20vw] border rounded-md flex-col h-[250px] flex">
-            <h1 className="text-xl p-3 border-b">Bids</h1>
-            <ScrollArea className="h-full">
-              <Table className="min-w-full h-full">
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Quantity</TableHead>
-                    <TableHead>Count</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {bids?.map((bid: Bid, index: any) => (
-                    <TableRow key={index}>
-                      <TableCell>{bid.amount}</TableCell>
-                      <TableCell>{bid.quantity}</TableCell>
-                      <TableCell>{bid.count}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </ScrollArea>
-          </div>
-        )}
-      </div>
 
-      {/* Sellers Table */}
-      {!owner && (
-        <div className="border rounded-md flex-1 min-h-0">
+        {/* bits table */}
+        <div className="w-[20vw] border rounded-md flex-col h-[250px] flex">
+          <h1 className="text-xl p-3 border-b">Bids</h1>
           <ScrollArea className="h-full">
-            <Table>
+            <Table className="min-w-full h-full">
               <TableHeader>
                 <TableRow>
-                  <TableHead>Seller ID</TableHead>
-                  <TableHead>Quantity</TableHead>
-                  <TableHead>Price</TableHead>
-                  <TableHead>Deal Type</TableHead>
-                  <TableHead>MOQ</TableHead>
-                  <TableHead>Delivery Timeline</TableHead>
-                  <TableHead>Confirm Delivery</TableHead>
-                  <TableHead>Pre-Share Transfer</TableHead>
-                  <TableHead>Action</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {share.sellers.map((seller: Seller, index: any) => (
-                  <TableRow key={index}>
-                    <TableCell>{userId != null ? userName  : seller.sellerId}</TableCell>
-                    <TableCell>{seller.quantity}</TableCell>
-                    <TableCell>{seller.price}</TableCell>
-                    <TableCell>
-                      {seller.fixed ? "Fixed" : "Negotiable"}
-                    </TableCell>
-                    <TableCell>{seller.moq}</TableCell>
-                    <TableCell>
-                      {seller.deliveryTimeline ? "Yes" : "No"}
-                    </TableCell>
-                    <TableCell>
-                      {seller.confirmDelivery ? "Yes" : "No"}
-                    </TableCell>
-                    <TableCell>
-                      {seller.preShareTransfer ? "Yes" : "No"}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Button disabled={userId != null} size="sm" variant="default">
-                          Book
-                        </Button>
-                        <Button disabled={userId != null} size="sm" variant="outline">
-                          Bid
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </ScrollArea>
-        </div>
-      )}
 
-      {/* bids tabel for the owner */}
-
-      {owner && <h1 className="text-3xl mb-3">Bids</h1>}
-      {owner && (
-        <div className=" rounded-md flex-1 min-h-0">
-          <ScrollArea className="h-full rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>User ID</TableHead>
                   <TableHead>Quantity</TableHead>
-                  <TableHead>Price</TableHead>
                   <TableHead>Count</TableHead>
-                  <TableHead>Action</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {bids?.map((bid: Bid, index: any) => (
                   <TableRow key={index}>
-                    <TableCell>{bid.userId}</TableCell>
+
                     <TableCell>{bid.quantity}</TableCell>
-                    <TableCell>{bid.amount}</TableCell>
                     <TableCell>{bid.count}</TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Button size="sm" variant="default">
-                          Accept
-                        </Button>
-                      </div>
-                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
           </ScrollArea>
         </div>
-      )}
+
+      </div>
+
+      {/* Sellers Table */}
+
+      <div className="border rounded-md flex-1 min-h-0">
+        <ScrollArea className="h-full">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Seller ID</TableHead>
+                <TableHead>Quantity</TableHead>
+                <TableHead>Price</TableHead>
+                <TableHead>Deal Type</TableHead>
+                <TableHead>MOQ</TableHead>
+                <TableHead>Delivery Timeline</TableHead>
+                <TableHead>Confirm Delivery</TableHead>
+                <TableHead>Pre-Share Transfer</TableHead>
+                <TableHead>Action</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {share.sellers.map((seller: Seller, index: any) => (
+                <TableRow key={index}>
+                  <TableCell>{(userId != null && userId === seller.sellerId) ? userName : seller.sellerId}</TableCell>
+                  <TableCell>{seller.quantity}</TableCell>
+                  <TableCell>{seller.price}</TableCell>
+                  <TableCell>
+                    {seller.fixed ? "Fixed" : "Negotiable"}
+                  </TableCell>
+                  <TableCell>{seller.moq}</TableCell>
+                  <TableCell>
+                    {seller.deliveryTimeline}
+                  </TableCell>
+                  <TableCell>
+                    {seller.confirmDelivery ? "Yes" : "No"}
+                  </TableCell>
+                  <TableCell>
+                    {seller.preShareTransfer ? "Yes" : "No"}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex gap-2">
+                      <Button disabled={(userId != null && userId === seller.sellerId)} size="sm" variant="default">
+                        Book
+                      </Button>
+                      <Button onClick={() => handleBid(seller.sellerId)} disabled={(userId != null && userId === seller.sellerId)} size="sm" variant="outline">
+                        Bid
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </ScrollArea>
+      </div>
+
+
+      {/* Bid dialog */}
+      <Dialog open={isBidOpen} onOpenChange={setIsBidOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Raise a Bid</DialogTitle>
+            <p className="text-sm text-muted-foreground">
+               Enter your bid amount below to raise an offer for this share. Please ensure your bid is higher than the current price.
+            </p>
+          </DialogHeader>
+          <div className=" grid gap-4 space-y-4 py-4">
+            <div className="flex flex-col space-y-2">
+              <Label htmlFor="number">Amount</Label>
+              <Input
+                id="price"
+                placeholder="Enter Price"
+                value={bidData.amount}
+                onChange={(e) => setBidData({...bidData, amount: e.target.value})}
+                disabled={isSending}
+              />
+            </div>
+            <div className="flex flex-col space-y-2">
+              <Label htmlFor="number">Quantity</Label>
+              <Input
+                id="quantity"
+                placeholder="Enter Quantity"
+                value={bidData.quantity}
+                onChange={(e) => setBidData({...bidData, quantity: e.target.value})}
+                disabled={isSending}
+              />
+            </div>
+            
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsBidOpen(false)}
+              disabled={isSending}
+              >
+              Cancel
+            </Button>
+            <Button onClick={handleBidSubmit} disabled={isSending}>
+              {isSending ? "Sending..." : "Send"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }

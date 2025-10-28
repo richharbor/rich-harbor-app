@@ -206,7 +206,7 @@ export default function Selling() {
             <CardTitle>Total Shares</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{allShares?.length}</div>
+            <div className="text-2xl font-bold">{allShares ? allShares?.length: "0"}</div>
           </CardContent>
         </Card>
         <Card
@@ -219,7 +219,7 @@ export default function Selling() {
             <CardTitle>My Shares</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{myShares?.length}</div>
+            <div className="text-2xl font-bold">{myShares ? myShares?.length : "0"}</div>
           </CardContent>
         </Card>
       </div>
