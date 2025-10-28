@@ -23,7 +23,10 @@ const loginSchema = z.object({
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
-export default function Login({ className, ...props }: React.ComponentProps<"div">) {
+export default function Login({
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState<ILoginBody>({
@@ -45,7 +48,7 @@ export default function Login({ className, ...props }: React.ComponentProps<"div
       Cookies.set("authToken", response.token);
       // Cookies.set("currentRole","wq")
       // Cookies.set("refreshToken", response.refreshToken);
-      toast.success("Login successfully")
+      toast.success("Login successfully");
       router.push("/");
     } catch (error) {
       console.log(error);
@@ -59,7 +62,9 @@ export default function Login({ className, ...props }: React.ComponentProps<"div
       if (status === 401) {
         toast.error(backendError || "Unauthorized");
       } else {
-        toast.error(backendError || "Internal server error, Please try again later");
+        toast.error(
+          backendError || "Internal server error, Please try again later"
+        );
       }
     } finally {
       setLoading(false);
@@ -68,7 +73,6 @@ export default function Login({ className, ...props }: React.ComponentProps<"div
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
 
     const result = loginSchema.safeParse(form);
     if (!result.success) {
@@ -118,7 +122,14 @@ export default function Login({ className, ...props }: React.ComponentProps<"div
 
               {/* Password */}
               <div className="grid gap-2">
-                <Label htmlFor="password">Password</Label>
+                <div className="flex items-center">
+                  <Label htmlFor="password">Password</Label>
+                  <p
+                    onClick={() => router.push("/auth/forgot-password")}
+                    className="ml-auto text-sm underline-offset-2 hover:underline cursor-pointer">
+                    Forgot your password?
+                  </p>
+                </div>
                 <Input
                   id="password"
                   name="password"
@@ -133,7 +144,11 @@ export default function Login({ className, ...props }: React.ComponentProps<"div
               </div>
 
               <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? <Loader2 className="animate-spin" size={32} /> : "Login"}
+                {loading ? (
+                  <Loader2 className="animate-spin" size={32} />
+                ) : (
+                  "Login"
+                )}
               </Button>
             </div>
           </form>

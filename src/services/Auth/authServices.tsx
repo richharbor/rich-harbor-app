@@ -249,3 +249,50 @@ export const verifyEmailAndSetNewPassword = async (requestBody: {
     throw error;
   }
 };
+
+//forgot password
+
+export const requestPasswordReset = async (requestBody: { email: string }) => {
+  try {
+    const response = await PrivateAxios.post(
+      `${API_URL}/auth/request-password-reset`,
+      requestBody
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Password reset email failed:", error);
+    throw error;
+  }
+};
+
+
+
+export const verifyResetToken = async (requestBody: { token: string }) => {
+  try {
+    const response = await PrivateAxios.post(
+      `${API_URL}/auth/verify-reset-token`,
+      requestBody
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Token verification failed:", error);
+    throw error;
+  }
+};
+
+
+export const resetPassword = async (requestBody: {
+  token: string;
+  newPassword: string;
+}) => {
+  try {
+    const response = await PrivateAxios.post(
+      `${API_URL}/auth/reset-password`,
+      requestBody
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Password reset failed:", error);
+    throw error;
+  }
+};
