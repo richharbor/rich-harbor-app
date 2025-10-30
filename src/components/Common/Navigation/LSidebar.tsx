@@ -145,6 +145,18 @@ export function LSidebar(props: ComponentProps<typeof Sidebar>) {
       icon: Sparkles,
       permission: "manage_partners",
     },
+    {
+      title: "Bookings",
+      url: `/${roleNameForUrl}/bookings`,
+      icon: Sparkles,
+      permission: "manage_bookings",
+    },
+    {
+      title: "Bids",
+      url: `/${roleNameForUrl}/bids`,
+      icon: Sparkles,
+      permission: "manage_bids",
+    },
   ];
 
   // ✅ Role-based nav filtering
@@ -156,6 +168,8 @@ export function LSidebar(props: ComponentProps<typeof Sidebar>) {
     "selling",
     "best_deals",
     "manage_partners",
+    "manage_bookings",
+    "manage_bids",
   ];
 
   if (user?.tier === 3) {

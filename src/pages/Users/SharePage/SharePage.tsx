@@ -19,12 +19,16 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { set } from "zod";
+import { bookShare } from "@/services/purchase/bookingService";
+import { toast } from "sonner";
+import { BidShare } from "@/services/purchase/bidsService";
 
 interface SharePageProps {
   id: string;
 }
 
 export interface Seller {
+  sellId: string;
   sellerId: string;
   quantity: string;
   price: string;
@@ -49,12 +53,14 @@ interface Bid {
   count: number; // number of bids by this user for this stock
 }
 
-interface BidData{
-  amount: string;
+interface BidData {
+  sellId: number;
   quantity: string;
-  sellerId:string;
-  buyerId:string;
-  shareId:string;
+  bidPrice: string;
+}
+interface BookingData {
+  sellId: number;
+  quantity: string;
 }
 
 export default function SharePage({ id }: SharePageProps) {
@@ -65,13 +71,16 @@ export default function SharePage({ id }: SharePageProps) {
   const [userId, setUserId] = useState<string | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
   const [isBidOpen, setIsBidOpen] = useState(false);
+  const [isBookingOpen, setIsBookingOpen] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [bidData, setBidData] = useState<BidData>({
-    amount: "",
+    sellId: 0,
     quantity: "",
-    sellerId: "",
-    buyerId: "",
-    shareId: id,
+    bidPrice: "",
+  });
+  const [bookingData, setBookingData] = useState<BookingData>({
+    sellId: 0,
+    quantity: "",
   });
 
   useEffect(() => {
@@ -85,9 +94,9 @@ export default function SharePage({ id }: SharePageProps) {
     }
   }, []);
 
-  useEffect(() => {
-    console.log("userId changed:", userId);
-  }, [userId])
+  // useEffect(() => {
+  //   console.log("userId changed:", userId);
+  // }, [userId])
 
   useEffect(() => {
     const fetchSells = async () => {
@@ -96,6 +105,7 @@ export default function SharePage({ id }: SharePageProps) {
 
         // map API fields to your Seller interface
         const sellers = data.map((s: any) => ({
+          sellId: s.id,
           sellerId: s.userId,
           quantity: s.quantityAvailable.toString(),
           price: s.price,
@@ -106,6 +116,9 @@ export default function SharePage({ id }: SharePageProps) {
           moq: s.minimumOrderQuatity?.toString() || "-",
           fixed: s.fixedPrice,
         }));
+
+        console.log("Fetched sellers:", sellers);
+        console.log("Fetched data:", data);
 
         setShare({ shareName: data[0]?.share.name || "", sellers });
       } catch (error) {
@@ -142,28 +155,85 @@ export default function SharePage({ id }: SharePageProps) {
   const maxQuantity = Math.max(...quantity);
 
 
-  const handleBid = (sellerId:string) => {
+  const handleBook = (sellId: string) => {
+    setBookingData({
+      ...bookingData,
+      sellId: parseInt(sellId),
+    });
+    setIsBookingOpen(true);
+  }
+
+
+  const handleBookingSubmit = async () => {
+    setIsSending(true);
+    try {
+      // Map frontend form fields to backend API field names
+      
+      const payload = {
+        sellId: bookingData.sellId,
+        quantity: parseInt(bookingData.quantity),
+      };
+
+
+      const result = await bookShare(payload);
+
+      if (result.success) {
+        // Redirect to selling page after successful creation
+        toast.success("Share is booked successfully");
+        setBookingData({
+          sellId: 0,
+          quantity: "",
+        })
+        setIsBookingOpen(false);
+
+      }
+    } catch (error: any) {
+      console.error("Failed to book share:", error);
+      toast.error("Failed to book share. Please try again.");
+    } finally {
+      setIsSending(false);
+    }
+
+  }
+
+  const handleBid = (sellId: string) => {
     setBidData({
       ...bidData,
-      sellerId: sellerId,
-      buyerId: userId ? userId : "",
+      sellId: parseInt(sellId),
     });
     setIsBidOpen(true);
   }
 
-  const handleBidSubmit = () =>{
+  const handleBidSubmit = async () => {
     setIsSending(true);
-    console.log("Bid Data Submitted: ", bidData);
+    try {
+      // Map frontend form fields to backend API field names
+      const payload = {
+        sellId: bidData.sellId,
+        quantity: parseInt(bidData.quantity),
+        bidPrice: parseFloat(bidData.bidPrice),
+      };
 
-    setIsBidOpen(false);
 
-    setBidData({
-      ...bidData,
-      amount:"",
-      quantity:"",
-      sellerId:"",
-    })
-    setIsSending(false);
+      const result = await BidShare(payload);
+
+      if (result.success) {
+        // Redirect to selling page after successful creation
+        toast.success("Bid raised successfully");
+        setBidData({
+          sellId: 0,
+          quantity: "",
+          bidPrice: "",
+        })
+        setIsBidOpen(false);
+
+      }
+    } catch (error: any) {
+      console.error("Failed to bid share:", error);
+      toast.error("Failed to bid share. Please try again.");
+    } finally {
+      setIsSending(false);
+    }
   }
 
   return (
@@ -226,7 +296,7 @@ export default function SharePage({ id }: SharePageProps) {
           </div>
         </div>
 
-        {/* bits table */}
+        {/* bids table */}
         <div className="w-[20vw] border rounded-md flex-col h-[250px] flex">
           <h1 className="text-xl p-3 border-b">Bids</h1>
           <ScrollArea className="h-full">
@@ -273,8 +343,8 @@ export default function SharePage({ id }: SharePageProps) {
             </TableHeader>
             <TableBody>
               {share.sellers.map((seller: Seller, index: any) => (
-                <TableRow key={index}>
-                  <TableCell>{(userId != null && userId === seller.sellerId) ? userName : seller.sellerId}</TableCell>
+                <TableRow key={index} className={`${(userId != null && userId === seller.sellerId) && 'hidden'}`}>
+                  <TableCell>{seller.sellerId}</TableCell>
                   <TableCell>{seller.quantity}</TableCell>
                   <TableCell>{seller.price}</TableCell>
                   <TableCell>
@@ -292,10 +362,10 @@ export default function SharePage({ id }: SharePageProps) {
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-2">
-                      <Button disabled={(userId != null && userId === seller.sellerId)} size="sm" variant="default">
+                      <Button onClick={() => handleBook(seller.sellId)} size="sm" variant="default">
                         Book
                       </Button>
-                      <Button onClick={() => handleBid(seller.sellerId)} disabled={(userId != null && userId === seller.sellerId)} size="sm" variant="outline">
+                      <Button onClick={() => handleBid(seller.sellId)} size="sm" variant="outline">
                         Bid
                       </Button>
                     </div>
@@ -314,17 +384,20 @@ export default function SharePage({ id }: SharePageProps) {
           <DialogHeader>
             <DialogTitle>Raise a Bid</DialogTitle>
             <p className="text-sm text-muted-foreground">
-               Enter your bid amount below to raise an offer for this share. Please ensure your bid is higher than the current price.
+              Enter your bid amount below to raise an offer for this share. Please ensure your bid is only 2 rupee lower than the current price.
             </p>
           </DialogHeader>
           <div className=" grid gap-4 space-y-4 py-4">
             <div className="flex flex-col space-y-2">
-              <Label htmlFor="number">Amount</Label>
+              <Label htmlFor="number">Bidding Price</Label>
               <Input
                 id="price"
                 placeholder="Enter Price"
-                value={bidData.amount}
-                onChange={(e) => setBidData({...bidData, amount: e.target.value})}
+                value={bidData.bidPrice}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/[^0-9.]/g, "");
+                  setBidData({ ...bidData, bidPrice: value });
+                }}
                 disabled={isSending}
               />
             </div>
@@ -334,21 +407,65 @@ export default function SharePage({ id }: SharePageProps) {
                 id="quantity"
                 placeholder="Enter Quantity"
                 value={bidData.quantity}
-                onChange={(e) => setBidData({...bidData, quantity: e.target.value})}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/[^0-9]/g, "");
+                  setBidData({ ...bidData, quantity: value });
+                }}
                 disabled={isSending}
               />
             </div>
-            
+
           </div>
           <DialogFooter>
             <Button
               variant="outline"
               onClick={() => setIsBidOpen(false)}
               disabled={isSending}
-              >
+            >
               Cancel
             </Button>
-            <Button onClick={handleBidSubmit} disabled={isSending}>
+            <Button onClick={handleBidSubmit} disabled={isSending || bidData.bidPrice === "" || bidData.quantity === ""}>
+              {isSending ? "Sending..." : "Send"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+
+      {/* Booking dialog */}
+      <Dialog open={isBookingOpen} onOpenChange={setIsBookingOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Book the Share</DialogTitle>
+            <p className="text-sm text-muted-foreground">
+              Enter your booking quantity below to book this share.
+            </p>
+          </DialogHeader>
+          <div className=" grid gap-4 space-y-4 py-4">
+            <div className="flex flex-col space-y-2">
+              <Label htmlFor="number">Quantity</Label>
+              <Input
+                id="quantity"
+                placeholder="Enter Quantity"
+                value={bookingData.quantity}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/[^0-9]/g, "");
+                  setBookingData({ ...bookingData, quantity: value });
+                }}
+                disabled={isSending}
+              />
+            </div>
+
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsBookingOpen(false)}
+              disabled={isSending}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleBookingSubmit} disabled={isSending || bookingData.quantity === ""}>
               {isSending ? "Sending..." : "Send"}
             </Button>
           </DialogFooter>

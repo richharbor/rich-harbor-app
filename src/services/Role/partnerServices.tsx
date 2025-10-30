@@ -54,6 +54,25 @@ export const getPartnerApplications = async (params?: {
     throw error;
   }
 };
+export const getPartnerDetailsbyId = async (
+  params:{
+    userId: number;
+    franchiseId: number;
+  }
+) =>{
+  try {
+    const response = await PrivateAxios.get(`${API_URL}/partners/partner-details`,
+      {
+        params, // query params { userId, franchiseId }
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Failed to fetch partner details", error);
+    throw error;
+  }
+
+}
 
 export const invitePartnerUsingEmail = async (
   email: string,
