@@ -17,6 +17,10 @@ import useAuthStore from "@/helpers/authStore"
 import App from "next/app"
 import ApplicationDialog from "./ApplicationDialog"
 import { set } from "zod"
+import Loading from "@/app/loading"
+import { CircleQuestionMark, User } from "lucide-react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 
 interface Share {
   id: number;
@@ -78,11 +82,14 @@ interface Booking {
 
 
 export default function BookingTable() {
+  const [loading, setLoading] = useState(false);
   const [bookings, setBookings] = useState<Booking[] | []>([])
+  const [details, setDetails] = useState<Booking | null>(null);
   const [open, setOpen] = useState(false);
   const franchiseId = useAuthStore((state) => state.user?.franchiseId);
   const [userDetails, setUserDetails] = useState<any>(null);
   const [isFetching, setIsFetching] = useState(false);
+  const [userProfile, setUserProfile] = useState<string>("");
 
   // const handleCloseDeal = (id: number) => {
   //   alert(`Deal closed for booking ID: ${id}`)
@@ -98,6 +105,7 @@ export default function BookingTable() {
   }, [])
 
   const fetchAllBookings = async () => {
+    setLoading(true);
     try {
       const response = await getAllbookings();
       console.log("Bookings data:", response);
@@ -105,6 +113,8 @@ export default function BookingTable() {
       setBookings(response.data);
     } catch (error) {
       console.error("Error fetching bookings:", error);
+    } finally {
+      setLoading(false);
     }
   }
   const fetchPartnersDetailbyId = async (userId: number, fid?: number) => {
@@ -141,20 +151,27 @@ export default function BookingTable() {
   };
 
   const handleSellerDetail = (userId: number) => {
-     setOpen(true);
+    setOpen(true);
+    setUserProfile("Seller");
     fetchPartnersDetailbyId(userId);
-   
-    
+
+
   }
   const handleBuyerDetail = (userId: number) => {
     setOpen(true);
+    setUserProfile("Buyer");
     fetchPartnersDetailbyId(userId);
-    
   }
 
-  useEffect(() => {
-    console.log("Bookings state updated:", bookings);
-  }, [bookings])
+
+  if (loading) {
+    return (
+      <div className="h-[calc(100vh-4.7rem)] flex flex-col relative overflow-hidden rounded-md">
+        <Loading areaOnly={true} />
+      </div>
+    );
+  }
+
 
   return (
     <div className="p-6">
@@ -172,6 +189,7 @@ export default function BookingTable() {
                 <TableHead>Stock Name</TableHead>
                 <TableHead>Selling Price</TableHead>
                 <TableHead>Actual Price</TableHead>
+                <TableHead>Share in Stock</TableHead>
                 <TableHead>Available Quantity</TableHead>
                 <TableHead>Require Quantity</TableHead>
                 <TableHead>Action</TableHead>
@@ -185,6 +203,22 @@ export default function BookingTable() {
                   <TableCell>{row.sell.share.name}</TableCell>
                   <TableCell>₹{row.sell.sellingPrice}</TableCell>
                   <TableCell>₹{row.sell.actualPrice}</TableCell>
+                  <TableCell onClick={() => setDetails(row)}>{row.sell.shareInStock ? 'Yes' : 'No'}
+                    {!row.sell.shareInStock && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="inline-flex relative top-0.5 items-center ml-2">
+                            <CircleQuestionMark className="h-4 w-4" />
+                          </span>
+                        </TooltipTrigger>
+
+                        <TooltipContent>
+                          End seller details
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
+                  </TableCell>
+
                   <TableCell>{row.sell.quantityAvailable}</TableCell>
                   <TableCell>{row.quantity}</TableCell>
                   <TableCell className="space-x-2">
@@ -217,7 +251,40 @@ export default function BookingTable() {
         </CardContent>
       </Card>
 
-      <ApplicationDialog isFetching={isFetching} open={open} onClose={setOpen} data={userDetails} />
+      <ApplicationDialog userProfile={userProfile} isFetching={isFetching} open={open} onClose={setOpen} data={userDetails} />
+
+      {/* End seller detail dialog */}
+      <Dialog
+        open={details !== null}
+        onOpenChange={(open) => {
+          if (!open) setDetails(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>End Seller Details</DialogTitle>
+          </DialogHeader>
+
+          {details && (
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between">
+                <span className="font-medium">Name:</span>
+                <span>{details.sell.endSellerName || "N/A"}</span>
+              </div>
+
+              <div className="flex justify-between">
+                <span className="font-medium">Profile:</span>
+                <span>{details.sell.endSellerProfile || "N/A"}</span>
+              </div>
+
+              <div className="flex justify-between">
+                <span className="font-medium">Location:</span>
+                <span>{details.sell.endSellerLocation || "N/A"}</span>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

@@ -6,13 +6,14 @@ import { Badge } from "@/components/ui/badge";
 // import { format } from "date-fns";
 
 interface ApplicationDialogProps {
-    isFetching: boolean
-    open: boolean;
-    onClose: (open: boolean) => void;
-    data: any;
+  isFetching: boolean
+  open: boolean;
+  onClose: (open: boolean) => void;
+  data: any;
+  userProfile?: string;
 }
 
-export default function ApplicationDialog({ open, onClose, data, isFetching }: ApplicationDialogProps) {
+export default function ApplicationDialog({ open, onClose, data, isFetching, userProfile }: ApplicationDialogProps) {
   if (isFetching) {
     return (
       <Dialog open={open} onOpenChange={onClose}>
@@ -25,7 +26,22 @@ export default function ApplicationDialog({ open, onClose, data, isFetching }: A
       </Dialog>
     )
   }
-  if(!data) return;
+  if (!data) {
+    return (
+      <Dialog open={open} onOpenChange={onClose}>
+        <DialogContent className="max-w-md flex items-center justify-center">
+          <div className="flex flex-col items-center gap-3 py-8">
+            <div className="h-10 w-10 flex items-center justify-center text-destructive">
+              ❌
+            </div>
+            <p className="text-sm text-muted-foreground font-medium">
+              Unable to fetch super admin data.
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
+    )
+  }
 
   const step1 = data.formData?.step1 || {}
   const step2 = data.formData?.step2 || {}
@@ -42,11 +58,11 @@ export default function ApplicationDialog({ open, onClose, data, isFetching }: A
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
               <DialogTitle className="text-2xl font-bold text-foreground">
-                {step1.fullName || "Partner Details"}
+               {userProfile} - {step1.fullName || "Partner Details"}
               </DialogTitle>
               <p className="text-sm text-muted-foreground mt-1">Partner Information & Referrals</p>
             </div>
-            
+
           </div>
         </DialogHeader>
 

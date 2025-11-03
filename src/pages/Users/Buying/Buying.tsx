@@ -456,10 +456,7 @@ export default function Buying() {
                   <p>
                     <strong>Available:</strong> {share.listings.length > 1 ? share.minQuantity + " - " + share.maxQuantity : share.maxQuantity}
                   </p>
-                  <p>
-                    <strong>Deal Type:</strong>{" "}
-                    {share.shareName ? "Fixed" : "Negotiable"}
-                  </p>
+                  
                 </div>
 
               </Card>

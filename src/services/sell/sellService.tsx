@@ -32,7 +32,7 @@ export const getUsersAllShares = async () => {
   }
 };
 
-export interface CreateSellPayload {
+export interface SellPayload {
   shareName: string;
   quantityAvailable: number;
   price: number;
@@ -47,7 +47,7 @@ export interface CreateSellPayload {
   endSellerLocation?: string;
 }
 
-export const createSell = async (payload: CreateSellPayload) => {
+export const createSell = async (payload: SellPayload) => {
   try {
     const response = await PrivateAxios.post(
       `${API_URL}/sell/create-sell`,
@@ -61,8 +61,8 @@ export const createSell = async (payload: CreateSellPayload) => {
 };
 
 export const updateSell = async (
-  id: number,
-  payload: { price?: number; quantityAvailable?: number }
+  id: number| string,
+  payload: SellPayload
 ) => {
   try {
     const response = await PrivateAxios.put(
@@ -85,3 +85,23 @@ export const getSellsByShareId = async (shareId: string | number) => {
     throw error;
   }
 };
+
+export const getSellbySellId = async (sellId: string | number) =>{
+  try {
+    const response = await PrivateAxios.get(`${API_URL}/sell/sell/${sellId}`);
+    return response.data.data; // assuming backend returns { success: true, data: [...] }
+  } catch (error) {
+    console.error("Failed to get sells for share:", error);
+    throw error;
+  }
+}
+
+export const getShareByShareId = async (shareId: string | number) =>{
+  try {
+    const response = await PrivateAxios.get(`${API_URL}/sell/share-detail/${shareId}`);
+    return response.data.data; // assuming backend returns { success: true, data: [...] }
+  } catch (error) {
+    console.error("Failed to get sells for share:", error);
+    throw error;
+  }
+}

@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useShareStore } from "@/store/useShareStore";
 import { useSearchParams } from "next/navigation";
-import { getSellsByShareId, getUsersAllShares } from "@/services/sell/sellService";
+import { getSellbySellId, getSellsByShareId, getUsersAllShares } from "@/services/sell/sellService";
 import Loading from "@/app/loading";
 
 interface SharePageProps {
@@ -79,24 +79,24 @@ export default function MySharePage({ id }: SharePageProps) {
 
 
     useEffect(() => {
-        getUsersShares();
+        getUserSell();
     }, [])
 
-    useEffect(() => {
+    // useEffect(() => {
 
-        const found = myShares?.find((s) => s.shareId.toString() === id);
-        setShare(found || null);
+    //     const found = myShares?.find((s) => s.shareId.toString() === id);
+    //     setShare(found || null);
 
-    }, [myShares])
-
-
+    // }, [myShares])
 
 
-    const getUsersShares = async () => {
+
+
+    const getUserSell = async () => {
         try {
-            const response = await getUsersAllShares();
-            console.log(response.data);
-            setMyShares(response?.data);
+            const response = await getSellbySellId(id);
+            console.log(response);
+            setShare(response);
         } catch (error) {
             console.log("failed to get shares");
         } finally {
