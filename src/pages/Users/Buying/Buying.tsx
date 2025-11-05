@@ -58,190 +58,192 @@ export interface SellItem {
   updatedAt: string;
   share: ShareInfo;
   seller: SellerInfo;
+  bestDeal:boolean;
+  approved:boolean;
 }
 
-const dummyShares: SellItem[] = [
-  {
-    id: 5,
-    userId: 6,
-    shareId: 4,
-    price: "50.000",
-    quantityAvailable: 4544,
-    minimumOrderQuatity: 45,
-    shareInStock: true,
-    preShareTransfer: false,
-    fixedPrice: false,
-    confirmDelivery: false,
-    deliveryTimeline: "t+2",
-    endSellerLocation: "",
-    endSellerName: "",
-    endSellerProfile: "",
-    createdAt: "2025-10-25T07:35:34.972Z",
-    updatedAt: "2025-10-25T07:35:34.972Z",
-    share: {
-      id: 4,
-      name: "BOAT",
-      symbol: null,
-      price: "0.00",
-    },
-    seller: {
-      id: 6,
-      firstName: "Ah",
-      lastName: "Patra",
-      email: "prabhat@rhinontech.com",
-    },
-  },
-  {
-    id: 5,
-    userId: 9,
-    shareId: 2,
-    price: "50.000",
-    quantityAvailable: 4544,
-    minimumOrderQuatity: 45,
-    shareInStock: true,
-    preShareTransfer: false,
-    fixedPrice: false,
-    confirmDelivery: false,
-    deliveryTimeline: "t+2",
-    endSellerLocation: "",
-    endSellerName: "",
-    endSellerProfile: "",
-    createdAt: "2025-10-25T07:35:34.972Z",
-    updatedAt: "2025-10-25T07:35:34.972Z",
-    share: {
-      id: 4,
-      name: "BOAT",
-      symbol: null,
-      price: "0.00",
-    },
-    seller: {
-      id: 9,
-      firstName: "Vr",
-      lastName: "Patra",
-      email: "prabhat@rhinontech.com",
-    },
-  },
-  {
-    id: 4,
-    userId: 2,
-    shareId: 3,
-    price: "23.000",
-    quantityAvailable: 2332,
-    minimumOrderQuatity: 232,
-    shareInStock: true,
-    preShareTransfer: false,
-    fixedPrice: false,
-    confirmDelivery: false,
-    deliveryTimeline: "t+1",
-    endSellerLocation: "",
-    endSellerName: "",
-    endSellerProfile: "",
-    createdAt: "2025-10-25T06:54:55.015Z",
-    updatedAt: "2025-10-25T06:54:55.015Z",
-    share: {
-      id: 3,
-      name: "Gamma Investments",
-      symbol: null,
-      price: "0.00",
-    },
-    seller: {
-      id: 2,
-      firstName: "Prabhat",
-      lastName: "Patra",
-      email: "prabhat@rhinontech.com",
-    },
-  },
-  {
-    id: 3,
-    userId: 2,
-    shareId: 2,
-    price: "43.000",
-    quantityAvailable: 12,
-    minimumOrderQuatity: 1214,
-    shareInStock: true,
-    preShareTransfer: false,
-    fixedPrice: false,
-    confirmDelivery: false,
-    deliveryTimeline: "t",
-    endSellerLocation: "",
-    endSellerName: "",
-    endSellerProfile: "",
-    createdAt: "2025-10-23T06:53:20.560Z",
-    updatedAt: "2025-10-23T06:53:20.560Z",
-    share: {
-      id: 2,
-      name: "Apple",
-      symbol: null,
-      price: "0.00",
-    },
-    seller: {
-      id: 2,
-      firstName: "Prabhat",
-      lastName: "Patra",
-      email: "prabhat@rhinontech.com",
-    },
-  },
-  {
-    id: 3,
-    userId: 2,
-    shareId: 4,
-    price: "43.000",
-    quantityAvailable: 12,
-    minimumOrderQuatity: 1214,
-    shareInStock: true,
-    preShareTransfer: false,
-    fixedPrice: false,
-    confirmDelivery: false,
-    deliveryTimeline: "t",
-    endSellerLocation: "",
-    endSellerName: "",
-    endSellerProfile: "",
-    createdAt: "2025-10-23T06:53:20.560Z",
-    updatedAt: "2025-10-23T06:53:20.560Z",
-    share: {
-      id: 2,
-      name: "Apple",
-      symbol: null,
-      price: "0.00",
-    },
-    seller: {
-      id: 2,
-      firstName: "Prabhat",
-      lastName: "Patra",
-      email: "prabhat@rhinontech.com",
-    },
-  },
-  {
-    id: 1,
-    userId: 2,
-    shareId: 1,
-    price: "45.000",
-    quantityAvailable: 4545,
-    minimumOrderQuatity: null,
-    shareInStock: true,
-    preShareTransfer: false,
-    fixedPrice: false,
-    confirmDelivery: false,
-    deliveryTimeline: "t+1",
-    endSellerLocation: "",
-    endSellerName: "",
-    endSellerProfile: "",
-    createdAt: "2025-10-23T06:39:34.547Z",
-    updatedAt: "2025-10-23T06:39:34.547Z",
-    share: {
-      id: 1,
-      name: "Beta Holdings",
-      symbol: null,
-      price: "0.00",
-    },
-    seller: {
-      id: 2,
-      firstName: "Prabhat",
-      lastName: "Patra",
-      email: "prabhat@rhinontech.com",
-    },
-  },
-];
+// const dummyShares: SellItem[] = [
+//   {
+//     id: 5,
+//     userId: 6,
+//     shareId: 4,
+//     price: "50.000",
+//     quantityAvailable: 4544,
+//     minimumOrderQuatity: 45,
+//     shareInStock: true,
+//     preShareTransfer: false,
+//     fixedPrice: false,
+//     confirmDelivery: false,
+//     deliveryTimeline: "t+2",
+//     endSellerLocation: "",
+//     endSellerName: "",
+//     endSellerProfile: "",
+//     createdAt: "2025-10-25T07:35:34.972Z",
+//     updatedAt: "2025-10-25T07:35:34.972Z",
+//     share: {
+//       id: 4,
+//       name: "BOAT",
+//       symbol: null,
+//       price: "0.00",
+//     },
+//     seller: {
+//       id: 6,
+//       firstName: "Ah",
+//       lastName: "Patra",
+//       email: "prabhat@rhinontech.com",
+//     },
+//   },
+//   {
+//     id: 5,
+//     userId: 9,
+//     shareId: 2,
+//     price: "50.000",
+//     quantityAvailable: 4544,
+//     minimumOrderQuatity: 45,
+//     shareInStock: true,
+//     preShareTransfer: false,
+//     fixedPrice: false,
+//     confirmDelivery: false,
+//     deliveryTimeline: "t+2",
+//     endSellerLocation: "",
+//     endSellerName: "",
+//     endSellerProfile: "",
+//     createdAt: "2025-10-25T07:35:34.972Z",
+//     updatedAt: "2025-10-25T07:35:34.972Z",
+//     share: {
+//       id: 4,
+//       name: "BOAT",
+//       symbol: null,
+//       price: "0.00",
+//     },
+//     seller: {
+//       id: 9,
+//       firstName: "Vr",
+//       lastName: "Patra",
+//       email: "prabhat@rhinontech.com",
+//     },
+//   },
+//   {
+//     id: 4,
+//     userId: 2,
+//     shareId: 3,
+//     price: "23.000",
+//     quantityAvailable: 2332,
+//     minimumOrderQuatity: 232,
+//     shareInStock: true,
+//     preShareTransfer: false,
+//     fixedPrice: false,
+//     confirmDelivery: false,
+//     deliveryTimeline: "t+1",
+//     endSellerLocation: "",
+//     endSellerName: "",
+//     endSellerProfile: "",
+//     createdAt: "2025-10-25T06:54:55.015Z",
+//     updatedAt: "2025-10-25T06:54:55.015Z",
+//     share: {
+//       id: 3,
+//       name: "Gamma Investments",
+//       symbol: null,
+//       price: "0.00",
+//     },
+//     seller: {
+//       id: 2,
+//       firstName: "Prabhat",
+//       lastName: "Patra",
+//       email: "prabhat@rhinontech.com",
+//     },
+//   },
+//   {
+//     id: 3,
+//     userId: 2,
+//     shareId: 2,
+//     price: "43.000",
+//     quantityAvailable: 12,
+//     minimumOrderQuatity: 1214,
+//     shareInStock: true,
+//     preShareTransfer: false,
+//     fixedPrice: false,
+//     confirmDelivery: false,
+//     deliveryTimeline: "t",
+//     endSellerLocation: "",
+//     endSellerName: "",
+//     endSellerProfile: "",
+//     createdAt: "2025-10-23T06:53:20.560Z",
+//     updatedAt: "2025-10-23T06:53:20.560Z",
+//     share: {
+//       id: 2,
+//       name: "Apple",
+//       symbol: null,
+//       price: "0.00",
+//     },
+//     seller: {
+//       id: 2,
+//       firstName: "Prabhat",
+//       lastName: "Patra",
+//       email: "prabhat@rhinontech.com",
+//     },
+//   },
+//   {
+//     id: 3,
+//     userId: 2,
+//     shareId: 4,
+//     price: "43.000",
+//     quantityAvailable: 12,
+//     minimumOrderQuatity: 1214,
+//     shareInStock: true,
+//     preShareTransfer: false,
+//     fixedPrice: false,
+//     confirmDelivery: false,
+//     deliveryTimeline: "t",
+//     endSellerLocation: "",
+//     endSellerName: "",
+//     endSellerProfile: "",
+//     createdAt: "2025-10-23T06:53:20.560Z",
+//     updatedAt: "2025-10-23T06:53:20.560Z",
+//     share: {
+//       id: 2,
+//       name: "Apple",
+//       symbol: null,
+//       price: "0.00",
+//     },
+//     seller: {
+//       id: 2,
+//       firstName: "Prabhat",
+//       lastName: "Patra",
+//       email: "prabhat@rhinontech.com",
+//     },
+//   },
+//   {
+//     id: 1,
+//     userId: 2,
+//     shareId: 1,
+//     price: "45.000",
+//     quantityAvailable: 4545,
+//     minimumOrderQuatity: null,
+//     shareInStock: true,
+//     preShareTransfer: false,
+//     fixedPrice: false,
+//     confirmDelivery: false,
+//     deliveryTimeline: "t+1",
+//     endSellerLocation: "",
+//     endSellerName: "",
+//     endSellerProfile: "",
+//     createdAt: "2025-10-23T06:39:34.547Z",
+//     updatedAt: "2025-10-23T06:39:34.547Z",
+//     share: {
+//       id: 1,
+//       name: "Beta Holdings",
+//       symbol: null,
+//       price: "0.00",
+//     },
+//     seller: {
+//       id: 2,
+//       firstName: "Prabhat",
+//       lastName: "Patra",
+//       email: "prabhat@rhinontech.com",
+//     },
+//   },
+// ];
 interface GroupedShares {
   shareId: number;
   shareName: string;
@@ -254,6 +256,7 @@ interface GroupedSharesWithStats extends GroupedShares {
   maxPrice: number;
   minQuantity: number;
   maxQuantity: number;
+  bestDeal:boolean;
 }
 
 export default function Buying() {
@@ -331,7 +334,7 @@ export default function Buying() {
             acc[shareId].listings.push(item);
 
             return acc;
-          }, {} as Record<number, { shareId: number; shareName: string; updatedAt: string; listings: typeof dummyShares }>);
+          }, {} as Record<number, { shareId: number; shareName: string; updatedAt: string; listings: SellItem }>);
 
           // convert object to array (optional)
           const groupedArray = Object.values(groupedByShareId) as GroupedShares[];
@@ -356,6 +359,7 @@ export default function Buying() {
     groups.map((group) => {
       const prices = group.listings.map((l) => parseInt(l.price));
       const quantities = group.listings.map((l) => l.quantityAvailable);
+      const bestDeal = group.listings.some((l) => (l.bestDeal === true && l.approved === true));
 
       return {
         ...group,
@@ -363,6 +367,7 @@ export default function Buying() {
         maxPrice: Math.max(...prices),
         minQuantity: Math.min(...quantities),
         maxQuantity: Math.max(...quantities),
+        bestDeal,
       };
     });
 
@@ -437,7 +442,7 @@ export default function Buying() {
                   <CardTitle className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
                     {share.shareName}
                   </CardTitle>
-                  <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-transform duration-300 group-hover:translate-x-1" />
+                  {!share.bestDeal &&  <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-transform duration-300 group-hover:translate-x-1" />}
                 </div>
 
                 {/* Price Section */}
@@ -456,11 +461,14 @@ export default function Buying() {
                   <p>
                     <strong>Available:</strong> {share.listings.length > 1 ? share.minQuantity + " - " + share.maxQuantity : share.maxQuantity}
                   </p>
-                  <p>
-                    <strong>Deal Type:</strong>{" "}
-                    {share.shareName ? "Fixed" : "Negotiable"}
-                  </p>
+                  
                 </div>
+                {/* Optional Badge for stock status */}
+                {share.bestDeal && (
+                  <span className="absolute top-3 right-3 bg-green-100 text-green-700 text-xs font-medium px-2 py-0.5 rounded-full">
+                    Best Deal
+                  </span>
+                )}
 
               </Card>
             ))}

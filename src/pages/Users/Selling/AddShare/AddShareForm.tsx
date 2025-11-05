@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { use, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -26,10 +26,11 @@ import {
 } from "@/components/ui/form";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
-import { createSell, getUsersAllShares } from "@/services/sell/sellService";
+import { createSell, getSellbySellId, getShareByShareId, getUsersAllShares, updateSell } from "@/services/sell/sellService";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { getTieredPath } from "@/helpers/getTieredPath";
+import Loading from "@/app/loading";
 
 const deliveryTimelineOptions = [
   "t",
@@ -70,6 +71,7 @@ const baseSchema = z.object({
   confirmDelivery: z.boolean(),
   shareInStock: z.boolean(),
   preShareTransfer: z.boolean(),
+  bestDeal: z.boolean(),
   endSellerName: z.string().optional(),
   endSellerProfile: z.string().optional(),
   endSellerLocation: z.string().optional(),
@@ -107,6 +109,7 @@ type FormValues = z.infer<typeof formSchema>;
 interface AddSharePageProps {
   id?: string;
   bestDeal?: boolean;
+  update?: boolean;
 }
 export interface ShareDetail {
   id: number;
@@ -135,17 +138,17 @@ export interface ShareItem {
   share: ShareDetail;
 }
 
-export default function AddStockForm({ id, bestDeal }: AddSharePageProps) {
+export default function AddStockForm({ id, bestDeal, update }: AddSharePageProps) {
   const currentRole = Cookies.get("currentRole");
   const [loading, setLoading] = useState(false);
+  const [isFillingData, setIsFillingData] = useState(true);
   const [myShares, setMyShares] = useState<ShareItem[] | null>(null);
+  const [initialData, setInitialData] = useState<any>(null);
   // console.log("ShareName =>", shareName)
 
   const route = useRouter();
 
-  const isNewShare = id == null || id === "addShare";
-
-  useEffect(() => {
+useEffect(() => {
     getUsersShares();
   }, []);
 
@@ -164,7 +167,7 @@ export default function AddStockForm({ id, bestDeal }: AddSharePageProps) {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      shareName: isNewShare ? "" : id?.replace(/_/g, " "),
+      shareName: "",
       quantityAvailable: "",
       price: "",
       deliveryTimeline: "t",
@@ -173,6 +176,7 @@ export default function AddStockForm({ id, bestDeal }: AddSharePageProps) {
       confirmDelivery: false,
       shareInStock: true,
       preShareTransfer: false,
+      bestDeal:false,
       endSellerName: "",
       endSellerProfile: "",
       endSellerLocation: "",
@@ -180,10 +184,99 @@ export default function AddStockForm({ id, bestDeal }: AddSharePageProps) {
     mode: "onTouched",
   });
 
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!id){
+        setIsFillingData(false)
+        return;
+      }; // no id → normal create mode
+
+      try {
+        if (update) {
+          // ✅ Update mode - fetch sell record
+          const data = await getSellbySellId(id);
+          setInitialData(data);
+          form.reset({
+            shareName: data.share.name,
+            quantityAvailable: String(data.quantityAvailable),
+            price: String(data.price),
+            deliveryTimeline: data.deliveryTimeline,
+            moq: String(data.minimumOrderQuatity),
+            fixed: data.fixedPrice,
+            confirmDelivery: data.confirmDelivery,
+            shareInStock: data.shareInStock,
+            preShareTransfer: data.preShareTransfer,
+            bestDeal:data.preShareTransfer,
+            endSellerName: data.endSellerName,
+            endSellerProfile: data.endSellerProfile,
+            endSellerLocation: data.endSellerLocation,
+          });
+        } else {
+          // ✅ View/Pre-fill share only
+          const data = await getShareByShareId(id);
+          setInitialData(data);
+          form.reset({
+            ...form.getValues(), // keep rest defaults
+            shareName: data.name,
+            price:data.price,
+          });
+        }
+      } catch (err) {
+        console.error(err);
+        toast.error("Failed to load data");
+      }finally{
+        setIsFillingData(false);
+      }
+    };
+
+    fetchData();
+  }, [id, update]);
+
   const shareInStock = form.watch("shareInStock");
 
   const onSubmit = async (values: FormValues) => {
     setLoading(true);
+    if(update){
+
+      try {
+      // Map frontend form fields to backend API field names
+      const payload = {
+        shareName: values.shareName,
+        quantityAvailable: Number(values.quantityAvailable),
+        price: Number(values.price),
+        deliveryTimeline: values.deliveryTimeline,
+        moq: values.moq ? Number(values.moq) : undefined,
+        fixedPrice: values.fixed,
+        confirmDelivery: values.confirmDelivery,
+        shareInStock: values.shareInStock,
+        preShareTransfer: values.preShareTransfer,
+        bestDeal:values.bestDeal,
+        endSellerName: values.endSellerName,
+        endSellerProfile: values.endSellerProfile,
+        endSellerLocation: values.endSellerLocation,
+      };
+
+      console.log("[update] payload:", payload);
+
+      const result = await updateSell(id as string, payload);
+
+      if (result.success) {
+        // Redirect to selling page after successful creation
+        toast.success("Sell is updated  successfully");
+        const base = getTieredPath();
+        route.push(`/${base}/sell`);
+      }
+    } catch (error: any) {
+      console.error("Failed to update sell:", error);
+      toast.error("Failed to update sell. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+    return;
+
+    }
+
+
     try {
       // Map frontend form fields to backend API field names
       const payload = {
@@ -196,6 +289,7 @@ export default function AddStockForm({ id, bestDeal }: AddSharePageProps) {
         confirmDelivery: values.confirmDelivery,
         shareInStock: values.shareInStock,
         preShareTransfer: values.preShareTransfer,
+        bestDeal:values.bestDeal,
         endSellerName: values.endSellerName,
         endSellerProfile: values.endSellerProfile,
         endSellerLocation: values.endSellerLocation,
@@ -241,6 +335,15 @@ export default function AddStockForm({ id, bestDeal }: AddSharePageProps) {
 
   const timelineItems = useMemo(() => deliveryTimelineOptions, []);
 
+
+   if (isFillingData) {
+      return (
+        <div className="h-[calc(100vh-4.7rem)] flex flex-col relative overflow-hidden rounded-md">
+          <Loading areaOnly={true} />
+        </div>
+      );
+    }
+
   return (
     <Form {...form}>
       <form
@@ -259,7 +362,7 @@ export default function AddStockForm({ id, bestDeal }: AddSharePageProps) {
                     type="text"
                     inputMode="text"
                     placeholder="Enter share name"
-                    readOnly={!isNewShare}
+                    readOnly={Boolean(id)}
                     className="appearance-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     {...field}
                   />
@@ -508,7 +611,8 @@ export default function AddStockForm({ id, bestDeal }: AddSharePageProps) {
           </div>
         )}
 
-        {/* Pre share transfer toggle */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Pre share transfer toggle */}
         <FormField
           control={form.control}
           name="preShareTransfer"
@@ -541,8 +645,43 @@ export default function AddStockForm({ id, bestDeal }: AddSharePageProps) {
           )}
         />
 
+        {/* best deal toggle */}
+        <FormField
+          control={form.control}
+          name="bestDeal"
+          render={({ field }) => (
+            <FormItem className="flex items-center justify-between rounded-md border border-primary p-3">
+              <div className="space-y-1">
+                <FormLabel>Best Deal</FormLabel>
+                <p className="text-sm text-muted-foreground">
+                  Toggle if it is a best deal.
+                </p>
+              </div>
+              <FormControl>
+                <div className="flex items-center gap-3">
+                  <Label htmlFor="bestDeal-no" className="text-sm">
+                    No
+                  </Label>
+                  <Switch
+                    id="bestDeal"
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                    aria-label="Best Deal"
+                  />
+                  <Label htmlFor="bestDeal-yes" className="text-sm">
+                    Yes
+                  </Label>
+                </div>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        </div>
+
         <Button type="submit" disabled={loading} className="w-full">
-          {loading ? <Loader2 className="animate-spin" size={32} /> : "Submit"}
+          {!update && (loading ? <Loader2 className="animate-spin" size={32} /> : "Submit")}
+          {update && (loading ? <Loader2 className="animate-spin" size={32} /> : "Update")}
         </Button>
       </form>
     </Form>

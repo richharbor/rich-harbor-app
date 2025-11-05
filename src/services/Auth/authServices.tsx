@@ -12,6 +12,7 @@ interface IRegisterBody {
   password: string;
   fullName: string;
   accountType: string[];
+  category:string;
   franchiseId: number | null;
 }
 

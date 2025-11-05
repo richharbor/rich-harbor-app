@@ -7,6 +7,9 @@ import {
   SquareTerminal,
   UserCog,
   Building2,
+  NotebookText,
+  Gavel,
+  Handshake,
 } from "lucide-react";
 import { NavMain } from "@/components/Common/Providers/nav-main";
 import { NavUser } from "@/components/Common/Providers/nav-user";
@@ -142,19 +145,19 @@ export function LSidebar(props: ComponentProps<typeof Sidebar>) {
     {
       title: "Partners",
       url: `/${roleNameForUrl}/partners`,
-      icon: Sparkles,
+      icon: Handshake ,
       permission: "manage_partners",
     },
     {
       title: "Bookings",
       url: `/${roleNameForUrl}/bookings`,
-      icon: Sparkles,
+      icon: NotebookText,
       permission: "manage_bookings",
     },
     {
       title: "Bids",
       url: `/${roleNameForUrl}/bids`,
-      icon: Sparkles,
+      icon: Gavel ,
       permission: "manage_bids",
     },
   ];

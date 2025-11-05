@@ -129,34 +129,34 @@ export default function Selling() {
     }
   };
 
-  const handleUpdateShare = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!editShare) return;
+  // const handleUpdateShare = async (e: React.FormEvent<HTMLFormElement>) => {
+  //   e.preventDefault();
+  //   if (!editShare) return;
 
-    try {
-      await updateSell(editShare.id, {
-        price: Number(updatedData.price),
-        quantityAvailable: Number(updatedData.quantityAvailable),
-      });
+  //   try {
+  //     await updateSell(editShare.id, {
+  //       price: Number(updatedData.price),
+  //       quantityAvailable: Number(updatedData.quantityAvailable),
+  //     });
 
-      setMyShares(
-        (prev) =>
-          prev?.map((share) =>
-            share.id === editShare.id
-              ? ({
-                  ...share,
-                  price: Number(updatedData.price),
-                  quantityAvailable: Number(updatedData.quantityAvailable),
-                } as unknown as ShareItem)
-              : share
-          ) || []
-      );
+  //     setMyShares(
+  //       (prev) =>
+  //         prev?.map((share) =>
+  //           share.id === editShare.id
+  //             ? ({
+  //               ...share,
+  //               price: Number(updatedData.price),
+  //               quantityAvailable: Number(updatedData.quantityAvailable),
+  //             } as unknown as ShareItem)
+  //             : share
+  //         ) || []
+  //     );
 
-      setIsEditOpen(false);
-    } catch (error) {
-      console.error("Failed to update share:", error);
-    }
-  };
+  //     setIsEditOpen(false);
+  //   } catch (error) {
+  //     console.error("Failed to update share:", error);
+  //   }
+  // };
 
   if (loading) {
     return (
@@ -197,23 +197,21 @@ export default function Selling() {
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-3">
         <Card
-          className={`${
-            isMyShares &&
+          className={`${isMyShares &&
             "dark:bg-background bg-white cursor-pointer hover:scale-105 transition-all duration-200 ease-in-out"
-          }`}
+            }`}
           onClick={() => setIsMyShares(false)}>
           <CardHeader>
             <CardTitle>Total Shares</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{allShares ? allShares?.length: "0"}</div>
+            <div className="text-2xl font-bold">{allShares ? allShares?.length : "0"}</div>
           </CardContent>
         </Card>
         <Card
-          className={`${
-            !isMyShares &&
+          className={`${!isMyShares &&
             "dark:bg-background bg-white cursor-pointer hover:scale-105 transition-all duration-200 ease-in-out"
-          }`}
+            }`}
           onClick={() => setIsMyShares(true)}>
           <CardHeader>
             <CardTitle>My Shares</CardTitle>
@@ -278,7 +276,7 @@ export default function Selling() {
                           className="cursor-pointer"
                           onClick={() => {
                             const base = getTieredPath();
-                            route.push(`/${base}/sell/${t.share.id}`);
+                            route.push(`/${base}/sell/${t.id}`);
                           }}>
                           <TableCell className="hover:underline">
                             {t.share.name}
@@ -304,8 +302,9 @@ export default function Selling() {
                               size="sm"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                setEditShare(t);
-                                setIsEditOpen(true);
+                                const base = getTieredPath();
+                                route.push(`/${base}/sell/update/${t.id}`);
+
                               }}>
                               <Edit className="h-4 w-4" />
                             </Button>
@@ -354,7 +353,7 @@ export default function Selling() {
                           onClick={() => {
                             const base = getTieredPath();
                             route.push(
-                              `/${base}/sell/add/${t.name.replace(/ /g, "_")}`
+                              `/${base}/sell/add/${t.id}`
                             );
                           }}>
                           <TableCell className="p-3 hover:underline">
@@ -378,8 +377,8 @@ export default function Selling() {
       )}
 
       {/* Edit Share model */}
-      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+      {/* <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+        <DialogContent className="sm:max-w-[725px]">
           <DialogHeader>
             <DialogTitle>Update share details</DialogTitle>
             <p className="text-sm text-muted-foreground">
@@ -389,28 +388,53 @@ export default function Selling() {
           </DialogHeader>
           <form onSubmit={handleUpdateShare}>
             <div className=" grid gap-4 space-y-4 py-4">
-              <div className="flex flex-col space-y-2">
-                <Label htmlFor="text">Share Name</Label>
-                <Input
-                  id="share-name"
-                  placeholder="Enter available quantity"
-                  value={editShare?.share.name}
-                  readOnly
-                  className="cursor-not-allowed"
-                />
+              <div className="flex gap-4 w-full">
+                <div className="flex flex-col w-full space-y-2">
+                  <Label htmlFor="text">Share Name</Label>
+                  <Input
+                    id="share-name"
+                    placeholder="Enter available quantity"
+                    value={editShare?.share.name}
+                    readOnly
+                    className="cursor-not-allowed"
+                  />
+                </div>
+                <div className="flex w-full flex-col space-y-2">
+                  <Label htmlFor="numeric">Available Quantity</Label>
+                  <Input
+                    id="quantity"
+                    placeholder="Enter available quantity"
+                    value={editShare?.quantityAvailable}
+                    type="number"
+                    onChange={(e) =>
+                      setEditShare((prev) =>
+                        prev
+                          ? {
+                            ...prev,
+                            quantityAvailable: Number(e.target.value),
+                          }
+                          : prev
+                      )
+                    }
+                  />
+                </div>
               </div>
               <div className="flex flex-col space-y-2">
-                <Label htmlFor="numeric">Available Quantity</Label>
+                <Label htmlFor="numeric">Price</Label>
                 <Input
                   id="quantity"
                   placeholder="Enter available quantity"
-                  value={updatedData.quantityAvailable}
+                  value={editShare?.price}
                   type="number"
                   onChange={(e) =>
-                    setUpdatedData({
-                      ...updatedData,
-                      quantityAvailable: e.target.value,
-                    })
+                    setEditShare((prev) =>
+                      prev
+                        ? {
+                          ...prev,
+                          price: e.target.value,
+                        }
+                        : prev
+                    )
                   }
                 />
               </div>
@@ -419,10 +443,17 @@ export default function Selling() {
                 <Input
                   id="quantity"
                   placeholder="Enter available quantity"
-                  value={updatedData.price}
+                  value={editShare?.price}
                   type="number"
                   onChange={(e) =>
-                    setUpdatedData({ ...updatedData, price: e.target.value })
+                    setEditShare((prev) =>
+                      prev
+                        ? {
+                          ...prev,
+                          price: e.target.value,
+                        }
+                        : prev
+                    )
                   }
                 />
               </div>
@@ -435,81 +466,7 @@ export default function Selling() {
             </DialogFooter>
           </form>
         </DialogContent>
-      </Dialog>
-
-      {/* Add Share Model */}
-      {/* <Dialog open={isAllShareOpen} onOpenChange={setIsAllShareOpen}>
-                <DialogContent className="max-w-[450px] flex flex-col overflow-hidden">
-                    <DialogHeader>
-                        <DialogTitle>Select Shares</DialogTitle>
-                        <p className="text-sm text-muted-foreground">
-                            Select shares from existing ones.
-                        </p>
-                    </DialogHeader>
-
-                    
-                    <div className="flex-1 min-h-0 flex flex-col">
-                        
-                        <div className="relative mb-2">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
-                            <Input
-                                placeholder="Search Shares..."
-                                value={popupSearch}
-                                onChange={(e) => setPopupSearch(e.target.value)}
-                                className="pl-10"
-                            />
-                        </div>
-
-                       
-                        <ScrollArea className="min-h-0 h-[300px] overflow-y-auto rounded-md border">
-                            <Table>
-                                <TableHeader className="sticky top-0 bg-background">
-                                    <TableRow>
-                                        <TableHead>Share Name</TableHead>
-                                        <TableHead>Price</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-
-                                <TableBody>
-                                    {loading ? (
-                                        <TableRow>
-                                            <TableCell colSpan={10} className="text-center">
-                                                Loading...
-                                            </TableCell>
-                                        </TableRow>
-                                    ) : shares.length ? (
-                                        shares
-                                            .filter((t: any) =>
-                                                t.shareName.toLowerCase().includes(popupSearch.toLowerCase())
-                                            )
-                                            .map((t: any) => (
-                                                <TableRow key={t.shareName}>
-                                                    <TableCell>{t.shareName}</TableCell>
-                                                    <TableCell>{t.price}</TableCell>
-                                                </TableRow>
-                                            ))
-                                    ) : (
-                                        <TableRow>
-                                            <TableCell colSpan={10} className="text-center">
-                                                No shares found
-                                            </TableCell>
-                                        </TableRow>
-                                    )}
-                                </TableBody>
-                            </Table>
-                        </ScrollArea>
-                    </div>
-
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsAllShareOpen(false)}>
-                            Cancel
-                        </Button>
-                        <Button
-                        onClick={() => route.push(`/${currentRole}/selling/addShare`)} 
-                        >Add New Share</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog> */}
+      </Dialog> */}
     </div>
   );
 }
