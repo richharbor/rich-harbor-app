@@ -74,6 +74,7 @@ export default function SharePage({ id }: SharePageProps) {
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [selectedSell, setSelectedSell] = useState<Seller | null>(null)
+  const [isBestDeal, setIsBestDeal] = useState(false);
   const [bidData, setBidData] = useState<BidData>({
     sellId: 0,
     quantity: "",
@@ -104,6 +105,10 @@ export default function SharePage({ id }: SharePageProps) {
       try {
         const data = await getSellsByShareId(id);
 
+        setIsBestDeal(
+          data.some((item: any) => item.bestDeal === true && item.approved === true)
+        );
+
         // map API fields to your Seller interface
         const sellers = data.map((s: any) => ({
           sellId: s.id,
@@ -118,7 +123,7 @@ export default function SharePage({ id }: SharePageProps) {
           fixed: s.fixedPrice,
         }));
 
-        
+
 
         setShare({ shareName: data[0]?.share.name || "", sellers });
       } catch (error) {
@@ -171,7 +176,7 @@ export default function SharePage({ id }: SharePageProps) {
     setIsSending(true);
     try {
       // Map frontend form fields to backend API field names
-      
+
       const payload = {
         sellId: bookingData.sellId,
         quantity: parseInt(bookingData.quantity),
@@ -250,11 +255,10 @@ export default function SharePage({ id }: SharePageProps) {
             <h2 className="text-3xl font-bold tracking-tight">
               {share.shareName}
             </h2>
-            {/* <span className={`px-3 py-1 rounded-full text-sm font-medium ${share.shareInStock ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-                            }`}
-                        >
-                            {share.shareInStock ? "In Stock" : "Out of Stock"}
-                        </span> */}
+            <span className={`${!isBestDeal && 'hidden'} px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800`}
+            >
+              {isBestDeal && "Available on Best Deals" }
+            </span>
           </div>
 
           {/* Grid Details */}
@@ -389,7 +393,7 @@ export default function SharePage({ id }: SharePageProps) {
             <DialogTitle>Raise a Bid</DialogTitle>
             <p className="text-sm text-muted-foreground">
               Enter your bid amount below. <br />
-              <span className={`${(bidData.quantity !== "" && selectedSell !== null && Number(bidData.quantity) < Number(selectedSell.moq)) && 'text-red-500' }  ${(bidData.bidPrice !== "" && selectedSell !== null && Number(bidData.bidPrice) < Number(selectedSell.price) - 2 ) && 'text-red-500' }`}>The quantity must be greater then MOQ and bid price must be greater then price - 3</span>
+              <span className={`${(bidData.quantity !== "" && selectedSell !== null && Number(bidData.quantity) < Number(selectedSell.moq)) && 'text-red-500'}  ${(bidData.bidPrice !== "" && selectedSell !== null && Number(bidData.bidPrice) < Number(selectedSell.price) - 2) && 'text-red-500'}`}>The quantity must be greater then MOQ and bid price must be greater then price - 3</span>
             </p>
           </DialogHeader>
           <div className=" grid gap-4 space-y-4 py-4">
@@ -430,12 +434,12 @@ export default function SharePage({ id }: SharePageProps) {
               Cancel
             </Button>
             <Button onClick={handleBidSubmit} disabled={isSending || bidData.bidPrice === "" || bidData.quantity === "" || (selectedSell != null && !isNaN(Number(selectedSell.moq))
-                  ? Number(bidData.quantity) < Number(selectedSell.moq)
-                  : false)
-                  || (selectedSell != null && !isNaN(Number(selectedSell.price))
-                  ? Number(bidData.bidPrice) < (Number(selectedSell.price) - 2)
-                  : false)
-                  }>
+              ? Number(bidData.quantity) < Number(selectedSell.moq)
+              : false)
+              || (selectedSell != null && !isNaN(Number(selectedSell.price))
+                ? Number(bidData.bidPrice) < (Number(selectedSell.price) - 2)
+                : false)
+            }>
               {isSending ? "Sending..." : "Send"}
             </Button>
           </DialogFooter>
@@ -450,7 +454,7 @@ export default function SharePage({ id }: SharePageProps) {
             <DialogTitle>Book the Share</DialogTitle>
             <p className="text-sm text-muted-foreground">
               Enter your booking quantity below to book this share. <br />
-              <span className={`${(bookingData.quantity !== "" && selectedSell !== null && Number(bookingData.quantity) < Number(selectedSell.moq)) && 'text-red-500' }`}>The quantity must be greater then MOQ</span>
+              <span className={`${(bookingData.quantity !== "" && selectedSell !== null && Number(bookingData.quantity) < Number(selectedSell.moq)) && 'text-red-500'}`}>The quantity must be greater then MOQ</span>
             </p>
           </DialogHeader>
           <div className=" grid gap-4 space-y-4 py-4">

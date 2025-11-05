@@ -42,6 +42,7 @@ export interface SellPayload {
   confirmDelivery?: boolean;
   shareInStock?: boolean;
   preShareTransfer?: boolean;
+  bestDeal?:boolean;
   endSellerName?: string;
   endSellerProfile?: string;
   endSellerLocation?: string;

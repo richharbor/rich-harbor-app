@@ -56,6 +56,7 @@ type FormDataState = {
   email: string;
   password: string;
   fullName: string;
+  category: string;
   // Step 2
   name: string;
   state: string;
@@ -105,6 +106,7 @@ export default function Onboarding() {
     email: "",
     password: "",
     fullName: "",
+    category: "",
     // Step 2
     name: "",
     state: "",
@@ -248,6 +250,7 @@ export default function Onboarding() {
             fullName: response.formData.step1?.fullName || prev.fullName,
             accountType:
               response.formData.step1?.accountType || prev.accountType,
+            category: response.formData.step1?.category || prev.category,
 
             // Step 2 (if API sends later)
             name: response.formData.step2?.name || prev.name,
@@ -313,6 +316,7 @@ export default function Onboarding() {
         password: formData.password,
         fullName: formData.fullName,
         accountType: formData.accountType,
+        category: formData.category,
         franchiseId, //  include franchiseId in payload
       });
 
@@ -321,53 +325,76 @@ export default function Onboarding() {
     } catch (error: any) {
       console.error("Onboarding error:", error);
       toast.error(error.response?.data?.error || "Failed to create account");
+      throw error;
     }
   };
 
   const handleStep2Submit = async () => {
-    await postAccountInfo({
-      name: formData.name,
-      state: formData.state,
-      aadharCard: formData.aadharCard,
-      panCard: formData.panCard,
-      mobile: formData.mobile,
-      bankName: formData.bankName,
-      accountNumber: formData.accountNumber,
-      ifscCode: formData.ifscCode,
-      country: formData.country,
-      addressState: formData.addressState,
-      addressLine1: formData.addressLine1,
-      addressLine2: formData.addressLine2,
-      city: formData.city,
-      zipCode: formData.zipCode,
-    });
-    toast.success("Account information saved!");
+    try {
+      await postAccountInfo({
+        name: formData.name,
+        state: formData.state,
+        aadharCard: formData.aadharCard,
+        panCard: formData.panCard,
+        mobile: formData.mobile,
+        bankName: formData.bankName,
+        accountNumber: formData.accountNumber,
+        ifscCode: formData.ifscCode,
+        country: formData.country,
+        addressState: formData.addressState,
+        addressLine1: formData.addressLine1,
+        addressLine2: formData.addressLine2,
+        city: formData.city,
+        zipCode: formData.zipCode,
+      });
+      toast.success("Account information saved!");
+
+    } catch (error: any) {
+      console.error("Onboarding error:", error);
+      toast.error(error.response?.data?.error || "Failed to Save information");
+      throw error;
+    }
+
   };
 
   const handleStep3Submit = async () => {
-    const documentUrls: Record<string, string> = {};
+    try {
+      const documentUrls: Record<string, string> = {};
 
-    // Extract actual file URLs from uploadedFiles
-    Object.entries(formData.uploadedFiles).forEach(
-      ([key, uploadedFile]: [string, any]) => {
-        if (uploadedFile && uploadedFile.fileUrl) {
-          documentUrls[key] = uploadedFile.fileUrl;
+      // Extract actual file URLs from uploadedFiles
+      Object.entries(formData.uploadedFiles).forEach(
+        ([key, uploadedFile]: [string, any]) => {
+          if (uploadedFile && uploadedFile.fileUrl) {
+            documentUrls[key] = uploadedFile.fileUrl;
+          }
         }
-      }
-    );
+      );
 
-    console.log("[v0] Submitting document URLs:", documentUrls);
+      console.log("[v0] Submitting document URLs:", documentUrls);
 
-    await postDocuments({ documents: documentUrls });
-    toast.success("Documents uploaded!");
+      await postDocuments({ documents: documentUrls });
+      toast.success("Documents uploaded!");
+    } catch (error: any) {
+      console.error("Onboarding error:", error);
+      toast.error(error.response?.data?.error || "Failed to upload documents");
+      throw error;
+
+    }
   };
 
   const handleStep4Submit = async () => {
-    // Upload agreement and get URL
+    try{
+      // Upload agreement and get URL
     const agreementUrl = "uploaded_agreement_url";
 
     await postAgreement({ agreementUrl });
     toast.success("Agreement saved!");
+    } catch (error: any) {
+      console.error("Onboarding error:", error);
+      toast.error(error.response?.data?.error || "Failed to save agreement");
+      throw error;
+
+    }
   };
 
   const handleStep5Submit = async () => {
@@ -389,9 +416,10 @@ export default function Onboarding() {
       toast.success("Referrals saved successfully!");
       await completeOnboarding();
       toast.success("Application submitted for review!");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error saving referrals:", error);
       toast.error("Failed to save referrals. Please try again.");
+      throw error;
     }
   };
 
@@ -566,6 +594,9 @@ export default function Onboarding() {
     }
     if (formData.fullName.trim().length <= 2) {
       newErrors.fullName = "Full name must be at least 3 characters";
+    }
+    if(formData.category.length === 0){
+      newErrors.category = "Category is required";
     }
 
     setErrs(newErrors);
@@ -756,7 +787,8 @@ export default function Onboarding() {
         formData.accountType.length > 0 &&
         isEmail(formData.email) &&
         isStrongPassword(formData.password) && //  new check
-        formData.fullName.trim().length > 2
+        formData.fullName.trim().length > 2 &&
+        formData.category.length !== 0
       );
     }
 
@@ -814,8 +846,8 @@ export default function Onboarding() {
           "flex items-center gap-2 px-3 py-2 rounded-full text-sm whitespace-nowrap transition-colors",
           isActive && "bg-primary/10 text-primary border border-primary/20",
           !isActive &&
-            isDone &&
-            "bg-muted text-muted-foreground hover:bg-muted/80",
+          isDone &&
+          "bg-muted text-muted-foreground hover:bg-muted/80",
           !isActive && !isDone && "bg-muted text-muted-foreground",
           !isClickable && "cursor-not-allowed opacity-60"
         )}
@@ -826,8 +858,8 @@ export default function Onboarding() {
             isActive && "border-primary text-primary bg-primary/5",
             isDone && "border-primary text-primary bg-primary/10",
             !isActive &&
-              !isDone &&
-              "border-muted-foreground/30 bg-background text-muted-foreground"
+            !isDone &&
+            "border-muted-foreground/30 bg-background text-muted-foreground"
           )}>
           {isDone ? <Check className="h-3.5 w-3.5" /> : stepNumber}
         </span>
@@ -1132,6 +1164,49 @@ function StepView({
             )
           )}
         </div>
+        <div >
+          <Label htmlFor="text">
+            Entity Type *
+          </Label>
+          <select
+            id='category'
+            value={formData.category}
+            onChange={(e) => {
+              setFormData((prev) => ({ ...prev, category: e.target.value }))
+            }}
+            className="mt-2 bg-transparent w-full px-3 py-2 border border-input rounded-md text-foreground">
+            <option className="dark:bg-background" value="">
+              Select entity type
+            </option>
+
+            <option className="dark:bg-background" value="institution">
+              Large Institution
+            </option>
+            <option className="dark:bg-background" value="wealth firm">
+              Wealth Firm
+            </option>
+            <option className="dark:bg-background" value="Large Broker">
+              Large Broker
+            </option>
+            <option className="dark:bg-background" value="broker">
+              Broker
+            </option>
+            <option className="dark:bg-background" value="Family office">
+              Family office
+            </option>
+            <option className="dark:bg-background" value="Individual">
+              Individual
+            </option>
+            <option className="dark:bg-background" value="Other">
+              Other
+            </option>
+
+          </select>
+          {err?.category && (
+            <p className="text-sm text-red-500 mt-1">{err?.category}</p>
+          )}
+
+        </div>
       </div>
     );
   }
@@ -1176,7 +1251,7 @@ function StepView({
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4" >
-          <div onClick={()=> clearError("aadharCard")}>
+          <div onClick={() => clearError("aadharCard")}>
             <ValidationInput
               id="aadhar"
               label="Aadhar Card"
@@ -1195,7 +1270,7 @@ function StepView({
               </p>
             )}
           </div>
-          <div onClick={()=> clearError('panCard')}>
+          <div onClick={() => clearError('panCard')}>
             <ValidationInput
               id="pan"
               label="PAN Card"
@@ -1230,23 +1305,23 @@ function StepView({
               className="mt-2"
             />
           </div>
-          <div onClick={()=> clearError("mobile")}>
+          <div onClick={() => clearError("mobile")}>
             <ValidationInput
-            id="mobile"
-            label="Mobile No."
-            value={formData.mobile}
-            onChange={(e) =>
-              setFormData((prev) => ({
-                ...prev,
-                mobile: e.target.value,
-              }))
-            }
-            placeholder="Enter 10-digit mobile number"
-            inputMode="tel"
-            validator={validators?.isMobile}
-            helperText="Format: 10 digits (e.g., 9876543210)"
-          />
-          {err?.mobile && (
+              id="mobile"
+              label="Mobile No."
+              value={formData.mobile}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  mobile: e.target.value,
+                }))
+              }
+              placeholder="Enter 10-digit mobile number"
+              inputMode="tel"
+              validator={validators?.isMobile}
+              helperText="Format: 10 digits (e.g., 9876543210)"
+            />
+            {err?.mobile && (
               <p className="text-xs text-red-600 dark:text-red-400 font-medium">
                 {err?.mobile}
               </p>
@@ -1295,19 +1370,19 @@ function StepView({
               </p>
             )}
           </div>
-          <div onClick={()=> clearError('ifscCode')}>
+          <div onClick={() => clearError('ifscCode')}>
             <ValidationInput
-            id="ifsc"
-            label="IFSC Code"
-            value={formData.ifscCode}
-            onChange={(e) =>
-              setFormData((prev) => ({ ...prev, ifscCode: e.target.value }))
-            }
-            placeholder="Enter IFSC code"
-            validator={validators?.isIFSC}
-            helperText="Format: 4 letters, 0, 6 alphanumeric (e.g., ABCD0123456)"
-          />
-           {err?.ifscCode && (
+              id="ifsc"
+              label="IFSC Code"
+              value={formData.ifscCode}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, ifscCode: e.target.value }))
+              }
+              placeholder="Enter IFSC code"
+              validator={validators?.isIFSC}
+              helperText="Format: 4 letters, 0, 6 alphanumeric (e.g., ABCD0123456)"
+            />
+            {err?.ifscCode && (
               <p className="text-xs text-red-600 dark:text-red-400 font-medium">
                 {err?.ifscCode}
               </p>
@@ -1411,20 +1486,20 @@ function StepView({
                 </p>
               )}
             </div>
-            <div onClick={()=> clearError('zipCode')}>
+            <div onClick={() => clearError('zipCode')}>
               <ValidationInput
-              id="zipCode"
-              label="Zip / Postal Code"
-              value={formData.zipCode}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, zipCode: e.target.value }))
-              }
-              placeholder="Enter zip code"
-              inputMode="numeric"
-              validator={validators?.isPostalCode}
-              helperText="Format: 4-6 digits (e.g., 110001)"
-            />
-            {err?.zipCode && (
+                id="zipCode"
+                label="Zip / Postal Code"
+                value={formData.zipCode}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, zipCode: e.target.value }))
+                }
+                placeholder="Enter zip code"
+                inputMode="numeric"
+                validator={validators?.isPostalCode}
+                helperText="Format: 4-6 digits (e.g., 110001)"
+              />
+              {err?.zipCode && (
                 <p className="text-xs text-red-600 dark:text-red-400 font-medium">
                   {err?.zipCode}
                 </p>

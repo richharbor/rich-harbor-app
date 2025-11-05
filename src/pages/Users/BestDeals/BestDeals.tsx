@@ -6,12 +6,17 @@ import Cookies from "js-cookie";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Search, ChevronRight, Plus } from "lucide-react";
+import { Search, ChevronRight, Plus, Edit, Check, X, Loader2 } from "lucide-react";
 
 import { getAllSellShares } from "@/services/sell/sellService";
 import Loading from "@/app/loading";
 import { getTieredPath } from "@/helpers/getTieredPath";
 import { Button } from "@/components/ui/button";
+import { approveBestDeal, discardBestDeal, getAllBestDeals, getAllNonApprovedBestDeals } from "@/services/BestDeals/bestDealsService";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import useAuthStore from "@/helpers/authStore";
+import { toast } from "sonner";
 
 interface ShareItem {
   id: number;
@@ -60,178 +65,224 @@ export interface SellItem {
   updatedAt: string;
   share: ShareInfo;
   seller: SellerInfo;
-  specialDeal: boolean;
+  bestDeal: boolean;
 }
 
-const dummyBestDeals: SellItem[] = [
-  {
-    id: 10,
-    userId: 11,
-    shareId: 10,
-    price: "120.000",
-    quantityAvailable: 5000,
-    minimumOrderQuatity: 100,
-    shareInStock: true,
-    preShareTransfer: false,
-    fixedPrice: true,
-    confirmDelivery: true,
-    deliveryTimeline: "t+1",
-    endSellerLocation: "Mumbai",
-    endSellerName: "Vikram Singh",
-    endSellerProfile: "",
-    createdAt: "2025-10-27T09:00:00.000Z",
-    updatedAt: "2025-10-27T09:00:00.000Z",
-    share: {
-      id: 10,
-      name: "Tata Technologies",
-      symbol: "TATA",
-      price: "0.00",
-    },
-    seller: {
-      id: 11,
-      firstName: "Vikram",
-      lastName: "Singh",
-      email: "vikram@tata.com",
-    },
-    specialDeal: true,
-  },
-  {
-    id: 11,
-    userId: 12,
-    shareId: 11,
-    price: "85.000",
-    quantityAvailable: 3000,
-    minimumOrderQuatity: 50,
-    shareInStock: true,
-    preShareTransfer: true,
-    fixedPrice: false,
-    confirmDelivery: true,
-    deliveryTimeline: "t+3",
-    endSellerLocation: "Delhi",
-    endSellerName: "Riya Kapoor",
-    endSellerProfile: "",
-    createdAt: "2025-10-27T09:10:00.000Z",
-    updatedAt: "2025-10-27T09:10:00.000Z",
-    share: {
-      id: 11,
-      name: "Zomato",
-      symbol: "ZOMATO",
-      price: "0.00",
-    },
-    seller: {
-      id: 12,
-      firstName: "Riya",
-      lastName: "Kapoor",
-      email: "riya@zomato.com",
-    },
-    specialDeal: true,
-  },
-  {
-    id: 12,
-    userId: 13,
-    shareId: 12,
-    price: "63.500",
-    quantityAvailable: 2500,
-    minimumOrderQuatity: 75,
-    shareInStock: true,
-    preShareTransfer: false,
-    fixedPrice: false,
-    confirmDelivery: false,
-    deliveryTimeline: "t+2",
-    endSellerLocation: "Bangalore",
-    endSellerName: "Ankit Verma",
-    endSellerProfile: "",
-    createdAt: "2025-10-27T09:20:00.000Z",
-    updatedAt: "2025-10-27T09:20:00.000Z",
-    share: {
-      id: 12,
-      name: "Ola Cabs",
-      symbol: "OLA",
-      price: "0.00",
-    },
-    seller: {
-      id: 13,
-      firstName: "Ankit",
-      lastName: "Verma",
-      email: "ankit@ola.com",
-    },
-    specialDeal: true,
-  },
-  {
-    id: 13,
-    userId: 14,
-    shareId: 13,
-    price: "150.000",
-    quantityAvailable: 800,
-    minimumOrderQuatity: 25,
-    shareInStock: true,
-    preShareTransfer: true,
-    fixedPrice: true,
-    confirmDelivery: true,
-    deliveryTimeline: "t+1",
-    endSellerLocation: "Hyderabad",
-    endSellerName: "Neha Joshi",
-    endSellerProfile: "",
-    createdAt: "2025-10-27T09:30:00.000Z",
-    updatedAt: "2025-10-27T09:30:00.000Z",
-    share: {
-      id: 13,
-      name: "Swiggy",
-      symbol: "SWIGGY",
-      price: "0.00",
-    },
-    seller: {
-      id: 14,
-      firstName: "Neha",
-      lastName: "Joshi",
-      email: "neha@swiggy.com",
-    },
-    specialDeal: true,
-  },
-];
+// const dummyBestDeals: SellItem[] = [
+//   {
+//     id: 10,
+//     userId: 11,
+//     shareId: 10,
+//     price: "120.000",
+//     quantityAvailable: 5000,
+//     minimumOrderQuatity: 100,
+//     shareInStock: true,
+//     preShareTransfer: false,
+//     fixedPrice: true,
+//     confirmDelivery: true,
+//     deliveryTimeline: "t+1",
+//     endSellerLocation: "Mumbai",
+//     endSellerName: "Vikram Singh",
+//     endSellerProfile: "",
+//     createdAt: "2025-10-27T09:00:00.000Z",
+//     updatedAt: "2025-10-27T09:00:00.000Z",
+//     share: {
+//       id: 10,
+//       name: "Tata Technologies",
+//       symbol: "TATA",
+//       price: "0.00",
+//     },
+//     seller: {
+//       id: 11,
+//       firstName: "Vikram",
+//       lastName: "Singh",
+//       email: "vikram@tata.com",
+//     },
+//     specialDeal: true,
+//   },
+//   {
+//     id: 11,
+//     userId: 12,
+//     shareId: 11,
+//     price: "85.000",
+//     quantityAvailable: 3000,
+//     minimumOrderQuatity: 50,
+//     shareInStock: true,
+//     preShareTransfer: true,
+//     fixedPrice: false,
+//     confirmDelivery: true,
+//     deliveryTimeline: "t+3",
+//     endSellerLocation: "Delhi",
+//     endSellerName: "Riya Kapoor",
+//     endSellerProfile: "",
+//     createdAt: "2025-10-27T09:10:00.000Z",
+//     updatedAt: "2025-10-27T09:10:00.000Z",
+//     share: {
+//       id: 11,
+//       name: "Zomato",
+//       symbol: "ZOMATO",
+//       price: "0.00",
+//     },
+//     seller: {
+//       id: 12,
+//       firstName: "Riya",
+//       lastName: "Kapoor",
+//       email: "riya@zomato.com",
+//     },
+//     specialDeal: true,
+//   },
+//   {
+//     id: 12,
+//     userId: 13,
+//     shareId: 12,
+//     price: "63.500",
+//     quantityAvailable: 2500,
+//     minimumOrderQuatity: 75,
+//     shareInStock: true,
+//     preShareTransfer: false,
+//     fixedPrice: false,
+//     confirmDelivery: false,
+//     deliveryTimeline: "t+2",
+//     endSellerLocation: "Bangalore",
+//     endSellerName: "Ankit Verma",
+//     endSellerProfile: "",
+//     createdAt: "2025-10-27T09:20:00.000Z",
+//     updatedAt: "2025-10-27T09:20:00.000Z",
+//     share: {
+//       id: 12,
+//       name: "Ola Cabs",
+//       symbol: "OLA",
+//       price: "0.00",
+//     },
+//     seller: {
+//       id: 13,
+//       firstName: "Ankit",
+//       lastName: "Verma",
+//       email: "ankit@ola.com",
+//     },
+//     specialDeal: true,
+//   },
+//   {
+//     id: 13,
+//     userId: 14,
+//     shareId: 13,
+//     price: "150.000",
+//     quantityAvailable: 800,
+//     minimumOrderQuatity: 25,
+//     shareInStock: true,
+//     preShareTransfer: true,
+//     fixedPrice: true,
+//     confirmDelivery: true,
+//     deliveryTimeline: "t+1",
+//     endSellerLocation: "Hyderabad",
+//     endSellerName: "Neha Joshi",
+//     endSellerProfile: "",
+//     createdAt: "2025-10-27T09:30:00.000Z",
+//     updatedAt: "2025-10-27T09:30:00.000Z",
+//     share: {
+//       id: 13,
+//       name: "Swiggy",
+//       symbol: "SWIGGY",
+//       price: "0.00",
+//     },
+//     seller: {
+//       id: 14,
+//       firstName: "Neha",
+//       lastName: "Joshi",
+//       email: "neha@swiggy.com",
+//     },
+//     specialDeal: true,
+//   },
+// ];
 
 
 export default function BestDeals() {
-  const [shares, setShares] = useState<ShareItem[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [bestDeals, setBestDeals] = useState<SellItem[]>([]);
+  const [nonApprovedBestDeals, setNonApprovedBestDeals] = useState<SellItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const tier = useAuthStore((state) => state.user?.tier);
+  const [openApproveModel, setOpenApproveModel] = useState(false);
+  const [fetchingData, setFetchingData] = useState(false);
+  const [approving , setApproving] = useState(false);
 
   const currentRole = Cookies.get("currentRole");
   const route = useRouter();
 
-  // useEffect(() => {
-  //   const fetchShares = async () => {
-  //     try {
-  //       const response = await getAllSellShares();
-  //       if (response.success && response.data.length) {
-  //         // Map API SellItem[] directly to ShareItem[]
-  //         const mappedShares: ShareItem[] = response.data.map((sell: any) => ({
-  //           id: sell.id,
-  //           shareId: sell.share.id,
-  //           shareName: sell.share.name,
-  //           quantityAvailable: String(sell.quantityAvailable),
-  //           price: sell.price,
-  //           deliveryTimeline: sell.deliveryTimeline,
-  //           confirmDelivery: sell.confirmDelivery,
-  //           shareInStock: sell.shareInStock,
-  //           preShareTransfer: sell.preShareTransfer,
-  //           fixed: sell.fixedPrice,
-  //           moq: String(sell.minimumOrderQuatity),
-  //         }));
-  //         // ✅ Remove duplicates by shareName
-  //         const uniqueShares = Array.from(
-  //           new Map(mappedShares.map((item) => [item.shareName, item])).values()
-  //         );
-  //         setShares(uniqueShares);
-  //       }
-  //     } catch (error) {
-  //       console.error("Failed to fetch shares:", error);
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
+  useEffect(() => {
+    const fetchBestDeals = async () => {
+      try {
+        const response = await getAllBestDeals();
+        console.log("best deals", response)
+        setBestDeals(response.data);
+      } catch (error) {
+        console.error("Failed to fetch shares:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  //   fetchShares();
-  // }, []);
+    fetchBestDeals();
+  }, []);
+
+  const fetchNonApprovedBestDeals = async () => {
+    setFetchingData(true);
+    try {
+      const response = await getAllNonApprovedBestDeals();
+      console.log("best deals", response)
+      setNonApprovedBestDeals(response.data);
+    } catch (error) {
+      console.error("Failed to fetch shares:", error);
+    } finally {
+      setFetchingData(false);
+    }
+  };
+
+
+  const handleApprove = async (id: string | number) => {
+    setApproving(true);
+    try {
+      const result = await approveBestDeal(id as string);
+
+      if (result.success) {
+        // Redirect to selling page after successful creation
+        toast.success("Best Deal is approved successfully");
+        setNonApprovedBestDeals(prev =>
+          prev.filter(item => item.id !== id)
+        );
+
+      }
+
+    } catch (error) {
+      console.error("Failed to fetch shares:", error);
+      toast.error('Unable to approved');
+    } finally {
+      setApproving(false);
+    }
+  }
+
+    const handleDiscard = async (id: string | number) => {
+    setApproving(true);
+    try {
+      const result = await discardBestDeal(id as string);
+
+      if (result.success) {
+        // Redirect to selling page after successful creation
+        toast.success("Best Deal is approved successfully");
+        setNonApprovedBestDeals(prev =>
+          prev.filter(item => item.id !== id)
+        );
+
+      }
+
+    } catch (error) {
+      console.error("Failed to fetch shares:", error);
+      toast.error('Unable to approved');
+    } finally {
+      setApproving(false);
+    }
+  }
+
+
 
   if (loading) {
     return (
@@ -241,13 +292,13 @@ export default function BestDeals() {
     );
   }
 
-  // if (!shares.length) {
-  //   return (
-  //     <div className="h-[calc(100vh-4.7rem)] flex flex-col relative justify-center items-center overflow-hidden rounded-md">
-  //       No shares found.
-  //     </div>
-  //   );
-  // }
+  if (!bestDeals.length) {
+    return (
+      <div className="h-[calc(100vh-4.7rem)] flex flex-col relative justify-center items-center overflow-hidden rounded-md">
+        No shares found.
+      </div>
+    );
+  }
 
   return (
     <div className="h-[calc(100vh-4.7rem)] flex flex-col relative overflow-hidden space-y-6">
@@ -258,13 +309,13 @@ export default function BestDeals() {
             Explore best deal shares available for purchase.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className={`flex items-center gap-2 ${(tier !== undefined && tier > 3) && 'hidden'}`}>
           <Button
             onClick={() => {
-              const base = getTieredPath();
-              route.push(`/${base}/best-deals/add`);
+              fetchNonApprovedBestDeals();
+              setOpenApproveModel(true);
             }}>
-            <Plus className="h-4 w-4 mr-2" /> Add Best Deal
+            Approve Best Deals
           </Button>
         </div>
 
@@ -280,12 +331,12 @@ export default function BestDeals() {
       <div className="flex-1 min-h-0 border-t">
         <ScrollArea className="h-full">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 p-4">
-            {dummyBestDeals.map((share, index) => (
+            {bestDeals.map((share, index) => (
               <Card
                 key={index}
                 onClick={() => {
                   const base = getTieredPath();
-                  route.push(`/${base}/share/${share.shareId}`);
+                  route.push(`/${base}/best-deals/${share.id}`);
                 }}
                 className="group relative cursor-pointer border border-border/50 bg-card hover:shadow-lg hover:border-primary/40 transition-all duration-300 rounded-2xl p-4">
                 {/* Top Row */}
@@ -318,7 +369,7 @@ export default function BestDeals() {
                   </p>
                 </div>
                 {/* Optional Badge for stock status */}
-                {share.specialDeal && (
+                {share.bestDeal && (
                   <span className="absolute top-3 right-3 bg-green-100 text-green-700 text-xs font-medium px-2 py-0.5 rounded-full">
                     Best Deal
                   </span>
@@ -328,6 +379,115 @@ export default function BestDeals() {
           </div>
         </ScrollArea>
       </div>
+
+
+      <Dialog
+        open={openApproveModel}
+        onOpenChange={setOpenApproveModel}
+      >
+        <DialogContent className="sm:max-w-6xl realtive flex flex-col h-[500px]">
+          <DialogHeader className="h-fit">
+            <DialogTitle>Approve Best Deals</DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 min-h-0">
+            <ScrollArea className="h-full">
+              <div className="rounded-md border">
+                <Table className={`${fetchingData && 'h-32'}`}>
+                  <TableHeader className="sticky top-0 z-10">
+                    <TableRow>
+                      <TableHead>Share Name</TableHead>
+                      <TableHead>Available Quantity</TableHead>
+                      <TableHead>Price</TableHead>
+                      <TableHead>Deal Type</TableHead>
+                      <TableHead>Delivery Timeline</TableHead>
+                      <TableHead>Confirm Delivery</TableHead>
+                      <TableHead>MOQ</TableHead>
+
+                      <TableHead>Share in Stock</TableHead>
+                      <TableHead>Pre-Share Transfer</TableHead>
+                      <TableHead>Action</TableHead>
+                    </TableRow>
+                  </TableHeader>
+
+                  <TableBody>
+                    {fetchingData ? (
+                      <TableRow>
+                        <TableCell colSpan={10} className="relative min-h-10 text-center">
+                          <Loading areaOnly />
+                        </TableCell>
+                      </TableRow>
+                    ) : nonApprovedBestDeals?.length ? (
+                      nonApprovedBestDeals
+                        .map((t: any) => (
+                          <TableRow
+                            key={t.id}
+                            className="cursor-pointer"
+                          // onClick={() => {
+                          //   const base = getTieredPath();
+                          //   route.push(`/${base}/sell/${t.id}`);
+                          // }}
+                          >
+                            <TableCell className="hover:underline">
+                              {t.share.name}
+                            </TableCell>
+                            <TableCell>{t.quantityAvailable}</TableCell>
+                            <TableCell>{t.price}</TableCell>
+                            <TableCell>
+                              {t.fixedPrice ? "Fixed" : "Negotiable"}
+                            </TableCell>
+                            <TableCell>{t.deliveryTimeline}</TableCell>
+                            <TableCell>
+                              {t.confirmDelivery ? "Yes" : "No"}
+                            </TableCell>
+                            <TableCell>{t.minimumOrderQuatity}</TableCell>
+
+                            <TableCell>{t.shareInStock ? "Yes" : "No"}</TableCell>
+                            <TableCell>
+                              {t.preShareTransfer ? "Yes" : "No"}
+                            </TableCell>
+                            <TableCell className="flex gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="relative"
+                                disabled={approving}
+                                onClick={(e) => {
+                                  handleApprove(t.id);
+                                }}
+                              >
+                                {approving ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" /> : <Check className="h-5 w-5 text-green-500" />}
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                disabled={approving}
+                              onClick={(e) => {
+                                handleDiscard(t.id);
+                              }}
+                              >
+                                {approving ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" /> : <X className="h-5 w-5 text-red-500" />}
+                                
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={10} className="text-center">
+                          No shares found
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </ScrollArea>
+          </div>
+
+
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }

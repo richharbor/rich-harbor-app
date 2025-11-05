@@ -71,6 +71,7 @@ const baseSchema = z.object({
   confirmDelivery: z.boolean(),
   shareInStock: z.boolean(),
   preShareTransfer: z.boolean(),
+  bestDeal: z.boolean(),
   endSellerName: z.string().optional(),
   endSellerProfile: z.string().optional(),
   endSellerLocation: z.string().optional(),
@@ -175,6 +176,7 @@ useEffect(() => {
       confirmDelivery: false,
       shareInStock: true,
       preShareTransfer: false,
+      bestDeal:false,
       endSellerName: "",
       endSellerProfile: "",
       endSellerLocation: "",
@@ -204,6 +206,7 @@ useEffect(() => {
             confirmDelivery: data.confirmDelivery,
             shareInStock: data.shareInStock,
             preShareTransfer: data.preShareTransfer,
+            bestDeal:data.preShareTransfer,
             endSellerName: data.endSellerName,
             endSellerProfile: data.endSellerProfile,
             endSellerLocation: data.endSellerLocation,
@@ -247,6 +250,7 @@ useEffect(() => {
         confirmDelivery: values.confirmDelivery,
         shareInStock: values.shareInStock,
         preShareTransfer: values.preShareTransfer,
+        bestDeal:values.bestDeal,
         endSellerName: values.endSellerName,
         endSellerProfile: values.endSellerProfile,
         endSellerLocation: values.endSellerLocation,
@@ -285,6 +289,7 @@ useEffect(() => {
         confirmDelivery: values.confirmDelivery,
         shareInStock: values.shareInStock,
         preShareTransfer: values.preShareTransfer,
+        bestDeal:values.bestDeal,
         endSellerName: values.endSellerName,
         endSellerProfile: values.endSellerProfile,
         endSellerLocation: values.endSellerLocation,
@@ -606,7 +611,8 @@ useEffect(() => {
           </div>
         )}
 
-        {/* Pre share transfer toggle */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Pre share transfer toggle */}
         <FormField
           control={form.control}
           name="preShareTransfer"
@@ -638,6 +644,40 @@ useEffect(() => {
             </FormItem>
           )}
         />
+
+        {/* best deal toggle */}
+        <FormField
+          control={form.control}
+          name="bestDeal"
+          render={({ field }) => (
+            <FormItem className="flex items-center justify-between rounded-md border border-primary p-3">
+              <div className="space-y-1">
+                <FormLabel>Best Deal</FormLabel>
+                <p className="text-sm text-muted-foreground">
+                  Toggle if it is a best deal.
+                </p>
+              </div>
+              <FormControl>
+                <div className="flex items-center gap-3">
+                  <Label htmlFor="bestDeal-no" className="text-sm">
+                    No
+                  </Label>
+                  <Switch
+                    id="bestDeal"
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                    aria-label="Best Deal"
+                  />
+                  <Label htmlFor="bestDeal-yes" className="text-sm">
+                    Yes
+                  </Label>
+                </div>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        </div>
 
         <Button type="submit" disabled={loading} className="w-full">
           {!update && (loading ? <Loader2 className="animate-spin" size={32} /> : "Submit")}
