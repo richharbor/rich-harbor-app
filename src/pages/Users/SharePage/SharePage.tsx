@@ -22,6 +22,7 @@ import { set } from "zod";
 import { bookShare } from "@/services/purchase/bookingService";
 import { toast } from "sonner";
 import { BidShare } from "@/services/purchase/bidsService";
+import useAuthStore from "@/helpers/authStore";
 
 interface SharePageProps {
   id: string;
@@ -65,16 +66,14 @@ interface BookingData {
 
 export default function SharePage({ id }: SharePageProps) {
   const [share, setShare] = useState<any>(null);
-  const { dummyBids } = useShareStore() as { dummyBids: Bid[] };
   const [loading, setLoading] = useState(true);
   const [bids, setBids] = useState<Bid[] | []>([]);
-  const [userId, setUserId] = useState<string | null>(null);
-  const [userName, setUserName] = useState<string | null>(null);
   const [isBidOpen, setIsBidOpen] = useState(false);
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [selectedSell, setSelectedSell] = useState<Seller | null>(null)
   const [isBestDeal, setIsBestDeal] = useState(false);
+  const userId = useAuthStore((state) => state.user?.id);
   const [bidData, setBidData] = useState<BidData>({
     sellId: 0,
     quantity: "",
@@ -84,21 +83,6 @@ export default function SharePage({ id }: SharePageProps) {
     sellId: 0,
     quantity: "",
   });
-
-  useEffect(() => {
-    const authStorage = localStorage.getItem("auth-storage");
-    if (authStorage) {
-      const parsed = JSON.parse(authStorage);
-      setUserId(parsed?.state?.user?.id ?? null);
-      setUserName(
-        `${parsed?.state?.user?.firstName ?? ""} ${parsed?.state?.user?.lastName ?? ""}`.trim()
-      );
-    }
-  }, []);
-
-  // useEffect(() => {
-  //   console.log("userId changed:", userId);
-  // }, [userId])
 
   useEffect(() => {
     const fetchSells = async () => {
@@ -351,7 +335,7 @@ export default function SharePage({ id }: SharePageProps) {
             </TableHeader>
             <TableBody>
               {share.sellers.map((seller: Seller, index: any) => (
-                <TableRow key={index} className={`${(userId != null && userId === seller.sellerId) && 'hidden'}`}>
+                <TableRow key={index} className={`${(userId != null && Number(userId) === Number(seller.sellerId)) && 'hidden'}`}>
                   <TableCell>{seller.sellerId}</TableCell>
                   <TableCell>{seller.quantity}</TableCell>
                   <TableCell>{seller.price}</TableCell>
