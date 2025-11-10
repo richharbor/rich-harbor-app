@@ -19,6 +19,7 @@ import {
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 
 
@@ -37,6 +38,7 @@ export function NavMain({
   }[];
 }) {
   const router = useRouter();
+  const [isClicked, setIsClicked] = useState('Dashboard')
   return (
     <SidebarGroup>
       <SidebarMenu>
@@ -44,9 +46,14 @@ export function NavMain({
           <Collapsible key={item.title} asChild defaultOpen={item.isActive}>
             <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip={item.title}>
-                <div className="cursor-pointer" onClick={() => router.push(item.url)}>
-                  <item.icon className="" />
-                  <span>{item.title}</span>
+                <div className={`cursor-pointer ${isClicked === item.title && 'bg-accent'} px-3 py-5`}
+                onClick={() => {
+                  setIsClicked(item.title)
+                  router.push(item.url)
+                }}
+                >
+                  <item.icon size={32} />
+                  <span className="font-semibold">{item.title}</span>
                 </div>
               </SidebarMenuButton>
             </SidebarMenuItem>

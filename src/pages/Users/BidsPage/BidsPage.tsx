@@ -11,15 +11,19 @@ import {
 } from "@/components/ui/table"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { getAllbookings } from "@/services/purchase/bookingService"
-import { getAllBids } from "@/services/purchase/bidsService"
+import { closeDeal, discardBooking, getAllbookings } from "@/services/purchase/bookingService"
+import { closeDealBid, discardBid, getAllBids } from "@/services/purchase/bidsService"
 import useAuthStore from "@/helpers/authStore"
 import { getPartnerDetailsbyId } from "@/services/Role/partnerServices"
 import ApplicationDialog from "../Bookings/ApplicationDialog"
 import Loading from "@/app/loading"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
-import { CircleQuestionMark } from "lucide-react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { CircleQuestionMark, ThumbsDown, ThumbsUp } from "lucide-react"
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { toast } from "sonner"
+import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
 
 interface Share {
   id: number;
@@ -79,6 +83,15 @@ interface Bids {
   sell: Sell;
   bidder: Buyer;
 }
+interface CloseDealProp {
+  id: number;
+  sellId: number;
+  sellerId: number;
+  buyerId: number;
+  dealQuantity: string;
+  goodBuyer: string;
+  goodSeller: string;
+}
 
 
 export default function BookingTable() {
@@ -90,6 +103,19 @@ export default function BookingTable() {
   const [userDetails, setUserDetails] = useState<any>(null);
   const [isFetching, setIsFetching] = useState(false);
   const [userProfile, setUserProfile] = useState<string>("");
+  const [openCloseDeal, setOpenCloseDeal] = useState(false);
+  const [closeDealDetails, setCloseDealDetails] = useState<CloseDealProp>({
+    id: 0,
+    sellId: 0,
+    sellerId: 0,
+    buyerId: 0,
+    dealQuantity: "",
+    goodBuyer: "",
+    goodSeller: "",
+  })
+  const [openDiscard, setOpenDiscard] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const [discardId, setDiscardId] = useState<number>(0);
 
 
   // const handleCloseDeal = (id: number) => {
@@ -147,6 +173,37 @@ export default function BookingTable() {
     fetchPartnersDetailbyId(userId);
   }
 
+  const handleCloseDeal = async () => {
+    console.log(closeDealDetails)
+    try {
+      setIsSending(true);
+      const response: any = await closeDealBid(closeDealDetails);
+      toast.success("Deal closed Successfully");
+      setBids((prevBookings) => prevBookings.filter(b => b.id !== closeDealDetails.id));
+    } catch (error: any) {
+      console.error("Error in closing deal");
+      toast.error(error?.message);
+
+    } finally {
+      setIsSending(false);
+    }
+  }
+  const handleDiscardBooking = async (id: string | number) => {
+    try {
+      setIsSending(true);
+      const response: any = await discardBid(id);
+      toast.success("Deal discarded");
+      setBids((prevBookings) => prevBookings.filter(b => b.id !== id));
+      setDiscardId(0);
+      setOpenDiscard(false);
+    } catch (error: any) {
+      console.error("Error in discarding booking");
+      toast.error(error?.message)
+    } finally {
+      setIsSending(false);
+    }
+  }
+
 
   if (loading) {
     return (
@@ -158,83 +215,93 @@ export default function BookingTable() {
 
 
   return (
-    <div className="p-6">
-      <Card className="shadow-md">
-        <CardHeader>
-          <CardTitle>Bids Overview</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableCaption>All recent bids records.</TableCaption>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Seller Name</TableHead>
-                <TableHead>Buyer Name</TableHead>
-                <TableHead>Stock Name</TableHead>
-                <TableHead>Selling Price</TableHead>
-                <TableHead>Actual Price</TableHead>
-                <TableHead>Bid Price</TableHead>
-                <TableHead>Share in Stock</TableHead>
-                <TableHead>Available Quantity</TableHead>
-                <TableHead>Require Quantity</TableHead>
-                <TableHead>Action</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {bids.map((row) => (
-                <TableRow key={row.id}>
-                  <TableCell className="cursor-pointer hover:underline" onClick={() => handleSellerDetail(row.sell.seller.id)}>{row.sell.seller.firstName} {row.sell.seller.lastName}</TableCell>
-                  <TableCell className="cursor-pointer hover:underline" onClick={() => handleBuyerDetail(row.buyerId)}>{row.bidder.firstName} {row.bidder.lastName}</TableCell>
-                  <TableCell>{row.sell.share.name}</TableCell>
-                  <TableCell>₹{row.sell.sellingPrice}</TableCell>
-                  <TableCell>₹{row.sell.actualPrice}</TableCell>
-                  <TableCell>₹{row.bidPrice}</TableCell>
-                  <TableCell onClick={() => setDetails(row)}>{row.sell.shareInStock ? 'Yes' : 'No'}
-                    {!row.sell.shareInStock && (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span className="inline-flex relative top-0.5 items-center ml-2">
-                            <CircleQuestionMark className="h-4 w-4" />
-                          </span>
-                        </TooltipTrigger>
+    <div className="h-[calc(100vh-4.7rem)] flex flex-col relative overflow-hidden gap-6 p-6">
+      <div className="flex-1 min-h-0">
+        <ScrollArea className="h-full">
+          <Card className="shadow-md">
+            <CardHeader>
+              <CardTitle>Bids Overview</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableCaption>All recent bids records.</TableCaption>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Seller Name</TableHead>
+                    <TableHead>Buyer Name</TableHead>
+                    <TableHead>Stock Name</TableHead>
+                    <TableHead>Selling Price</TableHead>
+                    <TableHead>Actual Price</TableHead>
+                    <TableHead>Bid Price</TableHead>
+                    <TableHead>Share in Stock</TableHead>
+                    <TableHead>Available Quantity</TableHead>
+                    <TableHead>Require Quantity</TableHead>
+                    <TableHead>Action</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {bids.map((row) => (
+                    <TableRow key={row.id}>
+                      <TableCell className="cursor-pointer hover:underline" onClick={() => handleSellerDetail(row.sell.seller.id)}>{row.sell.seller.firstName} {row.sell.seller.lastName}</TableCell>
+                      <TableCell className="cursor-pointer hover:underline" onClick={() => handleBuyerDetail(row.buyerId)}>{row.bidder.firstName} {row.bidder.lastName}</TableCell>
+                      <TableCell>{row.sell.share.name}</TableCell>
+                      <TableCell>₹{row.sell.sellingPrice}</TableCell>
+                      <TableCell>₹{row.sell.actualPrice}</TableCell>
+                      <TableCell>₹{row.bidPrice}</TableCell>
+                      <TableCell onClick={() => setDetails(row)}>{row.sell.shareInStock ? 'Yes' : 'No'}
+                        {!row.sell.shareInStock && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="inline-flex relative top-0.5 items-center ml-2">
+                                <CircleQuestionMark className="h-4 w-4" />
+                              </span>
+                            </TooltipTrigger>
 
-                        <TooltipContent>
-                          End seller details
-                        </TooltipContent>
-                      </Tooltip>
-                    )}
-                  </TableCell>
-                  <TableCell>{row.sell.quantityAvailable}</TableCell>
-                  <TableCell>{row.quantity}</TableCell>
-                  <TableCell className="space-x-2">
-                    <Button
-                      variant="default"
-                      size="sm"
-                    // onClick={() => handleCloseDeal(row.id)}
-                    >
-                      Close Deal
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                    // onClick={() => handleDiscard(row.id)}
-                    >
-                      Discard
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-              {bids.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground">
-                    No bookings available.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+                            <TooltipContent>
+                              End seller details
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
+                      </TableCell>
+                      <TableCell>{row.sell.quantityAvailable}</TableCell>
+                      <TableCell>{row.quantity}</TableCell>
+                      <TableCell className="space-x-2">
+                        <Button
+                          variant="default"
+                          size="sm"
+                          onClick={() => {
+                            setCloseDealDetails({ ...closeDealDetails, id: row.id, sellId: row.sell.id, sellerId: row.sell.seller.id, buyerId: row.buyerId })
+                            setOpenCloseDeal(true);
+                          }}
+                        >
+                          Close Deal
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setDiscardId(row.id);
+                            setOpenDiscard(true);
+                          }}
+                        >
+                          Discard
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {bids.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center text-muted-foreground">
+                        No bookings available.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </ScrollArea>
+      </div>
 
       <ApplicationDialog userProfile={userProfile} isFetching={isFetching} open={open} onClose={setOpen} data={userDetails} />
 
@@ -269,6 +336,113 @@ export default function BookingTable() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+
+
+      {/* close deal dialog */}
+      <Dialog open={openCloseDeal} onOpenChange={setOpenCloseDeal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Close the Deal</DialogTitle>
+            {/* <p className="text-sm text-muted-foreground">
+              Enter your booking quantity below to book this share. <br />
+            </p> */}
+          </DialogHeader>
+          <div className=" grid gap-4 space-y-4 py-4">
+            <div className="flex flex-col space-y-2">
+              <Label htmlFor="number">Quantity</Label>
+              <Input
+                id="quantity"
+                placeholder="Enter Quantity"
+                // className={`${(selectedSell !== null && Number(bookingData.quantity) <= Number(selectedSell.moq))}`}
+                value={closeDealDetails.dealQuantity}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/[^0-9]/g, "");
+                  setCloseDealDetails({ ...closeDealDetails, dealQuantity: value });
+                }}
+                disabled={isSending}
+              />
+            </div>
+            <div className="flex flex-col space-y-2">
+              <Label>What you think about Seller</Label>
+              <div className="flex gap-5 mt-1">
+                <ThumbsUp
+                  fill={closeDealDetails.goodSeller === 'yes' ? "white" : "none"}
+                  onClick={() => setCloseDealDetails({ ...closeDealDetails, goodSeller: "yes" })}
+                  className='cursor-pointer'
+                />
+                <ThumbsDown
+                  fill={closeDealDetails.goodSeller === 'no' ? "white" : "none"}
+                  onClick={() => setCloseDealDetails({ ...closeDealDetails, goodSeller: "no" })}
+                  className='cursor-pointer'
+                />
+              </div>
+            </div>
+            <div className="flex flex-col space-y-2">
+              <Label>What you think about Buyer</Label>
+              <div className="flex gap-5 mt-1">
+                <ThumbsUp
+                  fill={closeDealDetails.goodBuyer === 'yes' ? "white" : "none"}
+                  onClick={() => setCloseDealDetails({ ...closeDealDetails, goodBuyer: "yes" })}
+                  className='cursor-pointer'
+                />
+                <ThumbsDown
+                  fill={closeDealDetails.goodBuyer === 'no' ? "white" : "none"}
+                  onClick={() => setCloseDealDetails({ ...closeDealDetails, goodBuyer: "no" })}
+                  className='cursor-pointer'
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setOpenCloseDeal(false)}
+              disabled={isSending}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleCloseDeal}
+              disabled={
+                isSending ||
+                closeDealDetails.dealQuantity === ""
+              }
+            >
+              {isSending ? "Closing..." : "Close deal"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+
+      {/* Discard dialog */}
+      <Dialog open={openDiscard} onOpenChange={setOpenDiscard}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <p className="">
+              Are you sure?
+            </p>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setOpenDiscard(false)}
+              disabled={isSending}
+            >
+              No
+            </Button>
+            <Button
+              onClick={() => handleDiscardBooking(discardId)}
+              disabled={
+                isSending
+              }
+            >
+              {isSending ? "Discarding..." : "Yes"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
