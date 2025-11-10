@@ -10,7 +10,7 @@ const data = [
   { country: "South Korea", value: 38, flag: "🇰🇷" },
 ]
 
-export function SessionChart() {
+export default function SessionChart() {
   return (
     <Card className="bg-slate-900 border-slate-700 p-6">
       <div className="flex justify-between items-center mb-6">

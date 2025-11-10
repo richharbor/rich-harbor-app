@@ -1,9 +1,9 @@
 "use client"
 
 import MetricCard from "./MetrixCard/MetrixCard"
-import { AnalyticChart } from "./AnalyticChart/AnalyticChart"
-import { SessionChart } from "./SessionCard/SessionCard"
-import { TransactionTable } from "./TransactionTable/TransactionTable"
+import  AnalyticChart  from "./AnalyticChart/AnalyticChart"
+import  SessionChart  from "./SessionCard/SessionCard"
+import  TransactionTable  from "./TransactionTable/TransactionTable"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { ArrowLeftRight, BarChart3, Package, Share2, ShoppingCart, Star, TrendingDown } from "lucide-react"
 

@@ -1,5 +1,6 @@
 import { Card } from "@/components/ui/card"
 import type { LucideIcon } from "lucide-react"
+import { HelpCircle } from "lucide-react";
 
 interface MetricCardProps {
     title: string
@@ -11,7 +12,8 @@ interface MetricCardProps {
 }
 
 export default function MetricCard({ title, value, change, icon: Icon, bg }: MetricCardProps) {
-    const isPositive = change.startsWith("+")
+    const SafeIcon = Icon || HelpCircle; // fallback
+
 
     return (
         <Card
@@ -22,7 +24,7 @@ export default function MetricCard({ title, value, change, icon: Icon, bg }: Met
                 <div className="flex justify-between items-start mb-5">
 
                     <div className={`h-16 w-16 flex justify-center items-center rounded-full bg-gradient-to-b ${bg} to-transparent`}>
-                        <Icon size={32} className="fill" />
+                        <SafeIcon size={32} className="fill" />
                     </div>
                     {/* <button className="text-slate-400 hover:text-slate-200">
           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">

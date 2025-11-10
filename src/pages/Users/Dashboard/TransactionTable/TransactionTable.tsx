@@ -82,7 +82,7 @@ function StatusBadge({ status }: { status: "Processing" | "Success" | "Declined"
   return <span className={`text-xs ${statusMap[status]}`}>{status}</span>
 }
 
-export function TransactionTable() {
+export default function TransactionTable() {
   return (
     <Card className="bg-slate-900 border-slate-700 p-6">
       <div className="flex justify-between items-center mb-6">

@@ -15,7 +15,7 @@ const data = [
   { quarter: "Q4", revenue: 7800000, target: 7200000 },
 ]
 
-export function AnalyticChart() {
+export default function AnalyticChart() {
   return (
     <Card className="bg-slate-900 border-slate-700 p-6">
       <div className="flex justify-between items-center mb-6">
