@@ -22,6 +22,8 @@ import { set } from "zod";
 import { bookShare } from "@/services/purchase/bookingService";
 import { toast } from "sonner";
 import { BidShare } from "@/services/purchase/bidsService";
+import useAuthStore from "@/helpers/authStore";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface SharePageProps {
   id: string;
@@ -65,16 +67,14 @@ interface BookingData {
 
 export default function SharePage({ id }: SharePageProps) {
   const [share, setShare] = useState<any>(null);
-  const { dummyBids } = useShareStore() as { dummyBids: Bid[] };
   const [loading, setLoading] = useState(true);
   const [bids, setBids] = useState<Bid[] | []>([]);
-  const [userId, setUserId] = useState<string | null>(null);
-  const [userName, setUserName] = useState<string | null>(null);
   const [isBidOpen, setIsBidOpen] = useState(false);
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [selectedSell, setSelectedSell] = useState<Seller | null>(null)
   const [isBestDeal, setIsBestDeal] = useState(false);
+  const userId = useAuthStore((state) => state.user?.id);
   const [bidData, setBidData] = useState<BidData>({
     sellId: 0,
     quantity: "",
@@ -84,21 +84,6 @@ export default function SharePage({ id }: SharePageProps) {
     sellId: 0,
     quantity: "",
   });
-
-  useEffect(() => {
-    const authStorage = localStorage.getItem("auth-storage");
-    if (authStorage) {
-      const parsed = JSON.parse(authStorage);
-      setUserId(parsed?.state?.user?.id ?? null);
-      setUserName(
-        `${parsed?.state?.user?.firstName ?? ""} ${parsed?.state?.user?.lastName ?? ""}`.trim()
-      );
-    }
-  }, []);
-
-  // useEffect(() => {
-  //   console.log("userId changed:", userId);
-  // }, [userId])
 
   useEffect(() => {
     const fetchSells = async () => {
@@ -248,7 +233,7 @@ export default function SharePage({ id }: SharePageProps) {
   return (
     <div className=" h-[calc(100vh-4.7rem)] flex flex-col overflow-hidden p-6 space-y-6">
       {/* Share Details */}
-      <div className="border flex gap-5 rounded-xl shadow-xs p-6 bg-card">
+      <div className=" flex gap-5 shadow-xs px-6 py-12">
         <div className="flex-1">
           {/* Header */}
           <div className="flex items-center justify-between">
@@ -257,7 +242,7 @@ export default function SharePage({ id }: SharePageProps) {
             </h2>
             <span className={`${!isBestDeal && 'hidden'} px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800`}
             >
-              {isBestDeal && "Available on Best Deals" }
+              {isBestDeal && "Available on Best Deals"}
             </span>
           </div>
 
@@ -305,7 +290,7 @@ export default function SharePage({ id }: SharePageProps) {
         </div>
 
         {/* bids table */}
-        <div className="w-[20vw] border rounded-md flex-col h-[250px] flex">
+        {/* <div className="w-[20vw] border rounded-md flex-col h-[250px] flex">
           <h1 className="text-xl p-3 border-b">Bids</h1>
           <ScrollArea className="h-full">
             <Table className="min-w-full h-full">
@@ -327,63 +312,74 @@ export default function SharePage({ id }: SharePageProps) {
               </TableBody>
             </Table>
           </ScrollArea>
-        </div>
+        </div> */}
 
       </div>
 
       {/* Sellers Table */}
 
-      <div className="border rounded-md flex-1 min-h-0">
-        <ScrollArea className="h-full">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Seller ID</TableHead>
-                <TableHead>Quantity</TableHead>
-                <TableHead>Price</TableHead>
-                <TableHead>Deal Type</TableHead>
-                <TableHead>MOQ</TableHead>
-                <TableHead>Delivery Timeline</TableHead>
-                <TableHead>Confirm Delivery</TableHead>
-                <TableHead>Pre-Share Transfer</TableHead>
-                <TableHead>Action</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {share.sellers.map((seller: Seller, index: any) => (
-                <TableRow key={index} className={`${(userId != null && userId === seller.sellerId) && 'hidden'}`}>
-                  <TableCell>{seller.sellerId}</TableCell>
-                  <TableCell>{seller.quantity}</TableCell>
-                  <TableCell>{seller.price}</TableCell>
-                  <TableCell>
-                    {seller.fixed ? "Fixed" : "Negotiable"}
-                  </TableCell>
-                  <TableCell>{seller.moq}</TableCell>
-                  <TableCell>
-                    {seller.deliveryTimeline}
-                  </TableCell>
-                  <TableCell>
-                    {seller.confirmDelivery ? "Yes" : "No"}
-                  </TableCell>
-                  <TableCell>
-                    {seller.preShareTransfer ? "Yes" : "No"}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button onClick={() => handleBook(seller.sellId)} size="sm" variant="default">
-                        Book
-                      </Button>
-                      <Button onClick={() => handleBid(seller.sellId)} size="sm" variant="outline">
-                        Bid
-                      </Button>
-                    </div>
-                  </TableCell>
+      <Card className="shadow-md overflow-hidden flex flex-1 flex-col ">
+        <CardHeader>
+          <CardTitle>Seller Table</CardTitle>
+        </CardHeader>
+        <ScrollArea className="flex-1">
+          <CardContent className="flex-1 min-h-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Seller ID</TableHead>
+                  <TableHead>Quantity</TableHead>
+                  <TableHead>Price</TableHead>
+                  <TableHead>Deal Type</TableHead>
+                  <TableHead>MOQ</TableHead>
+                  <TableHead>Delivery Timeline</TableHead>
+                  <TableHead>Confirm Delivery</TableHead>
+                  <TableHead>Pre-Share Transfer</TableHead>
+                  <TableHead>Action</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {share.sellers.map((seller: Seller, index: any) => (
+                  <TableRow key={index} className={`${(userId != null && Number(userId) === Number(seller.sellerId)) && 'hidden'}`}>
+                    <TableCell>{seller.sellerId}</TableCell>
+                    <TableCell>{seller.quantity}</TableCell>
+                    <TableCell>{seller.price}</TableCell>
+                    <TableCell>
+                      {seller.fixed ? "Fixed" : "Negotiable"}
+                    </TableCell>
+                    <TableCell>{seller.moq}</TableCell>
+                    <TableCell>
+                      {seller.deliveryTimeline}
+                    </TableCell>
+                    <TableCell>
+                      {seller.confirmDelivery ? "Yes" : "No"}
+                    </TableCell>
+                    <TableCell>
+                      {seller.preShareTransfer ? "Yes" : "No"}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-2">
+                        <Button onClick={() => handleBook(seller.sellId)} size="sm" variant="default">
+                          Book
+                        </Button>
+                        <Button onClick={() => handleBid(seller.sellId)} size="sm" variant="outline">
+                          Bid
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+
+
+          </CardContent>
         </ScrollArea>
-      </div>
+
+
+      </Card>
+
+
 
 
       {/* Bid dialog */}

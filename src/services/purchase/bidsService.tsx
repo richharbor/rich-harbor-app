@@ -30,3 +30,34 @@ export const BidShare = async (payload: BookSharePayload) => {
     throw error;
   }
 };
+
+export const discardBid = async(id: number | string) =>{
+  try{
+    const response = await PrivateAxios.delete(`${API_URL}/bids/discard/${id}`);
+    return response;
+  }catch(error){
+    console.error('Faild to discard bid :', error);
+    throw error;
+  }
+}
+export interface closeDealPayload {
+  id:number;
+  sellId: number;
+  sellerId: number;
+  buyerId: number;
+  dealQuantity: string;
+  goodBuyer: string;
+  goodSeller: string;
+}
+export const closeDealBid = async (payload: closeDealPayload) =>{
+  try {
+    const response = await PrivateAxios.post(
+      `${API_URL}/bids/close-deal`,
+      payload
+    );
+    return response;
+  } catch (error: any) {
+    console.error("Failed to close deal:", error);
+    throw error;
+  }
+}
