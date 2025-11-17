@@ -8,5 +8,9 @@ export default function DashboardPage() {
 
   console.log(params); // Useful for role-based logic
 
-  return <Dashboard />;
+  return (
+    <div>
+      Dashboard
+    </div>
+  );
 }
