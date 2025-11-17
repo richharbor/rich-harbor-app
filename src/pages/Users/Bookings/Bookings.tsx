@@ -12,7 +12,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { closeDeal, discardBooking, getAllbookings } from "@/services/purchase/bookingService"
-import { getPartnerDetailsbyId } from "@/services/Role/partnerServices"
+import { fetchAllFranshisesForAdmin, getPartnerDetailsbyId } from "@/services/Role/partnerServices"
 import useAuthStore from "@/helpers/authStore"
 import App from "next/app"
 import ApplicationDialog from "./ApplicationDialog"
@@ -25,6 +25,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface Share {
   id: number;
@@ -85,7 +86,7 @@ interface Booking {
 }
 
 interface CloseDealProp {
-  id:number;
+  id: number;
   sellId: number;
   sellerId: number;
   buyerId: number;
@@ -96,17 +97,16 @@ interface CloseDealProp {
 
 
 export default function BookingTable() {
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [bookings, setBookings] = useState<Booking[] | []>([])
   const [details, setDetails] = useState<Booking | null>(null);
   const [open, setOpen] = useState(false);
-  const franchiseId = useAuthStore((state) => state.user?.franchiseId);
   const [userDetails, setUserDetails] = useState<any>(null);
   const [isFetching, setIsFetching] = useState(false);
   const [userProfile, setUserProfile] = useState<string>("");
   const [openCloseDeal, setOpenCloseDeal] = useState(false);
   const [closeDealDetails, setCloseDealDetails] = useState<CloseDealProp>({
-    id:0,
+    id: 0,
     sellId: 0,
     sellerId: 0,
     buyerId: 0,
@@ -118,6 +118,15 @@ export default function BookingTable() {
   const [isSending, setIsSending] = useState(false);
   const [discardId, setDiscardId] = useState<number>(0);
 
+  const franchiseId = useAuthStore((state) => state.user?.franchiseId);
+  const isSuperAdmin = useAuthStore((state) => state.user?.isSuperAdmin);
+  const tier = useAuthStore((state) => state.user?.tier);
+
+  const [franchises, setFranchises] = useState<any[]>([]);
+  const [selectedFranchiseId, setSelectedFranchiseId] = useState<number | null>(
+    null
+  );
+
   // const handleCloseDeal = (id: number) => {
   //   alert(`Deal closed for booking ID: ${id}`)
   // }
@@ -126,15 +135,39 @@ export default function BookingTable() {
   //   const updated = data.filter((item) => item.id !== id)
   //   setData(updated)
   // }
+  useEffect(() => {
+    if (isSuperAdmin || tier === 2) {
+      fetchAllFranchises();
+    } else if (tier === 3 && franchiseId) {
+      setSelectedFranchiseId(franchiseId);
+    }
+  }, [isSuperAdmin, tier, franchiseId]);
 
   useEffect(() => {
-    fetchAllBookings();
-  }, [])
+    if(selectedFranchiseId){
+      fetchAllBookings();
+    }
+  }, [selectedFranchiseId])
+  
+
+  const fetchAllFranchises = async () => {
+    try {
+      const response = await fetchAllFranshisesForAdmin();
+      if (response?.success) {
+        setFranchises(response.franchises || []);
+        const firstId = response.franchises[0]?.id || null;
+        setSelectedFranchiseId(firstId);
+
+      }
+    } catch (err) {
+      console.error("Error fetching franchises:", err);
+    }
+  };
 
   const fetchAllBookings = async () => {
-    setLoading(true);
+
     try {
-      const response = await getAllbookings();
+      const response = await getAllbookings(selectedFranchiseId!);
       console.log("Bookings data:", response);
 
       setBookings(response.data);
@@ -195,15 +228,15 @@ export default function BookingTable() {
     console.log(closeDealDetails)
     try {
       setIsSending(true);
-      const response:any = await closeDeal(closeDealDetails);
+      const response: any = await closeDeal(closeDealDetails);
       toast.success("Deal closed Successfully");
       setBookings((prevBookings) => prevBookings.filter(b => b.id !== closeDealDetails.id));
       setOpenCloseDeal(false);
-    } catch (error : any) {
+    } catch (error: any) {
       console.error("Error in closing deal");
       toast.error(error?.message);
-      
-    }finally{
+
+    } finally {
       setIsSending(false);
     }
   }
@@ -218,7 +251,7 @@ export default function BookingTable() {
     } catch (error: any) {
       console.error("Error in discarding booking");
       toast.error(error?.message)
-    }finally{
+    } finally {
       setIsSending(false);
     }
   }
@@ -238,8 +271,31 @@ export default function BookingTable() {
       <div className="flex-1 min-h-0">
         <ScrollArea className="h-full">
           <Card className="shadow-md">
-            <CardHeader>
+            <CardHeader className="flex flex-row w-full justify-between">
               <CardTitle>Bookings Overview</CardTitle>
+              {(isSuperAdmin || tier === 2) && (
+                <div className="flex items-center gap-2">
+                  <Label className="font-medium">Select Franchise:</Label>
+                  <Select
+                    value={selectedFranchiseId?.toString() || ""}
+                    onValueChange={(val) => {
+                      const fid = parseInt(val);
+                      setSelectedFranchiseId(fid);
+                    }}>
+                    <SelectTrigger className="w-64">
+                      <SelectValue placeholder="Select Franchise" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {franchises.map((f) => (
+                        <SelectItem key={f.id} value={f.id.toString()}>
+                          {f.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
             </CardHeader>
             <CardContent>
               <Table>
@@ -289,7 +345,7 @@ export default function BookingTable() {
                           size="sm"
                           disabled={isSending}
                           onClick={() => {
-                            setCloseDealDetails({ ...closeDealDetails, id:row.id, sellId: row.sell.id, sellerId: row.sell.seller.id, buyerId: row.buyerId })
+                            setCloseDealDetails({ ...closeDealDetails, id: row.id, sellId: row.sell.id, sellerId: row.sell.seller.id, buyerId: row.buyerId })
                             setOpenCloseDeal(true);
                           }}
                         >
@@ -299,7 +355,7 @@ export default function BookingTable() {
                           variant="outline"
                           size="sm"
                           disabled={isSending}
-                          onClick={() =>{
+                          onClick={() => {
                             setDiscardId(row.id);
                             setOpenDiscard(true);
                           }}
@@ -453,7 +509,7 @@ export default function BookingTable() {
               No
             </Button>
             <Button
-              onClick={()=>handleDiscardBooking(discardId)}
+              onClick={() => handleDiscardBooking(discardId)}
               disabled={
                 isSending
               }
