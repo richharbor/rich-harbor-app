@@ -11,6 +11,16 @@ export const getAllbookings = async () => {
     throw error;
   }
 };
+export const getMyBookings = async () => {
+  try {
+    const response = await PrivateAxios.get(`${API_URL}/booking/my-bookings`);
+    return response.data;
+  } catch (error) {
+    console.error("Failed to get shares:", error);
+    throw error;
+  }
+};
+
 
 export interface BookSharePayload {
   sellId: number;
@@ -29,3 +39,44 @@ export const bookShare = async (payload: BookSharePayload) => {
     throw error;
   }
 };
+
+export const discardBooking = async(id: number | string) =>{
+  try{
+    const response = await PrivateAxios.delete(`${API_URL}/booking/discard/${id}`);
+    return response.data;
+  }catch(error){
+    console.error('Faild to discard booking :', error);
+    throw error;
+  }
+}
+export interface closeDealPayload {
+  id:number;
+  sellId: number;
+  sellerId: number;
+  buyerId: number;
+  dealQuantity: string;
+  goodBuyer: string;
+  goodSeller: string;
+}
+export const closeDeal = async (payload: closeDealPayload) =>{
+  try {
+    const response = await PrivateAxios.post(
+      `${API_URL}/booking/close-deal`,
+      payload
+    );
+    return response;
+  } catch (error: any) {
+    console.error("Failed to close deal:", error);
+    throw error;
+  }
+}
+
+export const deleteMyBooking = async(id: number | string) =>{
+  try{
+    const response = await PrivateAxios.delete(`${API_URL}/booking/delete/${id}`);
+    return response.data;
+  }catch(error){
+    console.error('Faild to discard booking :', error);
+    throw error;
+  }
+}

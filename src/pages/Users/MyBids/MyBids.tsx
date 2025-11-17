@@ -1,0 +1,193 @@
+'use client'
+import { useEffect, useState } from "react"
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { closeDeal, discardBooking, getAllbookings, getMyBookings } from "@/services/purchase/bookingService"
+import { getPartnerDetailsbyId } from "@/services/Role/partnerServices"
+import useAuthStore from "@/helpers/authStore"
+import App from "next/app"
+import { set } from "zod"
+import Loading from "@/app/loading"
+import { CircleQuestionMark, Delete, ThumbsDown, ThumbsUp, Trash, User } from "lucide-react"
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
+import { toast } from "sonner"
+import { deleteMyBid, getMyBids } from "@/services/purchase/bidsService"
+
+interface Booking {
+  id: number;
+  sellId: number;
+  quantity: number;
+  bidingDate: string; // ISO date string
+  bidPrice:string;
+  sell: {
+    id: number;
+    userId: number;
+    shareId: number;
+    price: string; // Sequelize often returns DECIMAL as string
+    share: {
+      id: number;
+      name: string;
+    };
+  };
+}
+
+
+
+
+export default function MyBidsPage() {
+  const [loading, setLoading] = useState(false);
+  const [bids, setBids] = useState<Booking[] | []>([])
+  const [isFetching, setIsFetching] = useState(false);
+  
+  const [openDiscard, setOpenDiscard] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const [discardId, setDiscardId] = useState<number>(0);
+
+  useEffect(() => {
+    fetchMyBids();
+  }, [])
+
+  const fetchMyBids = async () => {
+    setLoading(true);
+    try {
+      const response = await getMyBids();
+      setBids(response.data);
+    } catch (error) {
+      console.error("Error fetching bookings:", error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const handleDeleteBid = async (id: string | number) => {
+    try {
+      setIsSending(true);
+      const response: any = await deleteMyBid(id);
+      toast.success("Bid Deleted");
+      setBids((prevBids) => prevBids.filter(b => b.id !== id));
+      setDiscardId(0);
+      setOpenDiscard(false);
+    } catch (error: any) {
+      console.error("Error in deleting bid");
+      toast.error(error?.message)
+    }finally{
+      setIsSending(false);
+    }
+  }
+
+
+  if (loading) {
+    return (
+      <div className="h-[calc(100vh-4.7rem)] flex flex-col relative overflow-hidden rounded-md">
+        <Loading areaOnly={true} />
+      </div>
+    );
+  }
+
+
+  return (
+    <div className="h-[calc(100vh-4.7rem)] flex flex-col relative overflow-hidden gap-6 p-6">
+      <div className="flex-1 min-h-0">
+        <ScrollArea className="h-full">
+          <Card className="shadow-md">
+            <CardHeader>
+              <CardTitle>Bids Overview</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableCaption>All recent Bids records.</TableCaption>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Seller Id</TableHead>
+                    <TableHead>Share Name</TableHead>
+                    <TableHead>Price</TableHead>
+                    <TableHead>Biding Price</TableHead>
+                    <TableHead>Biding Quantity</TableHead>
+                    <TableHead>Biding Date</TableHead>
+                    <TableHead>Action</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {bids.map((row) => (
+                    <TableRow key={row.id}>
+                      <TableCell >{row?.sell?.userId}</TableCell>
+                      <TableCell >{row.sell.share.name}</TableCell>
+                      <TableCell>₹{row.sell.price}</TableCell>
+                      <TableCell>₹{row.bidPrice}</TableCell>
+                      <TableCell>{row.quantity}</TableCell>
+                      <TableCell>{new Date(row.bidingDate).toLocaleDateString("en-IN")}</TableCell>
+                      <TableCell className="space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={isSending}
+                          onClick={()=>{
+                            setDiscardId(row.id);
+                            setOpenDiscard(true);
+                          }}
+                        >
+                          <Trash />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {bids.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center text-muted-foreground">
+                        No bids available.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </ScrollArea>
+      </div>
+
+
+
+      {/* Discard dialog */}
+      <Dialog open={openDiscard} onOpenChange={setOpenDiscard}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <p className="">
+              Are you sure?
+            </p>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setOpenDiscard(false)}
+              disabled={isSending}
+            >
+              No
+            </Button>
+            <Button
+              onClick={()=>handleDeleteBid(discardId)}
+              disabled={
+                isSending
+              }
+            >
+              {isSending ? "Deleting..." : "Yes"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+    </div>
+  )
+}
