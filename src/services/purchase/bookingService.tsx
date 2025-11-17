@@ -2,9 +2,10 @@ import { PrivateAxios } from "@/helpers/PrivateAxios";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-export const getAllbookings = async () => {
+export const getAllbookings = async (franchiseId: number) => {
+
   try {
-    const response = await PrivateAxios.get(`${API_URL}/booking/all-bookings`);
+    const response = await PrivateAxios.get(`${API_URL}/booking/all-bookings/${franchiseId}`);
     return response.data;
   } catch (error) {
     console.error("Failed to get shares:", error);

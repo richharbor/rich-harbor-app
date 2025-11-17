@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button"
 import { closeDeal, discardBooking, getAllbookings } from "@/services/purchase/bookingService"
 import { closeDealBid, discardBid, getAllBids } from "@/services/purchase/bidsService"
 import useAuthStore from "@/helpers/authStore"
-import { getPartnerDetailsbyId } from "@/services/Role/partnerServices"
+import { fetchAllFranshisesForAdmin, getPartnerDetailsbyId } from "@/services/Role/partnerServices"
 import ApplicationDialog from "../Bookings/ApplicationDialog"
 import Loading from "@/app/loading"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
@@ -24,6 +24,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { toast } from "sonner"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface Share {
   id: number;
@@ -95,7 +96,7 @@ interface CloseDealProp {
 
 
 export default function BookingTable() {
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [bids, setBids] = useState<Bids[] | []>([])
   const [details, setDetails] = useState<Bids | null>(null);
   const [open, setOpen] = useState(false);
@@ -118,6 +119,15 @@ export default function BookingTable() {
   const [discardId, setDiscardId] = useState<number>(0);
 
 
+  const isSuperAdmin = useAuthStore((state) => state.user?.isSuperAdmin);
+  const tier = useAuthStore((state) => state.user?.tier);
+
+  const [franchises, setFranchises] = useState<any[]>([]);
+  const [selectedFranchiseId, setSelectedFranchiseId] = useState<number | null>(
+    null
+  );
+
+
   // const handleCloseDeal = (id: number) => {
   //   alert(`Deal closed for booking ID: ${id}`)
   // }
@@ -128,13 +138,37 @@ export default function BookingTable() {
   // }
 
   useEffect(() => {
+    if (isSuperAdmin || tier === 2) {
+      fetchAllFranchises();
+    } else if (tier === 3 && franchiseId) {
+      setSelectedFranchiseId(franchiseId);
+    }
+  }, [isSuperAdmin, tier, franchiseId]);
+
+  useEffect(() => {
+    if(selectedFranchiseId){
     fetchAllBids();
-  }, [])
+    }
+  }, [selectedFranchiseId])
+
+  const fetchAllFranchises = async () => {
+    try {
+      const response = await fetchAllFranshisesForAdmin();
+      if (response?.success) {
+        setFranchises(response.franchises || []);
+        const firstId = response.franchises[0]?.id || null;
+        setSelectedFranchiseId(firstId);
+
+      }
+    } catch (err) {
+      console.error("Error fetching franchises:", err);
+    }
+  };
 
   const fetchAllBids = async () => {
-    setLoading(true);
+  
     try {
-      const response = await getAllBids();
+      const response = await getAllBids(selectedFranchiseId!);
       setBids(response.data);
     } catch (error) {
       console.error("Error fetching bids:", error);
@@ -220,8 +254,30 @@ export default function BookingTable() {
       <div className="flex-1 min-h-0">
         <ScrollArea className="h-full">
           <Card className="shadow-md">
-            <CardHeader>
+            <CardHeader className="flex flex-row w-full justify-between">
               <CardTitle>Bids Overview</CardTitle>
+              {(isSuperAdmin || tier === 2) && (
+                <div className="flex items-center gap-2">
+                  <Label className="font-medium">Select Franchise:</Label>
+                  <Select
+                    value={selectedFranchiseId?.toString() || ""}
+                    onValueChange={(val) => {
+                      const fid = parseInt(val);
+                      setSelectedFranchiseId(fid);
+                    }}>
+                    <SelectTrigger className="w-64">
+                      <SelectValue placeholder="Select Franchise" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {franchises.map((f) => (
+                        <SelectItem key={f.id} value={f.id.toString()}>
+                          {f.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </CardHeader>
             <CardContent>
               <Table>
