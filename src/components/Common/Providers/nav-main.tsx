@@ -18,7 +18,7 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 
 
@@ -38,17 +38,19 @@ export function NavMain({
   }[];
 }) {
   const router = useRouter();
-  const [isClicked, setIsClicked] = useState('Dashboard')
+  const pathname = usePathname();
   return (
     <SidebarGroup>
       <SidebarMenu>
-        {items.map((item) => (
+        {items.map((item) =>{
+          const isActive = pathname === item.url;
+        
+        return (
           <Collapsible key={item.title} asChild defaultOpen={item.isActive}>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip={item.title}>
-                <div className={`cursor-pointer ${isClicked === item.title && 'bg-accent'} px-3 py-5`}
+              <SidebarMenuButton isActive={isActive} asChild tooltip={item.title}>
+                <div className={`cursor-pointer px-3 py-5`}
                 onClick={() => {
-                  setIsClicked(item.title)
                   router.push(item.url)
                 }}
                 >
@@ -58,7 +60,7 @@ export function NavMain({
               </SidebarMenuButton>
             </SidebarMenuItem>
           </Collapsible>
-        ))}
+        )})}
       </SidebarMenu>
     </SidebarGroup>
   );

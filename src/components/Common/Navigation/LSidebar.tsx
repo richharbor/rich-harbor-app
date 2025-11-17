@@ -160,6 +160,18 @@ export function LSidebar(props: ComponentProps<typeof Sidebar>) {
       icon: Gavel ,
       permission: "manage_bids",
     },
+    {
+      title: "My Bookings",
+      url: `/${roleNameForUrl}/my-bookings`,
+      icon: NotebookText,
+      permission: "manage_my_bookings",
+    },
+    {
+      title: "My Bids",
+      url: `/${roleNameForUrl}/my-bids`,
+      icon: Gavel ,
+      permission: "manage_my_bids",
+    },
   ];
 
   // ✅ Role-based nav filtering
@@ -173,6 +185,8 @@ export function LSidebar(props: ComponentProps<typeof Sidebar>) {
     "manage_partners",
     "manage_bookings",
     "manage_bids",
+    "manage_my_bookings",
+    "manage_my_bids",
   ];
 
   if (user?.tier === 3) {

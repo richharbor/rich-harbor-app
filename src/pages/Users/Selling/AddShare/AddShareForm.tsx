@@ -362,7 +362,7 @@ useEffect(() => {
                     type="text"
                     inputMode="text"
                     placeholder="Enter share name"
-                    readOnly={Boolean(id)}
+                    readOnly={initialData}
                     className="appearance-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     {...field}
                   />

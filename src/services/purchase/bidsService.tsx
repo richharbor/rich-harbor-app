@@ -11,6 +11,15 @@ export const getAllBids = async () => {
     throw error;
   }
 };
+export const getMyBids = async () => {
+  try {
+    const response = await PrivateAxios.get(`${API_URL}/bids/my-bids`);
+    return response.data;
+  } catch (error) {
+    console.error("Failed to get shares:", error);
+    throw error;
+  }
+};
 
 export interface BookSharePayload {
   sellId: number;
@@ -34,7 +43,7 @@ export const BidShare = async (payload: BookSharePayload) => {
 export const discardBid = async(id: number | string) =>{
   try{
     const response = await PrivateAxios.delete(`${API_URL}/bids/discard/${id}`);
-    return response;
+    return response.data;
   }catch(error){
     console.error('Faild to discard bid :', error);
     throw error;
@@ -58,6 +67,16 @@ export const closeDealBid = async (payload: closeDealPayload) =>{
     return response;
   } catch (error: any) {
     console.error("Failed to close deal:", error);
+    throw error;
+  }
+}
+
+export const deleteMyBid = async(id: number | string) =>{
+  try{
+    const response = await PrivateAxios.delete(`${API_URL}/bids/delete/${id}`);
+    return response.data;
+  }catch(error){
+    console.error('Faild to discard bid :', error);
     throw error;
   }
 }

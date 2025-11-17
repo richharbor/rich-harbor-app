@@ -14,3 +14,14 @@ export const getMyProfile = async () => {
   }
 };
 
+
+export const getSellerDetails = async (id : string| number) =>{
+  try {
+    const response = await PrivateAxios.get(`${API_URL}/partners/profile/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error("Failed to get Seller details", error);
+    throw error;
+  }
+}
+

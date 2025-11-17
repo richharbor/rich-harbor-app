@@ -24,6 +24,8 @@ import { toast } from "sonner";
 import { BidShare } from "@/services/purchase/bidsService";
 import useAuthStore from "@/helpers/authStore";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { getSellerDetails } from "@/services/Auth/selfServices";
+import { Loader2 } from "lucide-react";
 
 interface SharePageProps {
   id: string;
@@ -75,6 +77,9 @@ export default function SharePage({ id }: SharePageProps) {
   const [selectedSell, setSelectedSell] = useState<Seller | null>(null)
   const [isBestDeal, setIsBestDeal] = useState(false);
   const userId = useAuthStore((state) => state.user?.id);
+  const [isFetching, setIsFetching] = useState(false);
+  const [sellerDetail, setSellerDetail] = useState<any>(null);
+  const [openSellerDetail, setOpenSellerDetail] = useState(false);
   const [bidData, setBidData] = useState<BidData>({
     sellId: 0,
     quantity: "",
@@ -84,6 +89,7 @@ export default function SharePage({ id }: SharePageProps) {
     sellId: 0,
     quantity: "",
   });
+
 
   useEffect(() => {
     const fetchSells = async () => {
@@ -120,6 +126,25 @@ export default function SharePage({ id }: SharePageProps) {
 
     fetchSells();
   }, [id]);
+
+  const fetchSellerDetail = async (id: number | string) => {
+    try {
+      setIsFetching(true);
+      const response = await getSellerDetails(id);
+      setSellerDetail(response.data);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsFetching(false);
+    }
+  };
+
+  const handleSellerIdClick = (id: number | string) => {
+    fetchSellerDetail(id);
+    setOpenSellerDetail(true);
+  }
+
+
 
   if (loading) {
     return (
@@ -341,7 +366,7 @@ export default function SharePage({ id }: SharePageProps) {
               <TableBody>
                 {share.sellers.map((seller: Seller, index: any) => (
                   <TableRow key={index} className={`${(userId != null && Number(userId) === Number(seller.sellerId)) && 'hidden'}`}>
-                    <TableCell>{seller.sellerId}</TableCell>
+                    <TableCell className="cursor-pointer" onClick={() => handleSellerIdClick(seller.sellerId)} >{seller.sellerId}</TableCell>
                     <TableCell>{seller.quantity}</TableCell>
                     <TableCell>{seller.price}</TableCell>
                     <TableCell>
@@ -491,6 +516,52 @@ export default function SharePage({ id }: SharePageProps) {
               {isSending ? "Sending..." : "Send"}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+
+      {/* seller detail dialog */}
+      <Dialog
+        open={openSellerDetail}
+        onOpenChange={setOpenSellerDetail}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Seller Details</DialogTitle>
+          </DialogHeader>
+
+          {isFetching ? (
+            // 🌀 Loading state
+            <div className="flex justify-center items-center py-10 text-gray-500">
+              <Loader2 className="h-8 w-8 animate-spin mb-2" />
+            </div>
+          ) : sellerDetail ? (
+            // ✅ Data loaded
+            <div className="space-y-3 text-sm">
+              {Object.entries(sellerDetail).map(([key, value]) => {
+                // Convert camelCase -> Title Case (e.g., joiningSince -> Joining Since)
+                const label = key
+                  .replace(/([A-Z])/g, " $1")
+                  .replace(/^./, (str) => str.toUpperCase());
+
+                return (
+                  <div key={key} className="flex justify-between">
+                    <span className="font-medium">{label}:</span>
+                    <span>
+                      {value !== undefined && value !== null
+                        ? typeof value === "object"
+                          ? JSON.stringify(value)
+                          : String(value)
+                        : "N/A"}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            // ❌ No data found
+            <div className="text-center py-10 text-gray-500">No seller details available.</div>
+          )}
         </DialogContent>
       </Dialog>
 

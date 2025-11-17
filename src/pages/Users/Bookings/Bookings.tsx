@@ -198,6 +198,7 @@ export default function BookingTable() {
       const response:any = await closeDeal(closeDealDetails);
       toast.success("Deal closed Successfully");
       setBookings((prevBookings) => prevBookings.filter(b => b.id !== closeDealDetails.id));
+      setOpenCloseDeal(false);
     } catch (error : any) {
       console.error("Error in closing deal");
       toast.error(error?.message);
