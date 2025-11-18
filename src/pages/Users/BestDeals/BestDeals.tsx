@@ -203,7 +203,7 @@ export default function BestDeals() {
   const tier = useAuthStore((state) => state.user?.tier);
   const [openApproveModel, setOpenApproveModel] = useState(false);
   const [fetchingData, setFetchingData] = useState(false);
-  const [approving , setApproving] = useState(false);
+  const [approving, setApproving] = useState(false);
 
   const currentRole = Cookies.get("currentRole");
   const route = useRouter();
@@ -260,7 +260,7 @@ export default function BestDeals() {
     }
   }
 
-    const handleDiscard = async (id: string | number) => {
+  const handleDiscard = async (id: string | number) => {
     setApproving(true);
     try {
       const result = await discardBestDeal(id as string);
@@ -292,13 +292,6 @@ export default function BestDeals() {
     );
   }
 
-  if (!bestDeals.length) {
-    return (
-      <div className="h-[calc(100vh-4.7rem)] flex flex-col relative justify-center items-center overflow-hidden rounded-md">
-        No shares found.
-      </div>
-    );
-  }
 
   return (
     <div className="h-[calc(100vh-4.7rem)] flex flex-col relative overflow-hidden space-y-6">
@@ -326,11 +319,15 @@ export default function BestDeals() {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
         <Input placeholder="Search Shares..." className="pl-10" />
       </div>
+      {!bestDeals.length && <div className="h-full flex flex-col relative justify-center items-center overflow-hidden rounded-md">
+        No shares found.
+      </div>}
 
       {/* Table / Cards */}
       <div className="flex-1 min-h-0 border-t">
         <ScrollArea className="h-full">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 p-4">
+
             {bestDeals.map((share, index) => (
               <Card
                 key={index}
@@ -461,12 +458,12 @@ export default function BestDeals() {
                                 variant="outline"
                                 size="sm"
                                 disabled={approving}
-                              onClick={(e) => {
-                                handleDiscard(t.id);
-                              }}
+                                onClick={(e) => {
+                                  handleDiscard(t.id);
+                                }}
                               >
                                 {approving ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" /> : <X className="h-5 w-5 text-red-500" />}
-                                
+
                               </Button>
                             </TableCell>
                           </TableRow>

@@ -29,12 +29,14 @@ import { useShareStore } from "@/store/useShareStore";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import Cookies from "js-cookie";
 import {
+  deleteSell,
   getAllShares,
   getUsersAllShares,
   updateSell,
 } from "@/services/sell/sellService";
 import Loading from "@/app/loading";
 import { getTieredPath } from "@/helpers/getTieredPath";
+import { toast } from "sonner";
 
 export interface ShareDetail {
   id: number;
@@ -77,13 +79,17 @@ export default function Selling() {
   const [editShare, setEditShare] = useState<ShareItem | null>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [allShares, setAllShares] = useState<AllShareItem[] | null>(null);
-  const [myShares, setMyShares] = useState<ShareItem[] | null>(null);
+  const [myShares, setMyShares] = useState<ShareItem[] | []>([]);
 
   const currentRole = Cookies.get("currentRole");
   const route = useRouter();
   const [isMyShares, setIsMyShares] = useState(false);
   const [isAllShareOpen, setIsAllShareOpen] = useState(false);
   const [popupSearch, setPopupSearch] = useState("");
+
+  const [discardId, setDiscardId] = useState<number>(0);
+  const [openDiscard, setOpenDiscard] = useState(false);
+   const [isSending, setIsSending] = useState(false);
 
   const [updatedData, setUpdatedData] = useState<{
     quantityAvailable: string;
@@ -128,6 +134,22 @@ export default function Selling() {
       setLoading(false);
     }
   };
+
+  const handleDeleteSell = async (id: string | number) => {
+    try {
+      setIsSending(true);
+      const response: any = await deleteSell(id);
+      toast.success("Sell Deleted");
+      setMyShares((prevShare) => prevShare.filter(b => b.id !== id));
+      setDiscardId(0);
+      setOpenDiscard(false);
+    } catch (error: any) {
+      console.error("Error in deleting sell");
+      toast.error(error?.message)
+    }finally{
+      setIsSending(false);
+    }
+  }
 
   // const handleUpdateShare = async (e: React.FormEvent<HTMLFormElement>) => {
   //   e.preventDefault();
@@ -296,10 +318,11 @@ export default function Selling() {
                           <TableCell>
                             {t.preShareTransfer ? "Yes" : "No"}
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="space-x-2">
                             <Button
                               variant="outline"
                               size="sm"
+                              className="cursor-pointer"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 const base = getTieredPath();
@@ -307,6 +330,18 @@ export default function Selling() {
 
                               }}>
                               <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="cursor-pointer"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setDiscardId(t.id);
+                                setOpenDiscard(true);
+                              }}
+                            >
+                              <Trash2 />
                             </Button>
                           </TableCell>
                         </TableRow>
@@ -331,7 +366,7 @@ export default function Selling() {
                 <TableHeader className="sticky top-0 z-10">
                   <TableRow>
                     <TableHead>Share Name</TableHead>
-                    <TableHead>Price</TableHead>
+                    {/* <TableHead>Price</TableHead> */}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -359,7 +394,7 @@ export default function Selling() {
                           <TableCell className="p-3 hover:underline">
                             {t.name}
                           </TableCell>
-                          <TableCell>{t.price}</TableCell>
+                          {/* <TableCell>{t.price}</TableCell> */}
                         </TableRow>
                       ))
                   ) : (
@@ -376,97 +411,33 @@ export default function Selling() {
         </div>
       )}
 
-      {/* Edit Share model */}
-      {/* <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-        <DialogContent className="sm:max-w-[725px]">
+      {/* Delete dialog */}
+      <Dialog open={openDiscard} onOpenChange={setOpenDiscard}>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Update share details</DialogTitle>
-            <p className="text-sm text-muted-foreground">
-              Enter the partner's email address. An invitation link will be sent
-              to them.
+            <p className="">
+              Are you sure?
             </p>
           </DialogHeader>
-          <form onSubmit={handleUpdateShare}>
-            <div className=" grid gap-4 space-y-4 py-4">
-              <div className="flex gap-4 w-full">
-                <div className="flex flex-col w-full space-y-2">
-                  <Label htmlFor="text">Share Name</Label>
-                  <Input
-                    id="share-name"
-                    placeholder="Enter available quantity"
-                    value={editShare?.share.name}
-                    readOnly
-                    className="cursor-not-allowed"
-                  />
-                </div>
-                <div className="flex w-full flex-col space-y-2">
-                  <Label htmlFor="numeric">Available Quantity</Label>
-                  <Input
-                    id="quantity"
-                    placeholder="Enter available quantity"
-                    value={editShare?.quantityAvailable}
-                    type="number"
-                    onChange={(e) =>
-                      setEditShare((prev) =>
-                        prev
-                          ? {
-                            ...prev,
-                            quantityAvailable: Number(e.target.value),
-                          }
-                          : prev
-                      )
-                    }
-                  />
-                </div>
-              </div>
-              <div className="flex flex-col space-y-2">
-                <Label htmlFor="numeric">Price</Label>
-                <Input
-                  id="quantity"
-                  placeholder="Enter available quantity"
-                  value={editShare?.price}
-                  type="number"
-                  onChange={(e) =>
-                    setEditShare((prev) =>
-                      prev
-                        ? {
-                          ...prev,
-                          price: e.target.value,
-                        }
-                        : prev
-                    )
-                  }
-                />
-              </div>
-              <div className="flex flex-col space-y-2">
-                <Label htmlFor="numeric">Price</Label>
-                <Input
-                  id="quantity"
-                  placeholder="Enter available quantity"
-                  value={editShare?.price}
-                  type="number"
-                  onChange={(e) =>
-                    setEditShare((prev) =>
-                      prev
-                        ? {
-                          ...prev,
-                          price: e.target.value,
-                        }
-                        : prev
-                    )
-                  }
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsEditOpen(false)}>
-                Cancel
-              </Button>
-              <Button type="submit">Update</Button>
-            </DialogFooter>
-          </form>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setOpenDiscard(false)}
+              disabled={isSending}
+            >
+              No
+            </Button>
+            <Button
+              onClick={()=>handleDeleteSell(discardId)}
+              disabled={
+                isSending
+              }
+            >
+              {isSending ? "Deleting..." : "Yes"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
-      </Dialog> */}
+      </Dialog>
     </div>
   );
 }
