@@ -218,7 +218,6 @@ useEffect(() => {
           form.reset({
             ...form.getValues(), // keep rest defaults
             shareName: data.name,
-            price:data.price,
           });
         }
       } catch (err) {

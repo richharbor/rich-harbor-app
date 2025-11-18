@@ -106,3 +106,13 @@ export const getShareByShareId = async (shareId: string | number) =>{
     throw error;
   }
 }
+
+export const deleteSell = async(id: number | string) =>{
+  try{
+    const response = await PrivateAxios.delete(`${API_URL}/sell/delete/${id}`);
+    return response.data;
+  }catch(error){
+    console.error('Faild to discard booking :', error);
+    throw error;
+  }
+}
