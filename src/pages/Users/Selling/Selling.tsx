@@ -331,7 +331,7 @@ export default function Selling() {
                 <TableHeader className="sticky top-0 z-10">
                   <TableRow>
                     <TableHead>Share Name</TableHead>
-                    <TableHead>Price</TableHead>
+                    {/* <TableHead>Price</TableHead> */}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -359,7 +359,7 @@ export default function Selling() {
                           <TableCell className="p-3 hover:underline">
                             {t.name}
                           </TableCell>
-                          <TableCell>{t.price}</TableCell>
+                          {/* <TableCell>{t.price}</TableCell> */}
                         </TableRow>
                       ))
                   ) : (
