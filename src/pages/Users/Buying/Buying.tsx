@@ -357,7 +357,7 @@ export default function Buying() {
 
   const enhanceGroupedShares = (groups: GroupedShares[]): GroupedSharesWithStats[] =>
     groups.map((group) => {
-      const prices = group.listings.map((l) => parseInt(l.price));
+      const prices = group.listings.map((l) => parseFloat(l.price));
       const quantities = group.listings.map((l) => l.quantityAvailable);
       const bestDeal = group.listings.some((l) => (l.bestDeal === true && l.approved === true));
 
