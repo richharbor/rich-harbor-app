@@ -168,8 +168,6 @@ export default function BookingTable() {
 
     try {
       const response = await getAllbookings(selectedFranchiseId!);
-      console.log("Bookings data:", response);
-
       setBookings(response.data);
     } catch (error) {
       console.error("Error fetching bookings:", error);

@@ -4,7 +4,7 @@ import { HelpCircle } from "lucide-react";
 
 interface MetricCardProps {
     title: string
-    value: string
+    value: string  
     change: string
     icon: LucideIcon
     bg: string
@@ -37,7 +37,7 @@ export default function MetricCard({ title, value, change, icon: Icon, bg }: Met
 
                 <div className="space-y-1">
                     <h3 className={`text-sm font-medium text-slate-400`}>{title}</h3>
-                    <div className="text-3xl font-bold text-white">{value}</div>
+                    <div className="text-3xl font-bold text-white">{value === "undefined" ? "NA": value}</div>
                     {/* <div className="flex items-center gap-2">
           <span className={`text-sm font-medium ${isPositive ? "text-emerald-400" : "text-red-400"}`}>{change}</span>
         </div> */}

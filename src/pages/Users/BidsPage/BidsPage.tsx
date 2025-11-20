@@ -89,6 +89,7 @@ interface CloseDealProp {
   sellId: number;
   sellerId: number;
   buyerId: number;
+  price:number;
   dealQuantity: string;
   goodBuyer: string;
   goodSeller: string;
@@ -110,6 +111,7 @@ export default function BookingTable() {
     sellId: 0,
     sellerId: 0,
     buyerId: 0,
+    price:0,
     dealQuantity: "",
     goodBuyer: "",
     goodSeller: "",
@@ -208,7 +210,6 @@ export default function BookingTable() {
   }
 
   const handleCloseDeal = async () => {
-    console.log(closeDealDetails)
     try {
       setIsSending(true);
       const response: any = await closeDealBid(closeDealDetails);
@@ -327,7 +328,7 @@ export default function BookingTable() {
                           variant="default"
                           size="sm"
                           onClick={() => {
-                            setCloseDealDetails({ ...closeDealDetails, id: row.id, sellId: row.sell.id, sellerId: row.sell.seller.id, buyerId: row.buyerId })
+                            setCloseDealDetails({ ...closeDealDetails, id: row.id, sellId: row.sell.id, sellerId: row.sell.seller.id, buyerId: row.buyerId, price: row.bidPrice })
                             setOpenCloseDeal(true);
                           }}
                         >
