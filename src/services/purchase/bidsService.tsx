@@ -54,6 +54,7 @@ export interface closeDealPayload {
   sellId: number;
   sellerId: number;
   buyerId: number;
+  price:number;
   dealQuantity: string;
   goodBuyer: string;
   goodSeller: string;

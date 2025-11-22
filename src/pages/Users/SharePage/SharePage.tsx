@@ -414,7 +414,7 @@ export default function SharePage({ id }: SharePageProps) {
             <DialogTitle>Raise a Bid</DialogTitle>
             <p className="text-sm text-muted-foreground">
               Enter your bid amount below. <br />
-              <span className={`${(bidData.quantity !== "" && selectedSell !== null && Number(bidData.quantity) < Number(selectedSell.moq)) && 'text-red-500'}  ${(bidData.bidPrice !== "" && selectedSell !== null && Number(bidData.bidPrice) < Number(selectedSell.price) - 2) && 'text-red-500'}`}>The quantity must be greater then MOQ and bid price must be greater then price - 3</span>
+              <span className={`${(bidData.quantity !== "" && selectedSell !== null && Number(bidData.quantity) < Number(selectedSell.moq)) && 'text-red-500'}  ${(bidData.bidPrice !== "" && selectedSell !== null && Number(bidData.bidPrice) < Number(selectedSell.price) - 5) && 'text-red-500'}`}>The quantity must be greater then MOQ and bid price must be greater then price - 5</span>
             </p>
           </DialogHeader>
           <div className=" grid gap-4 space-y-4 py-4">
@@ -458,7 +458,7 @@ export default function SharePage({ id }: SharePageProps) {
               ? Number(bidData.quantity) < Number(selectedSell.moq)
               : false)
               || (selectedSell != null && !isNaN(Number(selectedSell.price))
-                ? Number(bidData.bidPrice) < (Number(selectedSell.price) - 2)
+                ? Number(bidData.bidPrice) < (Number(selectedSell.price) - 5)
                 : false)
             }>
               {isSending ? "Sending..." : "Send"}

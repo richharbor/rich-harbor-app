@@ -11,6 +11,12 @@ import { Search, ChevronRight } from "lucide-react";
 import { getAllSellShares } from "@/services/sell/sellService";
 import Loading from "@/app/loading";
 import { getTieredPath } from "@/helpers/getTieredPath";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { putBuyQuery } from "@/services/purchase/bookingService";
+import { toast } from "sonner";
+import useAuthStore from "@/helpers/authStore";
 
 interface ShareItem {
   id: number;
@@ -58,192 +64,10 @@ export interface SellItem {
   updatedAt: string;
   share: ShareInfo;
   seller: SellerInfo;
-  bestDeal:boolean;
-  approved:boolean;
+  bestDeal: boolean;
+  approved: boolean;
 }
 
-// const dummyShares: SellItem[] = [
-//   {
-//     id: 5,
-//     userId: 6,
-//     shareId: 4,
-//     price: "50.000",
-//     quantityAvailable: 4544,
-//     minimumOrderQuatity: 45,
-//     shareInStock: true,
-//     preShareTransfer: false,
-//     fixedPrice: false,
-//     confirmDelivery: false,
-//     deliveryTimeline: "t+2",
-//     endSellerLocation: "",
-//     endSellerName: "",
-//     endSellerProfile: "",
-//     createdAt: "2025-10-25T07:35:34.972Z",
-//     updatedAt: "2025-10-25T07:35:34.972Z",
-//     share: {
-//       id: 4,
-//       name: "BOAT",
-//       symbol: null,
-//       price: "0.00",
-//     },
-//     seller: {
-//       id: 6,
-//       firstName: "Ah",
-//       lastName: "Patra",
-//       email: "prabhat@rhinontech.com",
-//     },
-//   },
-//   {
-//     id: 5,
-//     userId: 9,
-//     shareId: 2,
-//     price: "50.000",
-//     quantityAvailable: 4544,
-//     minimumOrderQuatity: 45,
-//     shareInStock: true,
-//     preShareTransfer: false,
-//     fixedPrice: false,
-//     confirmDelivery: false,
-//     deliveryTimeline: "t+2",
-//     endSellerLocation: "",
-//     endSellerName: "",
-//     endSellerProfile: "",
-//     createdAt: "2025-10-25T07:35:34.972Z",
-//     updatedAt: "2025-10-25T07:35:34.972Z",
-//     share: {
-//       id: 4,
-//       name: "BOAT",
-//       symbol: null,
-//       price: "0.00",
-//     },
-//     seller: {
-//       id: 9,
-//       firstName: "Vr",
-//       lastName: "Patra",
-//       email: "prabhat@rhinontech.com",
-//     },
-//   },
-//   {
-//     id: 4,
-//     userId: 2,
-//     shareId: 3,
-//     price: "23.000",
-//     quantityAvailable: 2332,
-//     minimumOrderQuatity: 232,
-//     shareInStock: true,
-//     preShareTransfer: false,
-//     fixedPrice: false,
-//     confirmDelivery: false,
-//     deliveryTimeline: "t+1",
-//     endSellerLocation: "",
-//     endSellerName: "",
-//     endSellerProfile: "",
-//     createdAt: "2025-10-25T06:54:55.015Z",
-//     updatedAt: "2025-10-25T06:54:55.015Z",
-//     share: {
-//       id: 3,
-//       name: "Gamma Investments",
-//       symbol: null,
-//       price: "0.00",
-//     },
-//     seller: {
-//       id: 2,
-//       firstName: "Prabhat",
-//       lastName: "Patra",
-//       email: "prabhat@rhinontech.com",
-//     },
-//   },
-//   {
-//     id: 3,
-//     userId: 2,
-//     shareId: 2,
-//     price: "43.000",
-//     quantityAvailable: 12,
-//     minimumOrderQuatity: 1214,
-//     shareInStock: true,
-//     preShareTransfer: false,
-//     fixedPrice: false,
-//     confirmDelivery: false,
-//     deliveryTimeline: "t",
-//     endSellerLocation: "",
-//     endSellerName: "",
-//     endSellerProfile: "",
-//     createdAt: "2025-10-23T06:53:20.560Z",
-//     updatedAt: "2025-10-23T06:53:20.560Z",
-//     share: {
-//       id: 2,
-//       name: "Apple",
-//       symbol: null,
-//       price: "0.00",
-//     },
-//     seller: {
-//       id: 2,
-//       firstName: "Prabhat",
-//       lastName: "Patra",
-//       email: "prabhat@rhinontech.com",
-//     },
-//   },
-//   {
-//     id: 3,
-//     userId: 2,
-//     shareId: 4,
-//     price: "43.000",
-//     quantityAvailable: 12,
-//     minimumOrderQuatity: 1214,
-//     shareInStock: true,
-//     preShareTransfer: false,
-//     fixedPrice: false,
-//     confirmDelivery: false,
-//     deliveryTimeline: "t",
-//     endSellerLocation: "",
-//     endSellerName: "",
-//     endSellerProfile: "",
-//     createdAt: "2025-10-23T06:53:20.560Z",
-//     updatedAt: "2025-10-23T06:53:20.560Z",
-//     share: {
-//       id: 2,
-//       name: "Apple",
-//       symbol: null,
-//       price: "0.00",
-//     },
-//     seller: {
-//       id: 2,
-//       firstName: "Prabhat",
-//       lastName: "Patra",
-//       email: "prabhat@rhinontech.com",
-//     },
-//   },
-//   {
-//     id: 1,
-//     userId: 2,
-//     shareId: 1,
-//     price: "45.000",
-//     quantityAvailable: 4545,
-//     minimumOrderQuatity: null,
-//     shareInStock: true,
-//     preShareTransfer: false,
-//     fixedPrice: false,
-//     confirmDelivery: false,
-//     deliveryTimeline: "t+1",
-//     endSellerLocation: "",
-//     endSellerName: "",
-//     endSellerProfile: "",
-//     createdAt: "2025-10-23T06:39:34.547Z",
-//     updatedAt: "2025-10-23T06:39:34.547Z",
-//     share: {
-//       id: 1,
-//       name: "Beta Holdings",
-//       symbol: null,
-//       price: "0.00",
-//     },
-//     seller: {
-//       id: 2,
-//       firstName: "Prabhat",
-//       lastName: "Patra",
-//       email: "prabhat@rhinontech.com",
-//     },
-//   },
-// ];
 interface GroupedShares {
   shareId: number;
   shareName: string;
@@ -256,13 +80,26 @@ interface GroupedSharesWithStats extends GroupedShares {
   maxPrice: number;
   minQuantity: number;
   maxQuantity: number;
-  bestDeal:boolean;
+  bestDeal: boolean;
+}
+interface QueryDataProps {
+  shareName: string;
+  quantity: string;
+  price: string;
 }
 
 export default function Buying() {
   const [shares, setShares] = useState<GroupedSharesWithStats[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAll, setIsAll] = useState(true);
+  const [isQueryOpen, setIsQueryOpen] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const tier = useAuthStore((state) => state.user?.tier);
+  const [queryData, setQueryData] = useState<QueryDataProps>({
+    shareName: "",
+    quantity: "",
+    price: ""
+  })
 
   const currentRole = Cookies.get("currentRole");
   const route = useRouter();
@@ -357,7 +194,7 @@ export default function Buying() {
 
   const enhanceGroupedShares = (groups: GroupedShares[]): GroupedSharesWithStats[] =>
     groups.map((group) => {
-      const prices = group.listings.map((l) => parseInt(l.price));
+      const prices = group.listings.map((l) => parseFloat(l.price));
       const quantities = group.listings.map((l) => l.quantityAvailable);
       const bestDeal = group.listings.some((l) => (l.bestDeal === true && l.approved === true));
 
@@ -371,6 +208,41 @@ export default function Buying() {
       };
     });
 
+  const handleSendQuery = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsSending(true);
+    try {
+      // Map frontend form fields to backend API field names
+      const payload = {
+        shareName: queryData.shareName,
+        quantity: parseInt(queryData.quantity),
+        price: parseFloat(queryData.price),
+      };
+
+
+      const result = await putBuyQuery(payload);
+
+      if (result.success) {
+        // Redirect to selling page after successful creation
+        toast.success("Query raised successfully");
+        setQueryData({
+          shareName: "",
+          quantity: "",
+          price: "",
+        })
+        setIsQueryOpen(false);
+
+      }
+    } catch (error: any) {
+      console.error("Failed to put query:", error);
+      toast.error("Failed to put query. Please try again.");
+    } finally {
+      setIsSending(false);
+    }
+  }
+
+
+
   if (loading) {
     return (
       <div className="h-[calc(100vh-4.7rem)] flex flex-col relative overflow-hidden rounded-md">
@@ -379,23 +251,18 @@ export default function Buying() {
     );
   }
 
-  if (!shares.length) {
-    return (
-      <div className="h-[calc(100vh-4.7rem)] flex flex-col relative justify-center items-center overflow-hidden rounded-md">
-        No shares found.
-      </div>
-    );
-  }
+
 
   return (
     <div className="h-[calc(100vh-4.7rem)] flex flex-col relative overflow-hidden gap-6">
-      <div className="flex items-center justify-between px-6 pt-6">
+      <div className="flex items-end justify-between px-6 pt-6">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Buy</h2>
           <p className="text-muted-foreground">
             Manage super admin and admin users
           </p>
         </div>
+        {(tier ?? 0) > 3 && <Button onClick={() => setIsQueryOpen(true)} className="px-7 py-2 mr-10">Put Query</Button>}
       </div>
 
       {/* Search */}
@@ -424,6 +291,13 @@ export default function Buying() {
           Best Deals
         </button>
       </div> */}
+      {!shares.length &&
+
+        (<div className="h-full flex flex-col relative justify-center items-center overflow-hidden rounded-md">
+          No shares found.
+        </div>)
+
+      }
 
       {/* Table / Cards */}
       <div className="flex-1 min-h-0 border-t">
@@ -442,14 +316,14 @@ export default function Buying() {
                   <CardTitle className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
                     {share.shareName}
                   </CardTitle>
-                  {!share.bestDeal &&  <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-transform duration-300 group-hover:translate-x-1" />}
+                  {!share.bestDeal && <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-transform duration-300 group-hover:translate-x-1" />}
                 </div>
 
                 {/* Price Section */}
                 <div className="flex items-baseline gap-2">
                   <span className="text-sm text-muted-foreground">Price:</span>
                   <span className="text-xl font-bold text-foreground tracking-tight">
-                    {share.listings.length > 1 ? "₹"+share.minPrice +" - ₹"+share.maxPrice : share.maxPrice}
+                    {share.listings.length > 1 ? "₹" + share.minPrice + " - ₹" + share.maxPrice : share.maxPrice}
                   </span>
                 </div>
 
@@ -461,7 +335,7 @@ export default function Buying() {
                   <p>
                     <strong>Available:</strong> {share.listings.length > 1 ? share.minQuantity + " - " + share.maxQuantity : share.maxQuantity}
                   </p>
-                  
+
                 </div>
                 {/* Optional Badge for stock status */}
                 {share.bestDeal && (
@@ -475,6 +349,70 @@ export default function Buying() {
           </div>
         </ScrollArea>
       </div>
+
+
+      {/* put query model */}
+      <Dialog open={isQueryOpen} onOpenChange={setIsQueryOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Put Buy Query</DialogTitle>
+            <p className="text-sm text-muted-foreground">
+              Enter the share you want to buy.
+            </p>
+          </DialogHeader>
+          <form onSubmit={handleSendQuery}>
+            <div className=" grid space-y-4 py-4">
+              <div className="flex flex-col space-y-2">
+                <Label htmlFor="text">Share Name</Label>
+                <Input
+                  id="share-name"
+                  placeholder="Enter Share Name"
+                  value={queryData.shareName}
+                  onChange={(e) => {
+                    setQueryData({ ...queryData, shareName: e.target.value });
+                  }}
+                  disabled={isSending}
+                />
+              </div>
+              <div className="flex flex-col space-y-2">
+                <Label htmlFor="number">Price</Label>
+                <Input
+                  id="price"
+                  placeholder="Enter Price"
+                  value={queryData.price}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/[^0-9.]/g, "");
+                    setQueryData({ ...queryData, price: value });
+                  }}
+                  disabled={isSending}
+                />
+              </div>
+              <div className="flex flex-col space-y-2">
+                <Label htmlFor="number">Quantity</Label>
+                <Input
+                  id="quantity"
+                  placeholder="Enter Quantity"
+                  value={queryData.quantity}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/[^0-9]/g, "");
+                    setQueryData({ ...queryData, quantity: value });
+                  }}
+                  disabled={isSending}
+                />
+              </div>
+
+            </div>
+
+            <DialogFooter>
+              <Button variant="outline" disabled={isSending} >
+                Cancel
+              </Button>
+              <Button disabled={isSending} type="submit">{isSending ? "Sending..." : "Send"}</Button>
+            </DialogFooter>
+          </form>
+
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
