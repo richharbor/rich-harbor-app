@@ -103,6 +103,7 @@ export default function BookingTable() {
   const [open, setOpen] = useState(false);
   const [userDetails, setUserDetails] = useState<any>(null);
   const [isFetching, setIsFetching] = useState(false);
+  const [isFetching2, setIsFetching2] = useState(false);
   const [userProfile, setUserProfile] = useState<string>("");
   const [openCloseDeal, setOpenCloseDeal] = useState(false);
   const [closeDealDetails, setCloseDealDetails] = useState<CloseDealProp>({
@@ -145,6 +146,7 @@ export default function BookingTable() {
 
   useEffect(() => {
     if(selectedFranchiseId){
+      setBookings([]);
       fetchAllBookings();
     }
   }, [selectedFranchiseId])
@@ -165,6 +167,7 @@ export default function BookingTable() {
   };
 
   const fetchAllBookings = async () => {
+    setIsFetching2(true);
 
     try {
       const response = await getAllbookings(selectedFranchiseId!);
@@ -172,7 +175,7 @@ export default function BookingTable() {
     } catch (error) {
       console.error("Error fetching bookings:", error);
     } finally {
-      setLoading(false);
+      setIsFetching2(false);
     }
   }
   const fetchPartnersDetailbyId = async (userId: number, fid?: number) => {
@@ -255,13 +258,7 @@ export default function BookingTable() {
   }
 
 
-  if (loading) {
-    return (
-      <div className="h-[calc(100vh-4.7rem)] flex flex-col relative overflow-hidden rounded-md">
-        <Loading areaOnly={true} />
-      </div>
-    );
-  }
+
 
 
   return (
@@ -363,7 +360,14 @@ export default function BookingTable() {
                       </TableCell>
                     </TableRow>
                   ))}
-                  {bookings.length === 0 && (
+                  {(isFetching2 && bookings.length === 0) && (
+                    <TableRow className="h-32">
+                      <TableCell colSpan={7} className="text-center text-muted-foreground">
+                         <Loading areaOnly />
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  {(bookings.length === 0 && !isFetching2) && (
                     <TableRow>
                       <TableCell colSpan={7} className="text-center text-muted-foreground">
                         No bookings available.

@@ -89,7 +89,7 @@ interface CloseDealProp {
   sellId: number;
   sellerId: number;
   buyerId: number;
-  price:number;
+  price: number;
   dealQuantity: string;
   goodBuyer: string;
   goodSeller: string;
@@ -111,7 +111,7 @@ export default function BookingTable() {
     sellId: 0,
     sellerId: 0,
     buyerId: 0,
-    price:0,
+    price: 0,
     dealQuantity: "",
     goodBuyer: "",
     goodSeller: "",
@@ -148,8 +148,9 @@ export default function BookingTable() {
   }, [isSuperAdmin, tier, franchiseId]);
 
   useEffect(() => {
-    if(selectedFranchiseId){
-    fetchAllBids();
+    if (selectedFranchiseId) {
+      setBids([]);
+      fetchAllBids();
     }
   }, [selectedFranchiseId])
 
@@ -168,7 +169,7 @@ export default function BookingTable() {
   };
 
   const fetchAllBids = async () => {
-  
+    setLoading(true);
     try {
       const response = await getAllBids(selectedFranchiseId!);
       setBids(response.data);
@@ -238,15 +239,6 @@ export default function BookingTable() {
     } finally {
       setIsSending(false);
     }
-  }
-
-
-  if (loading) {
-    return (
-      <div className="h-[calc(100vh-4.7rem)] flex flex-col relative overflow-hidden rounded-md">
-        <Loading areaOnly={true} />
-      </div>
-    );
   }
 
 
@@ -347,7 +339,15 @@ export default function BookingTable() {
                       </TableCell>
                     </TableRow>
                   ))}
-                  {bids.length === 0 && (
+                  {(loading && bids.length === 0) && (
+                    <TableRow className="h-32">
+                      <TableCell colSpan={7} className="text-center text-muted-foreground">
+                        <Loading areaOnly />
+                      </TableCell>
+                    </TableRow>
+                  )}
+
+                  {(bids.length === 0 && !loading) && (
                     <TableRow>
                       <TableCell colSpan={7} className="text-center text-muted-foreground">
                         No bookings available.
