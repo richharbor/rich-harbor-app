@@ -103,8 +103,8 @@ export default function Franchises() {
   }
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex items-center justify-between">
+    <div className="h-[calc(100vh-4.7rem)] flex flex-col relative overflow-hidden gap-6 p-6 max-md:p-2">
+      <div className="flex items-center max-md:flex-col max-md:items-start gap-5 justify-between">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">
             Franchise Members
@@ -118,7 +118,7 @@ export default function Franchises() {
         </Button>
       </div>
 
-      <div className="relative flex-1">
+      <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
         <Input
           placeholder="Search users..."
@@ -128,7 +128,7 @@ export default function Franchises() {
         />
       </div>
 
-      <div className="rounded-md border">
+      <div className="rounded-md border max-md:flex-1 overflow-auto">
         <Table>
           <TableHeader>
             <TableRow>

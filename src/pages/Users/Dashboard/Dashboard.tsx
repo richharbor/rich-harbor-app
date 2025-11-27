@@ -235,9 +235,9 @@ export default function Dashboard() {
     <div className="h-[calc(100vh-4.7rem)] flex flex-col relative overflow-hidden gap-6">
       <div className="flex-1 min-h-0">
         <ScrollArea className="h-full">
-          <div className="space-y-6 p-5">
+          <div className="space-y-6 p-5 max-md:p-3">
             {/* Metric Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 max-md:gap-3">
               <MetricCard
                 title="Total Shares"
                 value={String(dashboardInfo?.shareCount)}
@@ -264,13 +264,13 @@ export default function Dashboard() {
 
 
             {(typeof tier === 'number' && tier <= 3) && (
-              <div className="h-96">
-                <Card className="shadow-md h-full">
-                  <ScrollArea className="h-full">
-                    <CardHeader className="flex flex-row w-full justify-between">
+              <div className="h-96 overflow-x-auto max-md:w-[90vw]">
+                <Card className="shadow-md h-full max-md:p-3 w-full overflow-auto">
+                  <div className="h-full w-full overflow-auto">
+                    <CardHeader className="flex flex-row max-md:flex-col gap-3 w-full justify-between max-md:p-0">
                       <CardTitle>Buy Queries</CardTitle>
                       {(isSuperAdmin || tier === 2) && (
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center max-md:items-start max-md:flex-col gap-2">
                           <Label className="font-medium">Select Franchise:</Label>
                           <Select
                             value={selectedFranchiseId?.toString() || ""}
@@ -292,8 +292,9 @@ export default function Dashboard() {
                         </div>
                       )}
                     </CardHeader>
-                    <CardContent>
-                      <Table className="h-full">
+                    <CardContent className="max-md:p-0 max-md:mt-2">
+                      <div className="min-w-max">
+                      <Table>
                         <TableHeader>
                           <TableRow>
                             <TableHead>Buyer Id</TableHead>
@@ -305,7 +306,7 @@ export default function Dashboard() {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {queries?.map((query: any) => (
+                          {[...queries,...queries,...queries,...queries,...queries,...queries]?.map((query: any) => (
                             <TableRow key={query.id}>
                               <TableCell className="py-3 cursor-pointer" onClick={() => handleBuyerDetail(query.userId)}>{query.userId}</TableCell>
                               <TableCell className="py-3">{query.shareName}</TableCell>
@@ -359,8 +360,10 @@ export default function Dashboard() {
 
                         </TableBody>
                       </Table>
+                      </div>
+                    
                     </CardContent>
-                  </ScrollArea>
+                  </div>
                 </Card>
 
               </div>

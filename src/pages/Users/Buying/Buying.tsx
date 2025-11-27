@@ -255,18 +255,18 @@ export default function Buying() {
 
   return (
     <div className="h-[calc(100vh-4.7rem)] flex flex-col relative overflow-hidden gap-6">
-      <div className="flex items-end justify-between px-6 pt-6">
+      <div className="flex items-end justify-between px-6 pt-6 max-md:px-2 gap-3">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Buy</h2>
           <p className="text-muted-foreground">
             Manage super admin and admin users
           </p>
         </div>
-        {(tier ?? 0) > 3 && <Button onClick={() => setIsQueryOpen(true)} className="px-7 py-2 mr-10">Put Query</Button>}
+        {(tier ?? 0) > 3 && <Button onClick={() => setIsQueryOpen(true)} className="px-7 py-2 mr-10 max-md:mr-0">Put Query</Button>}
       </div>
 
       {/* Search */}
-      <div className="relative ml-6 max-w-xl">
+      <div className="relative ml-6 max-w-xl max-md:mx-2">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
         <Input placeholder="Search Shares..." className="pl-10" />
       </div>

@@ -243,11 +243,11 @@ export default function BookingTable() {
 
 
   return (
-    <div className="h-[calc(100vh-4.7rem)] flex flex-col relative overflow-hidden gap-6 p-6">
+    <div className="h-[calc(100vh-4.7rem)] flex flex-col relative overflow-hidden gap-6 p-6 max-md:p-2">
       <div className="flex-1 min-h-0">
         <ScrollArea className="h-full">
-          <Card className="shadow-md">
-            <CardHeader className="flex flex-row w-full justify-between">
+          <Card className="shadow-md max-md:w-[91.5vw]">
+            <CardHeader className="flex flex-row w-full justify-between max-md:p-3 max-md:flex-col gap-3">
               <CardTitle>Bids Overview</CardTitle>
               {(isSuperAdmin || tier === 2) && (
                 <div className="flex items-center gap-2">
@@ -272,8 +272,8 @@ export default function BookingTable() {
                 </div>
               )}
             </CardHeader>
-            <CardContent>
-              <Table>
+            <CardContent className="max-md:p-3">
+              <Table className="min-w-max">
                 <TableCaption>All recent bids records.</TableCaption>
                 <TableHeader>
                   <TableRow>

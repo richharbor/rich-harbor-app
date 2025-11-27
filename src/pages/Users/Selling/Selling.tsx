@@ -89,7 +89,7 @@ export default function Selling() {
 
   const [discardId, setDiscardId] = useState<number>(0);
   const [openDiscard, setOpenDiscard] = useState(false);
-   const [isSending, setIsSending] = useState(false);
+  const [isSending, setIsSending] = useState(false);
 
   const [updatedData, setUpdatedData] = useState<{
     quantityAvailable: string;
@@ -146,7 +146,7 @@ export default function Selling() {
     } catch (error: any) {
       console.error("Error in deleting sell");
       toast.error(error?.message)
-    }finally{
+    } finally {
       setIsSending(false);
     }
   }
@@ -189,8 +189,8 @@ export default function Selling() {
   }
 
   return (
-    <div className=" h-[calc(100vh-4.7rem)] flex flex-col relative overflow-hidden space-y-6 p-6">
-      <div className="flex items-center justify-between">
+    <div className=" h-[calc(100vh-4.7rem)] flex flex-col relative overflow-hidden space-y-6 p-6 max-md:p-2">
+      <div className="flex items-center justify-between gap-2">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Sell</h2>
           <p className="text-muted-foreground">
@@ -198,14 +198,6 @@ export default function Selling() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {/* <Button
-            variant="outline"
-            onClick={() => setRolesModalOpen(true)}
-            className="flex items-center gap-2"
-          >
-            Roles
-            <Settings className="h-4 w-4" />
-          </Button> */}
           <Button
             onClick={() => {
               const base = getTieredPath();
@@ -217,7 +209,7 @@ export default function Selling() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-3 grid-cols-2">
         <Card
           className={`${isMyShares &&
             "dark:bg-background bg-white cursor-pointer hover:scale-105 transition-all duration-200 ease-in-out"
@@ -260,8 +252,8 @@ export default function Selling() {
       {isMyShares ? (
         <div className="flex-1 min-h-0">
           <ScrollArea className="h-full">
-            <div className="rounded-md border">
-              <Table>
+            <div className="rounded-md md:border">
+              <Table className="hidden md:table">
                 <TableHeader className="sticky top-0 z-10">
                   <TableRow>
                     <TableHead>Share Name</TableHead>
@@ -355,6 +347,98 @@ export default function Selling() {
                   )}
                 </TableBody>
               </Table>
+              <div className="md:hidden flex flex-col gap-3">
+                {myShares?.length ? (
+                  myShares
+                    .filter((t: any) =>
+                      t.share.name
+                        .toLowerCase()
+                        .includes(search.toLowerCase())
+                    )
+                    .map((t: any) => (
+                      <Card
+                        key={t.id}
+                        className="cursor-pointer hover:bg-muted/50 transition-colors"
+                        onClick={() => {
+                          const base = getTieredPath();
+                          route.push(`/${base}/sell/${t.id}`);
+                        }}
+                      >
+                        <CardHeader className=" p-3">
+                          <div className="flex items-center justify-between">
+                            <CardTitle className="text-base font-semibold hover:underline">{t.share.name}</CardTitle>
+                            <Badge variant={t.fixedPrice ? "default" : "secondary"}>{t.fixedPrice ? "Fixed" : "Negotiable"}</Badge>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="space-y-3 p-3 pt-0">
+                          <div className="grid grid-cols-2 gap-2 text-sm">
+                            <div>
+                              <span className="text-muted-foreground">Quantity:</span>{" "}
+                              <span className="font-medium">{t.quantityAvailable}</span>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Price:</span> <span className="font-medium">{t.price}</span>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">MOQ:</span>{" "}
+                              <span className="font-medium">{t.minimumOrderQuatity}</span>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Delivery:</span>{" "}
+                              <span className="font-medium">{t.deliveryTimeline}</span>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-wrap gap-2">
+                            <Badge variant={t.confirmDelivery ? "default" : "outline"} className="text-xs">
+                              {t.confirmDelivery ? "Delivery Confirmed" : "Delivery Unconfirmed"}
+                            </Badge>
+                            <Badge variant={t.shareInStock ? "default" : "outline"} className="text-xs">
+                              {t.shareInStock ? "In Stock" : "Out of Stock"}
+                            </Badge>
+                            <Badge variant={t.preShareTransfer ? "default" : "outline"} className="text-xs">
+                              {t.preShareTransfer ? "Pre-Transfer" : "No Pre-Transfer"}
+                            </Badge>
+                          </div>
+
+                          <div className="flex gap-2 pt-2 border-t">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="flex-1 bg-transparent"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const base = getTieredPath();
+                                route.push(`/${base}/sell/update/${t.id}`);
+
+                              }}
+                            >
+                              <Edit className="h-4 w-4 mr-1" />
+                              Edit
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="flex-1 bg-transparent"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setDiscardId(t.id);
+                                setOpenDiscard(true);
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4 mr-1" />
+                              Delete
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))) : (
+                  <div className="text-center">
+                    No shares found
+                  </div>
+                )}
+              </div>
+
             </div>
           </ScrollArea>
         </div>
@@ -413,13 +497,13 @@ export default function Selling() {
 
       {/* Delete dialog */}
       <Dialog open={openDiscard} onOpenChange={setOpenDiscard}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
+        <DialogContent className="sm:max-w-md max-w-[300px] max-sm:rounded-lg">
+          <DialogHeader className="text-left">
             <p className="">
               Are you sure?
             </p>
           </DialogHeader>
-          <DialogFooter>
+          <DialogFooter className="max-sm:flex-row max-sm:justify-end max-sm:space-x-2">
             <Button
               variant="outline"
               onClick={() => setOpenDiscard(false)}
@@ -428,7 +512,7 @@ export default function Selling() {
               No
             </Button>
             <Button
-              onClick={()=>handleDeleteSell(discardId)}
+              onClick={() => handleDeleteSell(discardId)}
               disabled={
                 isSending
               }

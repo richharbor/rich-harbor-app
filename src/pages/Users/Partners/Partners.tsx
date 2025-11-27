@@ -118,6 +118,16 @@ const availableAccess = [
   //   label: "Reports",
   //   description: "Generate and view business and performance reports",
   // },
+  {
+    id: "manage_my_bookings",
+    label: "My Bookings",
+    description: "View and manage your personal bookings",
+  },
+  {
+    id: "manage_my_bids",
+    label: "My Bids",
+    description: "View and manage your personal bids",
+  },
 ];
 
 export default function Partners() {
@@ -414,9 +424,9 @@ export default function Partners() {
       console.error("Failed to delete partner role:", err);
       toast.error(
         err?.response?.data?.error ||
-          "An error occurred while deleting the partner role"
+        "An error occurred while deleting the partner role"
       );
-    }finally{
+    } finally {
       setRemovingRole(-1);
     }
   };
@@ -438,8 +448,8 @@ export default function Partners() {
   }
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex items-center justify-between">
+    <div className="h-[calc(100vh-4.7rem)] flex flex-col relative overflow-auto gap-6 p-6 max-md:p-2">
+      <div className="flex items-center max-md:flex-col gap-3 max-md:items-start justify-between">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">
             Partner Management
@@ -448,7 +458,7 @@ export default function Partners() {
             Manage partner registrations and approvals
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center max-md:flex-col max-md:items-start gap-2">
           {(isSuperAdmin || tier === 2) && (
             <div className="flex items-center gap-2">
               <Label className="font-medium">Select Franchise:</Label>
@@ -474,43 +484,45 @@ export default function Partners() {
             </div>
           )}
 
-          <Button
-            variant="outline"
-            onClick={() => setRolesModalOpen(true)}
-            className="flex items-center gap-2">
-            Roles
-            <Settings className="h-4 w-4" />
-          </Button>
-          <Button onClick={() => setIsInviteDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Invite Partner
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setRolesModalOpen(true)}
+              className="flex items-center gap-2">
+              Roles
+              <Settings className="h-4 w-4" />
+            </Button>
+            <Button onClick={() => setIsInviteDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Invite Partner
+            </Button>
+          </div>
         </div>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 grid-cols-2 md:grid-cols-3">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 max-md:p-2">
             <CardTitle className="text-sm font-medium">
               Total Partners
             </CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="max-md:p-2 max-md:pt-0">
             <div className="text-2xl font-bold">{totalPartners}</div>
             <p className="text-xs text-muted-foreground">Registered partners</p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 max-md:p-2">
             <CardTitle className="text-sm font-medium">
               Approved Partners
             </CardTitle>
             <Check className="h-4 w-4 text-green-600" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="max-md:p-2 max-md:pt-0">
             <div className="text-2xl font-bold text-green-600">
               {approvedPartners}
             </div>
@@ -519,13 +531,13 @@ export default function Partners() {
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 max-md:p-2">
             <CardTitle className="text-sm font-medium">
               Pending Approvals
             </CardTitle>
             <X className="h-4 w-4 text-orange-600" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="max-md:p-2 max-md:pt-0">
             <div className="text-2xl font-bold text-orange-600">
               {pendingPartners}
             </div>
@@ -674,9 +686,9 @@ export default function Partners() {
                   className="flex w-full items-center justify-between border rounded-md px-3 py-2 text-sm bg-background hover:bg-muted transition-colors">
                   {selectedRoles.length > 0
                     ? customRoles
-                        .filter((role) => selectedRoles.includes(role.id))
-                        .map((role) => role.name)
-                        .join(", ")
+                      .filter((role) => selectedRoles.includes(role.id))
+                      .map((role) => role.name)
+                      .join(", ")
                     : "Select roles"}
                   <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
                 </button>
@@ -835,7 +847,7 @@ export default function Partners() {
                     className="text-destructive"
                     disabled={removingRole === role.id}
                     onClick={() => handleRoleDelete(role.id)}>
-                    {removingRole === role.id ? 'Removing...': 'Remove'}
+                    {removingRole === role.id ? 'Removing...' : 'Remove'}
                   </Button>
                 </div>
               );

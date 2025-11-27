@@ -315,7 +315,7 @@ export default function BestDeals() {
       </div>
 
       {/* Search */}
-      <div className="relative ml-6 max-w-xl">
+      <div className="relative ml-6 max-md:mx-3 max-w-xl">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
         <Input placeholder="Search Shares..." className="pl-10" />
       </div>
@@ -377,19 +377,19 @@ export default function BestDeals() {
         </ScrollArea>
       </div>
 
-
+      {/* Approve Best Deals Model */}
       <Dialog
         open={openApproveModel}
         onOpenChange={setOpenApproveModel}
       >
-        <DialogContent className="sm:max-w-6xl realtive flex flex-col h-[500px]">
+        <DialogContent className="sm:max-w-6xl realtive w-[90vw] flex flex-col h-[500px]">
           <DialogHeader className="h-fit">
             <DialogTitle>Approve Best Deals</DialogTitle>
           </DialogHeader>
           <div className="flex-1 min-h-0">
-            <ScrollArea className="h-full">
+            <div className="h-full w-full overflow-auto">
               <div className="rounded-md border">
-                <Table className={`${fetchingData && 'h-32'}`}>
+                <Table className={`${fetchingData && 'h-32'} min-w-max`}>
                   <TableHeader className="sticky top-0 z-10">
                     <TableRow>
                       <TableHead>Share Name</TableHead>
@@ -478,7 +478,7 @@ export default function BestDeals() {
                   </TableBody>
                 </Table>
               </div>
-            </ScrollArea>
+            </div>
           </div>
 
 

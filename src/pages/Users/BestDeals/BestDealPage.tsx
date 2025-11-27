@@ -61,7 +61,7 @@ interface DetailCardProps {
 
 function DetailCard({ label, value, highlight = false }: DetailCardProps) {
   return (
-    <div className="p-4 rounded-lg border border-border bg-card hover:bg-secondary/30 transition-colors">
+    <div className="p-4 max-md:py-2 rounded-lg border border-border bg-card hover:bg-secondary/30 transition-colors">
       <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">{label}</p>
       <p className={`text-lg font-bold ${highlight ? "text-primary" : "text-foreground"}`}>{value}</p>
     </div>
@@ -192,12 +192,12 @@ export default function BestDealPage({ id }: SharePageProps) {
   }
 
   return (
-    <div className=" h-[calc(100vh-4.7rem)] flex flex-col overflow-hidden p-6 space-y-6">
+    <div className=" h-[calc(100vh-4.7rem)] flex flex-col overflow-hidden p-6 space-y-6 max-md:p-0">
       {/* Share Details */}
-      <Card className="p-8 shadow-lg">
+      <Card className="p-8 max-md:p-3 h-full flex flex-col border-none rounded-none shadow-lg">
       {/* Header Section */}
-      <div className="mb-8">
-        <div className="flex items-start justify-between mb-6">
+      <div className="mb-8 max-md:mb-4">
+        <div className="flex items-start justify-between mb-6 max-md:mb-0">
           <div>
             <h1 className="text-4xl font-bold text-foreground mb-2">{share.share.name}</h1>
             <p className="text-muted-foreground">Share Listing Details</p>
@@ -211,11 +211,11 @@ export default function BestDealPage({ id }: SharePageProps) {
       </div>
 
       {/* Main Price Section */}
-      <div className="mb-8 p-6 bg-secondary/50 rounded-lg border border-border">
+      <div className="mb-8 p-6 max-md:p-3 max-md:mb-4 bg-secondary/50 rounded-lg border border-border">
         <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
           <div>
             <p className="text-sm text-muted-foreground font-medium mb-2">Current Price</p>
-            <p className="text-3xl font-bold text-foreground">₹{share.price}</p>
+            <p className="text-3xl max-md:text-xl font-bold text-foreground">₹{share.price}</p>
           </div>
           {/* <div>
             <p className="text-sm text-muted-foreground font-medium mb-2">Base Price</p>
@@ -223,13 +223,13 @@ export default function BestDealPage({ id }: SharePageProps) {
           </div> */}
           <div>
             <p className="text-sm text-muted-foreground font-medium mb-2">Available Quantity</p>
-            <p className="text-2xl font-semibold text-foreground">{share.quantityAvailable.toLocaleString()} units</p>
+            <p className="text-2xl max-md:text-xl font-semibold text-foreground">{share.quantityAvailable.toLocaleString()} units</p>
           </div>
         </div>
       </div>
 
       {/* Details Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-md:gap-3 mb-8 max-md:mb-4">
         <DetailCard label="Minimum Order Quantity" value={`${share.minimumOrderQuatity} units`} />
         <DetailCard label="Delivery Timeline" value={share.deliveryTimeline} />
         <DetailCard
@@ -247,7 +247,8 @@ export default function BestDealPage({ id }: SharePageProps) {
       </div>
 
       {/* Action Buttons */}
-      <div className="flex gap-4 pt-6 border-t border-border">
+      <div className="flex-1 flex items-end">
+        <div className="flex gap-4 pt-6 border-t w-full border-border">
         <Button
           onClick={handleBook}
           size="lg"
@@ -256,9 +257,10 @@ export default function BestDealPage({ id }: SharePageProps) {
         >
           Book Now
         </Button>
-        <Button disabled={isSending} onClick={handleBid} size="lg" variant="outline" className="flex-1 font-semibold bg-transparent">
+        <Button disabled={isSending} onClick={handleBid} size="lg" variant="outline" className="flex-1 font-semibold">
           Place Bid
         </Button>
+      </div>
       </div>
     </Card>
 
@@ -301,7 +303,7 @@ export default function BestDealPage({ id }: SharePageProps) {
             </div>
 
           </div>
-          <DialogFooter>
+          <DialogFooter className="gap-2">
             <Button
               variant="outline"
               onClick={() => setIsBidOpen(false)}
@@ -350,7 +352,7 @@ export default function BestDealPage({ id }: SharePageProps) {
             </div>
 
           </div>
-          <DialogFooter>
+          <DialogFooter className="gap-2">
             <Button
               variant="outline"
               onClick={() => setIsBookingOpen(false)}

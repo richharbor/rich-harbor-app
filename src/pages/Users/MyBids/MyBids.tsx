@@ -99,15 +99,15 @@ export default function MyBidsPage() {
 
 
   return (
-    <div className="h-[calc(100vh-4.7rem)] flex flex-col relative overflow-hidden gap-6 p-6">
+    <div className="h-[calc(100vh-4.7rem)] flex flex-col relative overflow-hidden gap-6 p-6 max-md:p-2">
       <div className="flex-1 min-h-0">
         <ScrollArea className="h-full">
-          <Card className="shadow-md">
-            <CardHeader>
+          <Card className="shadow-md max-md:bg-transparent max-md:border-none">
+            <CardHeader className="max-md:px-3">
               <CardTitle>Bids Overview</CardTitle>
             </CardHeader>
-            <CardContent>
-              <Table>
+            <CardContent className="max-md:p-0">
+              <Table className="hidden md:table">
                 <TableCaption>All recent Bids records.</TableCaption>
                 <TableHeader>
                   <TableRow>
@@ -153,6 +153,55 @@ export default function MyBidsPage() {
                   )}
                 </TableBody>
               </Table>
+              <div className="md:hidden space-y-3 p-2">
+                {bids.map((row) => (
+                  <Card key={row.id}>
+                    <CardContent className="p-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-semibold">{row.sell.share.name}</p>
+                          <p className="text-sm text-muted-foreground">Seller: {row.sell.userId}</p>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          disabled={isSending}
+                          onClick={() => {
+                            setDiscardId(row.id);
+                            setOpenDiscard(true);
+                          }}
+                        >
+                          <Trash className="h-4 w-4" />
+                        </Button>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div>
+                          <p className="text-muted-foreground">Price</p>
+                          <p className="font-medium">₹{row.sell.price}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Bid Price</p>
+                          <p className="font-medium">₹{row.bidPrice}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Bid Quantity</p>
+                          <p className="font-medium">{row.quantity}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">bid On</p>
+                          <p className="font-medium">{new Date(row.bidingDate).toLocaleDateString("en-IN")}</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+                {bids.length === 0 && (
+                  <p className="text-center text-muted-foreground">
+                    No bids available.
+                  </p>
+                )}
+              </div>
             </CardContent>
           </Card>
         </ScrollArea>
@@ -162,13 +211,13 @@ export default function MyBidsPage() {
 
       {/* Discard dialog */}
       <Dialog open={openDiscard} onOpenChange={setOpenDiscard}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
+        <DialogContent className="sm:max-w-md max-w-[300px] max-md:rounded-lg">
+          <DialogHeader className="text-left">
             <p className="">
               Are you sure?
             </p>
           </DialogHeader>
-          <DialogFooter>
+          <DialogFooter className="max-sm:flex-row max-sm:justify-end max-sm:gap-3">
             <Button
               variant="outline"
               onClick={() => setOpenDiscard(false)}
