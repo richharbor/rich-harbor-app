@@ -173,7 +173,6 @@ export function RootSidebar(props: React.ComponentProps<typeof Sidebar>) {
     "manage_bids",
     "manage_my_bookings",
     "manage_my_bids",
-    "manage_whatsapp"
   ];
 
   if (user?.tier === 3) {
