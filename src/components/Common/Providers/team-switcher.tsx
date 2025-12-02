@@ -25,19 +25,20 @@ export function RoleSwitcher({
 }: {
   currentRole: Role;
   availableRoles: Role[];
-  franchiseName:string;
+  franchiseName: string;
   onRoleChange: (role: Role) => void;
 }) {
   const { isMobile } = useSidebar();
+  console.log(availableRoles);
 
   return (
-    <SidebarMenu>
+    <SidebarMenu className="w-fit">
       <SidebarMenuItem>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
               size="lg"
-              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
+              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground px-2">
               <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
                 <Shield className="size-4" />
               </div>
@@ -46,10 +47,10 @@ export function RoleSwitcher({
                   {franchiseName}
                 </span>
                 <span className="truncate text-xs text-muted-foreground">
-                  {/* {currentRole.description} */}
+                  {currentRole.name}
                 </span>
               </div>
-              <ChevronsUpDown className="ml-auto" />
+              <ChevronsUpDown className="" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           {availableRoles.length > 0 && (

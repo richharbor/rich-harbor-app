@@ -448,7 +448,7 @@ export default function Partners() {
   }
 
   return (
-    <div className="h-[calc(100vh-4.7rem)] flex flex-col relative overflow-auto gap-6 p-6 max-md:p-2">
+    <div className="flex h-[calc(100vh-4.5rem)]  w-full overflow-hidden rounded-lg border-2 max-md:border-none flex-col relative gap-6 p-6 max-md:p-3">
       <div className="flex items-center max-md:flex-col gap-3 max-md:items-start justify-between">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">

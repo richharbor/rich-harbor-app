@@ -103,15 +103,16 @@ export default function MyBookingPage() {
 
 
   return (
-    <div className="h-[calc(100vh-4.7rem)] flex flex-col relative overflow-hidden gap-6 p-6 max-md:p-2">
+    <div className="flex h-[calc(100vh-4.5rem)]  w-full overflow-hidden rounded-lg border-2 max-md:border-none flex-col relative gap-6 p-6 max-md:p-2">
       <div className="flex-1 min-h-0">
         <ScrollArea className="h-full">
-          <Card className="shadow-md max-md:bg-transparent max-md:border-none">
+          <Card className="max-md:bg-transparent max-md:border-none">
             <CardHeader className="max-md:px-3">
               <CardTitle>Bookings Overview</CardTitle>
             </CardHeader>
             <CardContent className="max-md:p-0">
 
+              {/* web version */}
               <Table className="hidden md:table">
                 <TableCaption>All recent booking records.</TableCaption>
                 <TableHeader>
@@ -135,7 +136,8 @@ export default function MyBookingPage() {
                       <TableCell className="space-x-2">
                         <Button
                           variant="outline"
-                          size="sm"
+                          size="icon"
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
                           disabled={isSending}
                           onClick={() => {
                             setDiscardId(row.id);
@@ -156,6 +158,8 @@ export default function MyBookingPage() {
                   )}
                 </TableBody>
               </Table>
+
+              {/* mobile version */}
               <div className="md:hidden space-y-3 p-2">
                 {bookings.map((row) => (
                   <Card key={row.id}>
@@ -168,6 +172,7 @@ export default function MyBookingPage() {
                         <Button
                           variant="outline"
                           size="icon"
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
                           disabled={isSending}
                           onClick={() => {
                             setDiscardId(row.id);

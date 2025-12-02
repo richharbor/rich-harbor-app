@@ -257,7 +257,7 @@ export default function SharePage({ id }: SharePageProps) {
   }
 
   return (
-    <div className=" h-[calc(100vh-4.7rem)] flex flex-col overflow-hidden p-6 space-y-6 max-md:p-2">
+    <div className="flex h-[calc(100vh-4.5rem)]  w-full overflow-hidden rounded-lg border-2 max-md:border-none  flex-col p-6 space-y-6 max-md:p-2">
       {/* Share Details */}
       <div className=" flex gap-5 shadow-xs px-6 py-12 max-md:p-3">
         <div className="flex-1">

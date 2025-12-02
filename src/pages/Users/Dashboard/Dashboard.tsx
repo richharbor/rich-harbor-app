@@ -5,7 +5,7 @@ import AnalyticChart from "./AnalyticChart/AnalyticChart"
 import SessionChart from "./SessionCard/SessionCard"
 import TransactionTable from "./TransactionTable/TransactionTable"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { ArrowLeftRight, BarChart3, Package, Share2, ShoppingCart, Star, ThumbsDown, ThumbsUp, TrendingDown } from "lucide-react"
+import { ArrowDown, ArrowLeftRight, ArrowUp, BarChart3, Divide, Package, Share2, ShoppingCart, Star, ThumbsDown, ThumbsUp, TrendingDown } from "lucide-react"
 import { useEffect, useState } from "react"
 import { getDashboardInfo } from "@/services/Dashboard/dashboardService"
 import Loading from "@/app/loading"
@@ -21,6 +21,8 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
 import ApplicationDialog from "../Bookings/ApplicationDialog"
+import { cn } from "@/lib/utils"
+import QueryDetails from "./QueryDetails/QueryDetails"
 
 
 
@@ -55,6 +57,22 @@ interface CloseDealProp {
 
 }
 
+interface BuyQueryProp {
+  id: number;
+  userId: number;
+  franchiseId: number;
+  shareName: string;
+  quantity: number;
+  price: string; // stored as string ("25.000")
+  createdAt: string; // ISO timestamp
+  updatedAt: string; // ISO timestamp
+  buyer: {
+    id: number;
+    firstName: string;
+    lastName: string;
+  };
+}
+
 
 export default function Dashboard() {
   const [loading, setLoading] = useState(true);
@@ -62,8 +80,9 @@ export default function Dashboard() {
   const franchiseId = useAuthStore((state) => state.user?.franchiseId);
   const isSuperAdmin = useAuthStore((state) => state.user?.isSuperAdmin);
   const tier = useAuthStore((state) => state.user?.tier);
+  const userId = useAuthStore((state) => state.user?.id);
 
-  const [queries, setQueries] = useState<any>([])
+  const [queries, setQueries] = useState<BuyQueryProp[]>([])
   const [isFetching, setIsFetching] = useState(false);
 
   const [franchises, setFranchises] = useState<any[]>([]);
@@ -85,6 +104,9 @@ export default function Dashboard() {
     dealQuantity: "",
     goodBuyer: "",
   })
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [selectedQueryDetails, setSelectedQueryDetails] = useState<any>(null);
+  const [showMore, setShowMore] = useState(false);
 
 
 
@@ -224,7 +246,7 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="h-[calc(100vh-4.7rem)] flex flex-col relative overflow-hidden rounded-md">
+      <div className="h-[calc(100vh-4.5rem)] flex flex-col relative overflow-hidden rounded-md">
         <Loading areaOnly={true} />
       </div>
     );
@@ -232,7 +254,7 @@ export default function Dashboard() {
 
 
   return (
-    <div className="h-[calc(100vh-4.7rem)] flex flex-col relative overflow-hidden gap-6">
+    <div className="flex h-[calc(100vh-4.5rem)]  w-full overflow-hidden rounded-lg border-2 max-md:border-none">
       <div className="flex-1 min-h-0">
         <ScrollArea className="h-full">
           <div className="space-y-6 p-5 max-md:p-3">
@@ -258,113 +280,244 @@ export default function Dashboard() {
               <SessionChart />
             </div> */}
 
-            {/* Transaction Table */}
+            {/* Transaction Table for desktop */}
             <TransactionTable transactions={dashboardInfo?.transactions!} />
+
+            {/* Transaction Table for mobile */}
+            <div className="space-y-3 md:hidden">
+              <h2 className="text-xl font-semibold">Transaction History</h2>
+              <div className={(dashboardInfo?.transactions?.length ?? 0) > 0 ? `h-[350px] overflow-hidden transition-height duration-300 ease-in-out ${showMore && "h-fit"}` : ""}>
+
+                <div className="grid grid-cols-1 gap-2 py-3">
+                  {dashboardInfo?.transactions?.map((tx) => {
+                    const isBuy = tx.buyerId === userId;
+                    return (
+                      <div
+                        key={tx.id}
+                        className="p-4 rounded-xl border bg-card shadow-sm flex flex-col gap-1"
+                      >
+                        {/* BUY / SELL tag */}
+                        <span
+                          className={cn(
+                            "text-xs font-medium w-fit px-2 py-0.5 rounded-full",
+                            isBuy
+                              ? "bg-green-100 text-green-700"
+                              : "bg-red-100 text-red-700"
+                          )}
+                        >
+                          {isBuy ? "Bought" : "Sold"}
+                        </span>
+
+                        {/* Share name */}
+                        <div className="flex justify-between">
+                          <div className="text-base font-semibold">
+                            {tx.shareName}
+                          </div>
+                          <span className="text-sm text-muted-foreground">{new Date(tx.createdAt).toLocaleDateString("en-IN")}</span>
+                        </div>
+
+                        {/* Essential details */}
+                        <div className="flex justify-between text-sm text-muted-foreground">
+                          <span>Qty: {tx.quantity}</span>
+                          <span>Price: {tx.price}</span>
+                        </div>
+
+                      </div>
+                    );
+                  })}
+                  {dashboardInfo?.transactions?.length === 0 && (
+                    <div className="py-20 text-center text-muted-foreground">
+                      No transactions available.
+                    </div>
+                  )}
+                </div>
+
+              </div>
+              {(dashboardInfo?.transactions?.length ?? 0) > 3 && (
+                <div className="w-full flex justify-end">
+                  <span onClick={() => setShowMore(!showMore)} className="text-sm font-medium cursor-pointer flex items-center text-primary group">{showMore ? "Show less" : "Show more"} <ArrowDown className={`h-4 w-4 duration-300 transition-transform ease-in-out ${showMore ? "rotate-180" : ""}`} /></span>
+                </div>
+              )}
+            </div>
 
 
 
             {(typeof tier === 'number' && tier <= 3) && (
-              <div className="h-96 overflow-x-auto max-md:w-[90vw]">
-                <Card className="shadow-md h-full max-md:p-3 w-full overflow-auto">
-                  <div className="h-full w-full overflow-auto">
-                    <CardHeader className="flex flex-row max-md:flex-col gap-3 w-full justify-between max-md:p-0">
-                      <CardTitle>Buy Queries</CardTitle>
-                      {(isSuperAdmin || tier === 2) && (
-                        <div className="flex items-center max-md:items-start max-md:flex-col gap-2">
-                          <Label className="font-medium">Select Franchise:</Label>
-                          <Select
-                            value={selectedFranchiseId?.toString() || ""}
-                            onValueChange={(val) => {
-                              const fid = parseInt(val);
-                              setSelectedFranchiseId(fid);
-                            }}>
-                            <SelectTrigger className="w-64">
-                              <SelectValue placeholder="Select Franchise" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {franchises.map((f) => (
-                                <SelectItem key={f.id} value={f.id.toString()}>
-                                  {f.name}
-                                </SelectItem>
+              <div>
+                {/* query table desktop version */}
+                <div className="h-96 max-md:hidden overflow-x-auto max-md:w-[calc(100vw-1.7rem)]">
+                  <Card className="shadow-md h-full max-md:p-3 w-full overflow-auto">
+                    <ScrollArea className="h-full">
+                      <CardHeader className="flex flex-row max-md:flex-col gap-3 w-full justify-between max-md:p-0">
+                        <CardTitle>Buy Queries</CardTitle>
+                        {(isSuperAdmin || tier === 2) && (
+                          <div className="flex items-center max-md:items-start max-md:flex-col gap-2">
+                            <Label className="font-medium">Select Franchise:</Label>
+                            <Select
+                              value={selectedFranchiseId?.toString() || ""}
+                              onValueChange={(val) => {
+                                const fid = parseInt(val);
+                                setSelectedFranchiseId(fid);
+                              }}>
+                              <SelectTrigger className="w-64">
+                                <SelectValue placeholder="Select Franchise" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {franchises.map((f) => (
+                                  <SelectItem key={f.id} value={f.id.toString()}>
+                                    {f.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        )}
+                      </CardHeader>
+                      <CardContent className="max-md:p-0 max-md:mt-2">
+                        <div className="min-w-max">
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Buyer Id</TableHead>
+                                <TableHead>Share Name</TableHead>
+                                <TableHead>Price</TableHead>
+                                <TableHead>Buying Quantity</TableHead>
+                                <TableHead>Date</TableHead>
+                                <TableHead>Action</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {queries?.map((query: any) => (
+                                <TableRow key={query.id}>
+                                  <TableCell className="py-3 cursor-pointer" onClick={() => handleBuyerDetail(query.userId)}>{query.userId}</TableCell>
+                                  <TableCell className="py-3">{query.shareName}</TableCell>
+                                  <TableCell className="py-3">{query.price}</TableCell>
+                                  <TableCell className="py-3">{query.quantity}</TableCell>
+                                  <TableCell className="py-3">{new Date(query.createdAt).toLocaleDateString("en-IN")}</TableCell>
+                                  <TableCell className="space-x-2">
+                                    <Button
+                                      variant="default"
+                                      size="sm"
+                                      className="cursor-pointer"
+                                      disabled={isSending}
+                                      onClick={() => {
+                                        setCloseDealDetails({ ...closeDealDetails, id: query.id, buyerId: query.userId, shareName: query.shareName })
+                                        setOpenCloseDeal(true);
+                                      }}
+                                    >
+                                      Close Deal
+                                    </Button>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="cursor-pointer"
+                                      disabled={isSending}
+                                      onClick={() => {
+                                        setDiscardId(query.id);
+                                        setOpenDiscard(true);
+                                      }}
+                                    >
+                                      Discard
+                                    </Button>
+                                  </TableCell>
+                                </TableRow>
+
                               ))}
-                            </SelectContent>
-                          </Select>
+                              {(isFetching && queries.length === 0) && (
+                                <TableRow className="h-60">
+                                  <TableCell colSpan={7} className="text-center text-muted-foreground">
+                                    <Loading areaOnly />
+                                  </TableCell>
+                                </TableRow>
+                              )}
+                              {(queries.length === 0 && !isFetching) && (
+                                <TableRow>
+                                  <TableCell colSpan={7} className="text-center py-20 text-muted-foreground">
+                                    No query available.
+                                  </TableCell>
+                                </TableRow>
+                              )}
+
+
+                            </TableBody>
+                          </Table>
                         </div>
-                      )}
-                    </CardHeader>
-                    <CardContent className="max-md:p-0 max-md:mt-2">
-                      <div className="min-w-max">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Buyer Id</TableHead>
-                            <TableHead>Share Name</TableHead>
-                            <TableHead>Price</TableHead>
-                            <TableHead>Buying Quantity</TableHead>
-                            <TableHead>Date</TableHead>
-                            <TableHead>Action</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {[...queries,...queries,...queries,...queries,...queries,...queries]?.map((query: any) => (
-                            <TableRow key={query.id}>
-                              <TableCell className="py-3 cursor-pointer" onClick={() => handleBuyerDetail(query.userId)}>{query.userId}</TableCell>
-                              <TableCell className="py-3">{query.shareName}</TableCell>
-                              <TableCell className="py-3">{query.price}</TableCell>
-                              <TableCell className="py-3">{query.quantity}</TableCell>
-                              <TableCell className="py-3">{new Date(query.createdAt).toLocaleDateString("en-IN")}</TableCell>
-                              <TableCell className="space-x-2">
-                                <Button
-                                  variant="default"
-                                  size="sm"
-                                  className="cursor-pointer"
-                                  disabled={isSending}
-                                  onClick={() => {
-                                    setCloseDealDetails({ ...closeDealDetails, id: query.id, buyerId: query.userId, shareName: query.shareName })
-                                    setOpenCloseDeal(true);
-                                  }}
-                                >
-                                  Close Deal
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="cursor-pointer"
-                                  disabled={isSending}
-                                  onClick={() => {
-                                    setDiscardId(query.id);
-                                    setOpenDiscard(true);
-                                  }}
-                                >
-                                  Discard
-                                </Button>
-                              </TableCell>
-                            </TableRow>
 
+                      </CardContent>
+                    </ScrollArea>
+                  </Card>
+
+                </div>
+
+                {/* query table mobile version */}
+                <div className="space-y-3 md:hidden">
+                  <h2 className="text-xl font-semibold">Queries</h2>
+                  {(isSuperAdmin || tier === 2) && (
+                    <div className="flex items-center max-md:items-start max-md:flex-col gap-2">
+                      <Label className="font-medium">Select Franchise:</Label>
+                      <Select
+                        value={selectedFranchiseId?.toString() || ""}
+                        onValueChange={(val) => {
+                          const fid = parseInt(val);
+                          setSelectedFranchiseId(fid);
+                        }}>
+                        <SelectTrigger className="w-64">
+                          <SelectValue placeholder="Select Franchise" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {franchises.map((f) => (
+                            <SelectItem key={f.id} value={f.id.toString()}>
+                              {f.name}
+                            </SelectItem>
                           ))}
-                          {(isFetching && queries.length === 0) && (
-                            <TableRow className="h-60">
-                              <TableCell colSpan={7} className="text-center text-muted-foreground">
-                                <Loading areaOnly />
-                              </TableCell>
-                            </TableRow>
-                          )}
-                          {(queries.length === 0 && !isFetching) && (
-                            <TableRow>
-                              <TableCell colSpan={7} className="text-center py-20 text-muted-foreground">
-                                No query available.
-                              </TableCell>
-                            </TableRow>
-                          )}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                  <div className={(queries?.length ?? 0) > 0 ? "h-96" : ""}>
+                    <ScrollArea className="h-full">
+                      <div className="grid grid-cols-1 gap-2 py-3">
+                        {queries?.map((tx: any) => {
+                          return (
+                            <div
+                              key={tx.id}
+                              className="p-4 rounded-xl border bg-card shadow-sm flex flex-col gap-1"
+                              onClick={() => {
+                                setSelectedQueryDetails(tx);
+                                setIsDrawerOpen(true);
+                              }}
+                            >
+                              {/* Share name */}
+                              <div className="flex justify-between">
+                                <div className="text-base font-semibold">
+                                  {tx.shareName}
+                                </div>
+                                <span className="text-sm text-muted-foreground">{new Date(tx.createdAt).toLocaleDateString("en-IN")}</span>
+                              </div>
 
+                              {/* Essential details */}
+                              <div className="flex justify-between text-sm text-muted-foreground">
+                                <span>Qty: {tx.quantity}</span>
+                                <span>Price: {tx.price}</span>
+                              </div>
 
-                        </TableBody>
-                      </Table>
+                            </div>
+                          );
+                        })}
+                        {queries.length === 0 && !isFetching && (
+                          <div className="py-20 text-center text-muted-foreground">
+                            No query available.
+                          </div>)
+                        }
+                        {isFetching && queries.length === 0 && (
+                          <div className="py-20 relative text-center text-muted-foreground">
+                            <Loading areaOnly />
+                          </div>)
+                        }
                       </div>
-                    
-                    </CardContent>
+                    </ScrollArea>
                   </div>
-                </Card>
+                </div>
 
               </div>
             )}
@@ -375,6 +528,21 @@ export default function Dashboard() {
 
 
       <ApplicationDialog userProfile={userProfile} isFetching={isFetching} open={open} onClose={setOpen} data={userDetails} />
+
+
+
+      <QueryDetails
+        isOpen={isDrawerOpen}
+        onClose={() => setIsDrawerOpen(false)}
+        details={selectedQueryDetails}
+        isSending={isSending}
+        setCloseDealDetails={setCloseDealDetails}
+        closeDealDetails={closeDealDetails}
+        setOpenCloseDeal={setOpenCloseDeal}
+        setOpenDiscard={setOpenDiscard}
+        setDiscardId={setDiscardId}
+        handleBuyerDetail={handleBuyerDetail}
+      />
 
 
       {/* close deal dialog */}

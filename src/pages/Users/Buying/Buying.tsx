@@ -254,8 +254,8 @@ export default function Buying() {
 
 
   return (
-    <div className="h-[calc(100vh-4.7rem)] flex flex-col relative overflow-hidden gap-6">
-      <div className="flex items-end justify-between px-6 pt-6 max-md:px-2 gap-3">
+    <div className="flex h-[calc(100vh-4.5rem)] flex-col relative overflow-hidden gap-6 w-full rounded-lg border-2 max-md:border-none">
+      <div className="flex items-end justify-between px-6 pt-6 max-md:px-3 gap-3">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Buy</h2>
           <p className="text-muted-foreground">

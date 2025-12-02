@@ -7,6 +7,8 @@ import {
 import { ThemeModeToggle } from "@/components/Common/Providers/ThemeModeToggle";
 import { LSidebar } from "@/components/Common/Navigation/LSidebar";
 import { cookies } from "next/headers";
+import { SiteHeader } from "@/components/Common/Navigation/MainNavigation/SiteHeader";
+import { RootSidebar } from "@/components/Common/Navigation/MainNavigation/RootSidebar";
 
 export async function generateMetadata(): Promise<Metadata> {
   const cookieStore = cookies();
@@ -23,20 +25,18 @@ export default function BrokerLayout({
 }>) {
   return (
     <main className="flex min-h-screen w-full flex-col">
-      <SidebarProvider>
-        <LSidebar />
-        <SidebarInset>
-          <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-            <div className="flex items-center justify-between px-4 w-full">
-              <SidebarTrigger className="-ml-1" />
-              <ThemeModeToggle />
-            </div>
-          </header>
-          <div className="flex flex-1 flex-col m-2 mt-0 bg-background rounded-lg border-2 border-border">
-            {children}
+      <div className="[--header-height:calc(--spacing(14))]">
+        <SidebarProvider className="flex flex-col">
+          <SiteHeader />
+          <div className="flex flex-1">
+            <RootSidebar />
+            {/* <LSidebar /> */}
+            <SidebarInset className="shadow-none">
+              <div className="flex flex-1 flex-col gap-4">{children}</div>
+            </SidebarInset>
           </div>
-        </SidebarInset>
-      </SidebarProvider>
+        </SidebarProvider>
+      </div>
     </main>
   );
 }

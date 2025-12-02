@@ -189,7 +189,7 @@ export default function Selling() {
   }
 
   return (
-    <div className=" h-[calc(100vh-4.7rem)] flex flex-col relative overflow-hidden space-y-6 p-6 max-md:p-2">
+    <div className="flex h-[calc(100vh-4.5rem)]  w-full overflow-hidden rounded-lg border-2 max-md:border-none flex-col relative space-y-6 p-6 max-md:p-3">
       <div className="flex items-center justify-between gap-2">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Sell</h2>

@@ -31,7 +31,7 @@ interface Booking {
   sellId: number;
   quantity: number;
   bidingDate: string; // ISO date string
-  bidPrice:string;
+  bidPrice: string;
   sell: {
     id: number;
     userId: number;
@@ -51,7 +51,7 @@ export default function MyBidsPage() {
   const [loading, setLoading] = useState(false);
   const [bids, setBids] = useState<Booking[] | []>([])
   const [isFetching, setIsFetching] = useState(false);
-  
+
   const [openDiscard, setOpenDiscard] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [discardId, setDiscardId] = useState<number>(0);
@@ -83,7 +83,7 @@ export default function MyBidsPage() {
     } catch (error: any) {
       console.error("Error in deleting bid");
       toast.error(error?.message)
-    }finally{
+    } finally {
       setIsSending(false);
     }
   }
@@ -99,14 +99,16 @@ export default function MyBidsPage() {
 
 
   return (
-    <div className="h-[calc(100vh-4.7rem)] flex flex-col relative overflow-hidden gap-6 p-6 max-md:p-2">
+    <div className="flex h-[calc(100vh-4.5rem)]  w-full overflow-hidden rounded-lg border-2 max-md:border-none flex-col relative gap-6 p-6 max-md:p-3">
       <div className="flex-1 min-h-0">
         <ScrollArea className="h-full">
-          <Card className="shadow-md max-md:bg-transparent max-md:border-none">
+          <Card className="max-md:bg-transparent shadow-none max-md:border-none">
             <CardHeader className="max-md:px-3">
               <CardTitle>Bids Overview</CardTitle>
             </CardHeader>
             <CardContent className="max-md:p-0">
+
+              {/* Web version */}
               <Table className="hidden md:table">
                 <TableCaption>All recent Bids records.</TableCaption>
                 <TableHeader>
@@ -132,9 +134,10 @@ export default function MyBidsPage() {
                       <TableCell className="space-x-2">
                         <Button
                           variant="outline"
-                          size="sm"
+                          size="icon"
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
                           disabled={isSending}
-                          onClick={()=>{
+                          onClick={() => {
                             setDiscardId(row.id);
                             setOpenDiscard(true);
                           }}
@@ -153,6 +156,8 @@ export default function MyBidsPage() {
                   )}
                 </TableBody>
               </Table>
+
+              {/* Mobile version */}
               <div className="md:hidden space-y-3 p-2">
                 {bids.map((row) => (
                   <Card key={row.id}>
@@ -162,9 +167,12 @@ export default function MyBidsPage() {
                           <p className="font-semibold">{row.sell.share.name}</p>
                           <p className="text-sm text-muted-foreground">Seller: {row.sell.userId}</p>
                         </div>
+
+
                         <Button
                           variant="outline"
                           size="icon"
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
                           disabled={isSending}
                           onClick={() => {
                             setDiscardId(row.id);
@@ -226,7 +234,7 @@ export default function MyBidsPage() {
               No
             </Button>
             <Button
-              onClick={()=>handleDeleteBid(discardId)}
+              onClick={() => handleDeleteBid(discardId)}
               disabled={
                 isSending
               }

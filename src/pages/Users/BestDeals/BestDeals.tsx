@@ -294,7 +294,7 @@ export default function BestDeals() {
 
 
   return (
-    <div className="h-[calc(100vh-4.7rem)] flex flex-col relative overflow-hidden space-y-6">
+    <div className="flex h-[calc(100vh-4.5rem)]  w-full overflow-hidden rounded-lg border-2 max-md:border-none flex-col relative  space-y-6">
       <div className="flex items-center justify-between px-6 py-3">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Best Deals</h2>
@@ -319,12 +319,13 @@ export default function BestDeals() {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
         <Input placeholder="Search Shares..." className="pl-10" />
       </div>
-      {!bestDeals.length && <div className="h-full flex flex-col relative justify-center items-center overflow-hidden rounded-md">
-        No shares found.
-      </div>}
+      
 
       {/* Table / Cards */}
       <div className="flex-1 min-h-0 border-t">
+        {!bestDeals.length && <div className="h-full flex flex-col relative justify-center items-center overflow-hidden rounded-md">
+        No shares found.
+      </div>}
         <ScrollArea className="h-full">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 p-4">
 

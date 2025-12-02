@@ -32,15 +32,15 @@ export default function TransactionTable({ transactions }: TransactionTableProps
   const firstName = useAuthStore((state) => state.user?.firstName);
   const lastName = useAuthStore((state) => state.user?.lastName);
   return (
-    <div className={` ${transactions?.length === 0 ? "h-40":"h-96"} `}>
+    <div className={` ${transactions?.length === 0 ? "h-96 max-md:h-40":"h-96"} max-md:hidden `}>
 
-      <Card className="shadow-md h-full max-md:border-none max-md:bg-transparent">
+      <Card className="h-full max-md:border-none max-md:bg-transparent">
         <ScrollArea className="h-full">
           <CardHeader className="flex flex-row w-full justify-between max-md:px-3">
             <CardTitle>Transaction History</CardTitle>
           </CardHeader>
           <CardContent className="max-md:p-0">
-            <Table className="h-full hidden md:table">
+            <Table className="h-full">
               <TableHeader>
                 <TableRow>
                   <TableHead>Seller Id</TableHead>
@@ -79,8 +79,8 @@ export default function TransactionTable({ transactions }: TransactionTableProps
 
               </TableBody>
             </Table>
-            <div className="md:hidden space-y-3">
-              {transactions.map((transaction) => (
+            {/* <div className="md:hidden space-y-3">
+              {transactions?.map((transaction) => (
                 <Card key={transaction.id}>
                   <CardContent className="p-2 space-y-2">
                     <div className="flex justify-between items-start">
@@ -122,12 +122,12 @@ export default function TransactionTable({ transactions }: TransactionTableProps
                   </CardContent>
                 </Card>
               ))}
-              {transactions.length === 0 && (
+              {transactions?.length === 0 && (
                 <div className="text-center h-full flex items-center justify-center text-muted-foreground">
                   No Transaction available.
                 </div>
               )}
-            </div>
+            </div> */}
           </CardContent>
         </ScrollArea>
       </Card>

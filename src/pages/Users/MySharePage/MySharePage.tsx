@@ -106,15 +106,15 @@ export default function MySharePage({ id }: SharePageProps) {
 
     if (loading) {
         return (
-            <div className="h-[calc(100vh-4.7rem)] flex flex-col relative overflow-hidden rounded-md">
+            <div className="flex h-[calc(100vh-4.5rem)]  w-full overflow-hidden rounded-lg border-2 max-md:border-noneflex-col relative">
                 <Loading areaOnly={true} />
             </div>
         );
     }
-    if (!share) return <div className="h-[calc(100vh-4.7rem)] flex flex-col relative justify-center items-center overflow-hidden rounded-md">No shares found.</div>;
+    if (!share) return <div className="flex h-[calc(100vh-4.5rem)]  w-full overflow-hidden rounded-lg border-2 max-md:border-none  flex-col relative justify-center items-center">No shares found.</div>;
 
     return (
-        <div className=" h-[calc(100vh-4.7rem)] flex flex-col overflow-hidden p-6 space-y-6">
+        <div className="flex h-[calc(100vh-4.5rem)]  w-full overflow-hidden rounded-lg border-2 max-md:border-none flex-col p-6 space-y-6">
             {/* Share Details */}
             <div className="border flex gap-5 rounded-xl shadow-xs p-6 bg-card">
                 <div className="flex-1">

@@ -393,7 +393,7 @@ export default function Teams() {
   }
 
   return (
-    <div className="h-[calc(100vh-4.7rem)] flex flex-col relative overflow-hidden gap-6 p-6 max-md:p-2">
+    <div className="flex h-[calc(100vh-4.5rem)]  w-full overflow-hidden rounded-lg border-2 max-md:border-none flex-col relative gap-6 p-6 max-md:p-2">
       <div className="flex max-md:flex-col max-md:items-start gap-5 items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Teams</h2>
