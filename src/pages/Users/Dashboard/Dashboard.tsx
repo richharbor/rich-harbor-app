@@ -5,7 +5,7 @@ import AnalyticChart from "./AnalyticChart/AnalyticChart"
 import SessionChart from "./SessionCard/SessionCard"
 import TransactionTable from "./TransactionTable/TransactionTable"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { ArrowDown, ArrowLeftRight, ArrowUp, BarChart3, Divide, Package, Share2, ShoppingCart, Star, ThumbsDown, ThumbsUp, TrendingDown } from "lucide-react"
+import { ArrowDown, ArrowLeftRight, ArrowRight, ArrowUp, BarChart3, CheckCircle2, ChevronDown, Code2, Divide, Package, Settings, Share2, ShoppingCart, Star, ThumbsDown, ThumbsUp, TrendingDown, Users, Zap } from "lucide-react"
 import { useEffect, useState } from "react"
 import { getDashboardInfo } from "@/services/Dashboard/dashboardService"
 import Loading from "@/app/loading"
@@ -23,6 +23,10 @@ import { toast } from "sonner"
 import ApplicationDialog from "../Bookings/ApplicationDialog"
 import { cn } from "@/lib/utils"
 import QueryDetails from "./QueryDetails/QueryDetails"
+import { AnimatePresence, motion } from "framer-motion"
+import { useRouter } from "next/navigation"
+import Link from "next/link"
+import { getOnboardingStatus } from "@/services/Auth/authServices"
 
 
 
@@ -81,6 +85,7 @@ export default function Dashboard() {
   const isSuperAdmin = useAuthStore((state) => state.user?.isSuperAdmin);
   const tier = useAuthStore((state) => state.user?.tier);
   const userId = useAuthStore((state) => state.user?.id);
+  const onboardingStatus = useAuthStore((state) => state.onboardingStatus);
 
   const [queries, setQueries] = useState<BuyQueryProp[]>([])
   const [isFetching, setIsFetching] = useState(false);
@@ -107,11 +112,72 @@ export default function Dashboard() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [selectedQueryDetails, setSelectedQueryDetails] = useState<any>(null);
   const [showMore, setShowMore] = useState(false);
+  const [openStep, setOpenStep] = useState<number | null>(null);
+  const router = useRouter()
+  const { setOnboardingStatus } =
+    useAuthStore.getState();
+
+  const [stepsCompleted, setCompletedSteps] = useState<number>(0)
+  const [progressPercentage, setProgress] = useState<number>(0);
 
 
+  const checkOnboardingStatus = async () => {
+
+    try {
+      const response = await getOnboardingStatus();
+      //  store status in state
+      // console.log(response.status);
+      // setCurrentStatus(response.status);
+
+      if (response.currentStep && response.currentStep != 6) {
+        // setCurrentStep(response.currentStep + 1);
+        // setMaxStepVisited(response.currentStep);
+        setOnboardingStatus({
+          required: false,
+          status: response.status,
+          completedSteps: response.completedSteps,
+          currentStep: response.currentStep
+        })
+      } else if (response.currentStep === 6) {
+        // setIsCompleted(true);
+        // setOnboardingStatus({
+        //   required: false,
+        //   status: "completed"
+        // })
+
+        setOnboardingStatus({
+          required: false,
+          status: response.status,
+          completedSteps: response.completedSteps,
+          currentStep: response.currentStep
+        })
+      }
+
+      // if (response.completedSteps) {
+      //   // store in state
+      //   // setCompletedSteps(response.completedSteps);
+      // }
 
 
+    } catch (error) {
+      console.log("No existing application");
+    }
 
+  };
+
+  const totalSteps = 5;
+  useEffect(() => {
+    if (!onboardingStatus) {
+      checkOnboardingStatus();
+
+    }
+    console.log("onboardingStatus", onboardingStatus)
+    if (onboardingStatus?.completedSteps) {
+      setCompletedSteps(onboardingStatus?.completedSteps.length - 1);
+      setProgress((stepsCompleted / totalSteps) * 100);
+    }
+
+  }, [onboardingStatus])
 
   useEffect(() => {
     fetchDashBoardInfo();
@@ -244,6 +310,84 @@ export default function Dashboard() {
   };
 
 
+  // Extract onboarding state
+  const onboardingSteps = {};
+
+
+  // Compute step completion status
+  // const stepsCompleted = [
+  //   installationGuide.syncWebsite,
+  //   installationGuide.customizeChatbot,
+  //   installationGuide.addTeamMember,
+  //   chatbotInstalled,
+  // ].filter(Boolean).length;
+
+
+
+
+
+
+  const setUpStep = [
+    {
+      id: 1,
+      title: "Account Setup",
+      description:
+        "Connect your website to enable chatbot integration seamlessly.",
+      icon: Zap,
+      // href: `${role}/automate/knowledge-hub/websites?addWebsite=true`,
+      href: "#",
+      image:
+        "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&h=400&fit=crop",
+      // ref: step1Ref,
+    },
+    {
+      id: 2,
+      title: "Account Information",
+      description:
+        "Set up your chatbot's personality, responses, and appearance.",
+      icon: Settings,
+      // href: `${role}/settings/theme`,
+      href: "#",
+      image:
+        "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h=400&fit=crop",
+      // ref: step2Ref,
+    },
+    {
+      id: 3,
+      title: "Upload Documents",
+      description: "Embed the chatbot into your website and go live instantly.",
+      icon: Code2,
+      // href: `${role}/settings/messenger`,
+      href: "#",
+      image:
+        "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=400&h=400&fit=crop",
+      // ref: step3Ref,
+    },
+    {
+      id: 4,
+      title: "Franchise Agreement",
+      description: "Add and manage your teammates for smooth collaboration.",
+      icon: Users,
+      // href: `${role}/teams?addAgent=true`,
+      href: '#',
+      image:
+        "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=400&h=400&fit=crop",
+      // ref: step4Ref,
+    },
+    {
+      id: 5,
+      title: "Referrals",
+      description: "Add and manage your teammates for smooth collaboration.",
+      icon: Users,
+      // href: `${role}/teams?addAgent=true`,
+      href: '#',
+      image:
+        "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=400&h=400&fit=crop",
+      // ref: step4Ref,
+    },
+  ];
+
+
   if (loading) {
     return (
       <div className="h-[calc(100vh-4.5rem)] flex flex-col relative overflow-hidden rounded-md">
@@ -279,6 +423,207 @@ export default function Dashboard() {
               <AnalyticChart />
               <SessionChart />
             </div> */}
+
+
+            {/* onboardig steps */}
+            {onboardingStatus &&
+
+              <div className={`lg:col-span-2 space-y-6 ${onboardingStatus?.status !== 'draft' && 'hidden'}`}>
+                <Card
+                  // ref={setupGuideRef}
+                  className="bg-card border border-border shadow-sm py-0">
+                  <CardContent className="p-8">
+                    {/* Header with progress */}
+                    <div className="flex items-center justify-between mb-8">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
+                          <Zap className="w-5 h-5 text-primary" />
+                        </div>
+                        <div>
+                          <h2 className="text-2xl font-bold text-foreground">
+                            Onboarding Steps
+                          </h2>
+                          <p className="text-muted-foreground">
+                            Complete setup in just {totalSteps} steps
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="text-right">
+                        <div className="flex items-center gap-2 mb-1">
+                          <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-primary transition-all duration-500"
+                              style={{ width: `${progressPercentage}%` }}
+                            />
+                          </div>
+                          <span className="text-sm font-medium text-foreground">
+                            {stepsCompleted}/{totalSteps}
+                          </span>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          {Math.round(progressPercentage)}% complete
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Steps */}
+                    <motion.div
+                      className="space-y-5"
+                      initial="hidden"
+                      animate="visible"
+                      variants={{
+                        hidden: { opacity: 0 },
+                        visible: {
+                          opacity: 1,
+                          transition: { staggerChildren: 0.15 },
+                        },
+                      }}>
+                      {setUpStep.map((step) => {
+                        const StepIcon = step.icon;
+                        const isOpen = openStep === step.id;
+                        // const isCompleted =
+                        //   (step.id === 1 && installationGuide.syncWebsite) ||
+                        //   (step.id === 2 &&
+                        //     installationGuide.customizeChatbot) ||
+                        //   (step.id === 3 && chatbotInstalled) ||
+                        //   (step.id === 4 && installationGuide.addTeamMember);
+                        const isCompleted = true;
+
+                        return (
+                          <motion.div
+                            key={step.id}
+                            // ref={step.ref}
+                            variants={{
+                              hidden: { opacity: 0, y: 20 },
+                              visible: { opacity: 1, y: 0 },
+                            }}
+                            transition={{ duration: 0.4 }}
+                            className={`rounded-xl border border-border bg-card transition-all duration-200 overflow-hidden 
+          ${isOpen ? "shadow-md ring-1 ring-primary/20" : "shadow-sm"}`}>
+                            {/* Header */}
+                            <motion.div
+                              className="flex items-center justify-between p-6 cursor-pointer select-none"
+                              // onClick={() =>
+                              //   setOpenStep(isOpen ? null : step.id)
+                              // }
+                              transition={{ duration: 0.3 }}>
+                              <div className="flex items-center gap-4 flex-1">
+                                <div className="relative flex-shrink-0">
+                                  <div
+                                    className={`flex items-center justify-center w-12 h-12 rounded-lg shadow-sm  bg-primary/10 text-primary `}>
+                                    <StepIcon className="w-6 h-6 text-primary" />
+                                  </div>
+                                  {isCompleted && (
+                                    <div className="absolute -top-1.5 -right-1.5 bg-white rounded-full p-1 border border-emerald-200">
+                                      <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                                    </div>
+                                  )}
+                                </div>
+
+                                <div className="flex flex-col">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-xs font-medium text-muted-foreground uppercase">
+                                      Step {step.id}
+                                    </span>
+                                    {isCompleted && (
+                                      <span
+                                        className="text-xs px-2 py-0.5 bg-primary/10 text-primary rounded-full border border-primary
+                                    ">
+                                        Completed
+                                      </span>
+                                    )}
+                                  </div>
+                                  <h3
+                                    className={`text-lg font-semibold text-primary`}>
+                                    {step.title}
+                                  </h3>
+                                </div>
+                              </div>
+
+                              {/* <motion.div
+                              animate={{ rotate: isOpen ? 180 : 0 }}
+                              transition={{ duration: 0.3 }}
+                              className={`p-2.5 rounded-lg ${isOpen
+                                ? "bg-primary/10 text-primary"
+                                : "bg-muted text-muted-foreground"
+                                }`}>
+                              <ChevronDown className="w-4 h-4" />
+                            </motion.div> */}
+                            </motion.div>
+
+                            {/* Expanded content */}
+                            <AnimatePresence>
+                              {isOpen && (
+                                <motion.div
+                                  initial={{ opacity: 0, height: 0 }}
+                                  animate={{ opacity: 1, height: "auto" }}
+                                  exit={{ opacity: 0, height: 0 }}
+                                  transition={{ duration: 0.4 }}
+                                  className="border-t border-border bg-muted/30">
+                                  <div className="p-6">
+                                    <div className="flex flex-col lg:flex-row gap-6 items-start">
+                                      <div className="flex gap-6 items-start">
+                                        {/* Left side - Text and Button */}
+                                        <div className="flex-1 space-y-5">
+                                          <div>
+                                            <p className="text-muted-foreground leading-relaxed text-xl mt-1">
+                                              {step.description}
+                                            </p>
+                                          </div>
+
+                                          <div className="flex justify-start">
+                                            {!isCompleted ? (
+                                              <Button
+                                                className="px-6 py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground font-medium rounded-lg transition-all duration-300 flex items-center gap-2"
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  router.push(`/${step.href}`);
+                                                }}>
+                                                Start Now
+                                                <ArrowRight className="w-4 h-4" />
+                                              </Button>
+                                            ) : (
+                                              <div className="flex items-center gap-2 text-emerald-700 bg-emerald-50 px-4 py-2 rounded-lg border border-emerald-200">
+                                                <CheckCircle2 className="w-4 h-4" />
+                                                <span className="text-sm font-medium">
+                                                  Step Completed
+                                                </span>
+                                              </div>
+                                            )}
+                                          </div>
+                                        </div>
+
+                                        {/* Right side - Image */}
+                                        <div className="flex-1">
+                                          <img
+                                            src={step.image}
+                                            alt={step.title}
+                                            className="w-full h-36 object-cover rounded-lg"
+                                          />
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </motion.div>
+                        );
+                      })}
+                    </motion.div>
+                    <div className="w-full pt-5 flex justify-end">
+                      <Button
+                        onClick={() => router.push("/auth/onboarding")}
+                      >
+
+                        Complete Steps
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            }
 
             {/* Transaction Table for desktop */}
             <TransactionTable transactions={dashboardInfo?.transactions!} />
@@ -524,7 +869,7 @@ export default function Dashboard() {
 
           </div>
         </ScrollArea>
-      </div>
+      </div >
 
 
       <ApplicationDialog userProfile={userProfile} isFetching={isFetching} open={open} onClose={setOpen} data={userDetails} />
@@ -651,6 +996,6 @@ export default function Dashboard() {
         </DialogContent>
       </Dialog>
 
-    </div>
+    </div >
   )
 }

@@ -29,7 +29,6 @@ export function RoleSwitcher({
   onRoleChange: (role: Role) => void;
 }) {
   const { isMobile } = useSidebar();
-  console.log(availableRoles);
 
   return (
     <SidebarMenu className="w-fit">
