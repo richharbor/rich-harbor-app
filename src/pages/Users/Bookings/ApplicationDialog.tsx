@@ -58,7 +58,7 @@ export default function ApplicationDialog({ open, onClose, data, isFetching, use
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
               <DialogTitle className="text-2xl font-bold text-foreground">
-               {userProfile} - {step1.fullName || "Partner Details"}
+                {userProfile} - {step1.fullName || "Partner Details"}
               </DialogTitle>
               <p className="text-sm text-muted-foreground mt-1">Partner Information & Referrals</p>
             </div>
@@ -83,15 +83,27 @@ export default function ApplicationDialog({ open, onClose, data, isFetching, use
                   <Phone className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
                   <div className="min-w-0">
                     <p className="text-xs text-muted-foreground font-medium">Mobile</p>
-                    <p className="text-sm font-medium text-foreground">{step2.mobile || "—"}</p>
+                    <p className="text-sm font-medium text-foreground">{data.user?.phoneNumber || "—"}</p>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3 p-3 rounded-lg bg-secondary/50 border border-border md:col-span-2">
+                <div className="flex items-start gap-3 p-3 rounded-lg bg-secondary/50 border border-border">
                   <MapPin className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
                   <div className="min-w-0">
                     <p className="text-xs text-muted-foreground font-medium">Location</p>
-                    <p className="text-sm font-medium text-foreground">{location || "—"}</p>
+                    <p className="text-sm font-medium text-foreground">{step1.location || "—"}</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 rounded-lg bg-secondary/50 border border-border ">
+                  <div className="min-w-0">
+                    <p className="text-xs text-muted-foreground font-medium">firm Name</p>
+                    <p className="text-sm font-medium text-foreground">{step1.firmName || "—"}</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 rounded-lg bg-secondary/50 border border-border ">
+                  <div className="min-w-0">
+                    <p className="text-xs text-muted-foreground font-medium">Entity Type</p>
+                    <p className="text-sm font-medium text-foreground">{step1.category || "—"}</p>
                   </div>
                 </div>
               </div>

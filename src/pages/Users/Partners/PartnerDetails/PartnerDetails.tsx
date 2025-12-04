@@ -46,6 +46,8 @@ interface PartnerApplication {
       email: string;
       fullName: string;
       accountType: string;
+      firmName?: string;
+      category?: string;
     };
     step2?: {
       city: string;
@@ -236,6 +238,26 @@ export default function PartnerDetails({
                       {application.formData.step1.accountType}
                     </p>
                   </div>
+                  {application.formData.step1.firmName && (
+                    <div>
+                      <span className="text-xs text-muted-foreground">
+                        Firm Name
+                      </span>
+                      <p className="text-sm font-medium">
+                        {application.formData.step1.firmName}
+                      </p>
+                    </div>
+                  )}
+                  {application.formData.step1.category && (
+                    <div>
+                      <span className="text-xs text-muted-foreground">
+                        Entity Type
+                      </span>
+                      <p className="text-sm font-medium">
+                        {application.formData.step1.category}
+                      </p>
+                    </div>
+                  )}
                 </div>
                 <div className="flex items-center gap-2">
                   <Mail className="h-4 w-4 text-muted-foreground" />
@@ -369,45 +391,45 @@ export default function PartnerDetails({
           {/* Documents */}
           {!(!application.documents || Object.keys(application.documents).length === 0) && (
             <Card>
-            <CardHeader>
-              <CardTitle className="text-sm flex items-center gap-2">
-                <FileText className="h-4 w-4" />
-                Uploaded Documents
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {Object.entries(application.documents).map(([key, url]) => (
-                  <div
-                    key={key}
-                    className="flex items-center justify-between p-3 border rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <FileText className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm font-medium">
-                        {key === "cmlCopy"
-                          ? "CML Copy"
-                          : key === "panCard"
-                            ? "PAN Card"
-                            : key === "signature"
-                              ? "Signature"
-                              : key === "cancelCheque"
-                                ? "Cancelled Cheque"
-                                : key === "agreement"
-                                  ? "Agreement"
-                                  : key}
-                      </span>
+              <CardHeader>
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  Uploaded Documents
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {Object.entries(application.documents).map(([key, url]) => (
+                    <div
+                      key={key}
+                      className="flex items-center justify-between p-3 border rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <FileText className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm font-medium">
+                          {key === "cmlCopy"
+                            ? "CML Copy"
+                            : key === "panCard"
+                              ? "PAN Card"
+                              : key === "signature"
+                                ? "Signature"
+                                : key === "cancelCheque"
+                                  ? "Cancelled Cheque"
+                                  : key === "agreement"
+                                    ? "Agreement"
+                                    : key}
+                        </span>
+                      </div>
+                      <Button variant="outline" size="sm" asChild>
+                        <a href={url} target="_blank" rel="noopener noreferrer">
+                          <Download className="h-4 w-4 mr-1" />
+                          View
+                        </a>
+                      </Button>
                     </div>
-                    <Button variant="outline" size="sm" asChild>
-                      <a href={url} target="_blank" rel="noopener noreferrer">
-                        <Download className="h-4 w-4 mr-1" />
-                        View
-                      </a>
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
           )}
 
           {/* Refferal */}

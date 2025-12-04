@@ -27,11 +27,11 @@ export default function Home() {
         return;
       }
 
-      if (response.onboarding?.required || !user.emailVerified) {
-        setOnboardingStatus(response.onboarding);
-        router.push("/auth/onboarding");
-        return;
-      }
+      // if (response.onboarding?.required || !user.emailVerified) {
+      //   setOnboardingStatus(response.onboarding);
+      //   router.push("/auth/onboarding");
+      //   return;
+      // }
 
       const roles = user.roles || [];
       setAuth(user, authToken || "", roles);

@@ -140,16 +140,16 @@ export default function ProfilePage() {
                             </div>
 
                             {/* Profile Grid */}
-                            <div className="grid gap-6 md:grid-cols-2">
+                            <div className={data.formData.step2 ? "grid gap-6 md:grid-cols-2" : ""}>
                                 {/* Profile Info Card */}
                                 <ProfileInfo data={data} />
 
                                 {/* Personal Details Card */}
-                                <PersonalDetails data={data} />
+                                {data.formData.step2 && <PersonalDetails data={data} />}
                             </div>
 
                             {/* Referrals Section */}
-                            <ReferralsList referrals={data.formData.step5} />
+                            {data.formData.step5 && <ReferralsList referrals={data.formData.step5} />}
                         </div>
                     </main>
                 </ScrollArea>

@@ -49,6 +49,7 @@ import {
   inviteTeamMember,
 } from "@/services/Role/teamService";
 import Loading from "@/app/loading";
+import { ScrollArea } from "@/components/ui/scroll-area";
 // import {
 //   getAllTeamMembers,
 //   inviteTeamMember,
@@ -337,9 +338,9 @@ export default function Teams() {
       console.error("Delete role failed:", error);
       toast.error(
         error?.response?.data?.error ||
-          "An error occurred while deleting the role"
+        "An error occurred while deleting the role"
       );
-    }finally{
+    } finally {
       setRemovingRole(-1);
     }
   };
@@ -393,117 +394,124 @@ export default function Teams() {
   }
 
   return (
-    <div className="flex h-[calc(100vh-4.5rem)]  w-full overflow-hidden rounded-lg border-2 max-md:border-none flex-col relative gap-6 p-6 max-md:p-2">
-      <div className="flex max-md:flex-col max-md:items-start gap-5 items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">Teams</h2>
-          <p className="text-muted-foreground">
-            Manage super admin and admin users
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            onClick={() => setRolesModalOpen(true)}
-            className="flex items-center gap-2">
-            Roles
-            <Settings className="h-4 w-4" />
-          </Button>
-          <Button onClick={() => setIsInviteOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" /> Invite Team Member
-          </Button>
-        </div>
+    <div className="flex h-[calc(100vh-4.5rem)]  w-full overflow-hidden rounded-lg border-2 max-md:border-none flex-col relative gap-6">
+      <div className="flex-1 min-h-0">
+        <ScrollArea className="h-full">
+          <div className="flex flex-col gap-6  p-6 max-md:p-3">
+            <div className="flex max-md:flex-col max-md:items-start gap-5 items-center justify-between">
+              <div>
+                <h2 className="text-3xl font-bold tracking-tight">Teams</h2>
+                <p className="text-muted-foreground">
+                  Manage super admin and admin users
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setRolesModalOpen(true)}
+                  className="flex items-center gap-2">
+                  Roles
+                  <Settings className="h-4 w-4" />
+                </Button>
+                <Button onClick={() => setIsInviteOpen(true)}>
+                  <Plus className="h-4 w-4 mr-2" /> Invite Team Member
+                </Button>
+              </div>
+            </div>
+
+            {/* Summary Cards */}
+            <div className="grid gap-4 md:grid-cols-3">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Total Team Members</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{teams.length}</div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Search */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
+                placeholder="Search team..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+
+            {/* Table */}
+            <div className="rounded-md border max-md:flex-1 overflow-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Email</TableHead>
+                    {/* <TableHead>Phone</TableHead> */}
+                    <TableHead>Role</TableHead>
+                    <TableHead>Created By</TableHead>
+                    <TableHead>Tier</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {loading ? (
+                    <TableRow>
+                      <TableCell colSpan={9} className="text-center">
+                        Loading...
+                      </TableCell>
+                    </TableRow>
+                  ) : teams.length ? (
+                    teams.map((t: any) => (
+                      <TableRow key={t.id}>
+                        <TableCell>
+                          {t.firstName} {t.lastName}
+                        </TableCell>
+                        <TableCell>{t.email}</TableCell>
+                        {/* <TableCell>{t.phoneNumber || "N/A"}</TableCell> */}
+                        <TableCell>
+                          {t.roles && t.roles.length
+                            ? t.roles.map((r: any) => r.name).join(", ")
+                            : "N/A"}
+                        </TableCell>
+                        <TableCell>{t.creatorName || "N/A"}</TableCell>
+                        <TableCell>{t.tier}</TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={t.emailVerified ? "default" : "destructive"}>
+                            {t.emailVerified ? "Acceprted" : "Pending"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleDeactivate(t.id)}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={9} className="text-center">
+                        No team members found
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+
+          </div>
+        </ScrollArea>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader>
-            <CardTitle>Total Team Members</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{teams.length}</div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
-        <Input
-          placeholder="Search team..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="pl-10"
-        />
-      </div>
-
-      {/* Table */}
-      {/* Table */}
-      <div className="rounded-md border max-md:flex-1 overflow-auto">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Email</TableHead>
-              {/* <TableHead>Phone</TableHead> */}
-              <TableHead>Role</TableHead>
-              <TableHead>Created By</TableHead>
-              <TableHead>Tier</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loading ? (
-              <TableRow>
-                <TableCell colSpan={9} className="text-center">
-                  Loading...
-                </TableCell>
-              </TableRow>
-            ) : teams.length ? (
-              teams.map((t: any) => (
-                <TableRow key={t.id}>
-                  <TableCell>
-                    {t.firstName} {t.lastName}
-                  </TableCell>
-                  <TableCell>{t.email}</TableCell>
-                  {/* <TableCell>{t.phoneNumber || "N/A"}</TableCell> */}
-                  <TableCell>
-                    {t.roles && t.roles.length
-                      ? t.roles.map((r: any) => r.name).join(", ")
-                      : "N/A"}
-                  </TableCell>
-                  <TableCell>{t.creatorName || "N/A"}</TableCell>
-                  <TableCell>{t.tier}</TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={t.emailVerified ? "default" : "destructive"}>
-                      {t.emailVerified ? "Acceprted" : "Pending"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDeactivate(t.id)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={9} className="text-center">
-                  No team members found
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
 
       {/* Invite Partner Dialog */}
       <Dialog open={isInviteOpen} onOpenChange={setIsInviteOpen}>
@@ -558,9 +566,9 @@ export default function Teams() {
                   className="flex w-full items-center justify-between border rounded-md px-3 py-2 text-sm bg-background hover:bg-muted transition-colors">
                   {selectedRoles.length > 0
                     ? customRoles
-                        .filter((role) => selectedRoles.includes(role.id))
-                        .map((role) => role.name)
-                        .join(", ")
+                      .filter((role) => selectedRoles.includes(role.id))
+                      .map((role) => role.name)
+                      .join(", ")
                     : "Select roles"}
                   <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
                 </button>
@@ -720,7 +728,7 @@ export default function Teams() {
                     className="text-destructive"
                     disabled={removingRole === role.id}
                     onClick={() => handleRoleDelete(role.id)}>
-                     {removingRole === role.id ? 'Removing...': 'Remove'}
+                    {removingRole === role.id ? 'Removing...' : 'Remove'}
                   </Button>
                 </div>
               );

@@ -12,6 +12,8 @@ import { BidShare } from "@/services/purchase/bidsService";
 import { getBestDealBySellId } from "@/services/BestDeals/bestDealsService";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import useAuthStore from "@/helpers/authStore";
+import Cookies from "js-cookie";
 
 interface SharePageProps {
   id: string;
@@ -84,6 +86,8 @@ export default function BestDealPage({ id }: SharePageProps) {
     sellId: 0,
     quantity: "",
   });
+  const onboardingRequired = useAuthStore((state) => state.onboardingRequired);
+  const onboardingStatus = Cookies.get('onboardingStatus')
 
 
   useEffect(() => {
@@ -112,6 +116,14 @@ export default function BestDealPage({ id }: SharePageProps) {
 
 
   const handleBook = () => {
+    if (onboardingRequired && onboardingStatus === 'pending') {
+      toast.info("Wait for the admin to approve your onboarding");
+      return;
+    }
+    if (onboardingRequired && onboardingStatus !== 'approved') {
+      toast.error("Please complete onboarding to raise a booking");
+      return;
+    }
     setBookingData({
       ...bookingData,
       sellId: share.id,
@@ -153,6 +165,14 @@ export default function BestDealPage({ id }: SharePageProps) {
   }
 
   const handleBid = () => {
+    if (onboardingRequired && onboardingStatus === 'pending') {
+      toast.info("Wait for the admin to approve your onboarding");
+      return;
+    }
+    if (onboardingRequired && onboardingStatus !== 'approved') {
+      toast.error("Please complete onboarding to raise a bid");
+      return;
+    }
     setBidData({
       ...bidData,
       sellId: share.id,
