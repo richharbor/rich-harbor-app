@@ -102,6 +102,27 @@ const availableAccess = [
     label: "Partners",
     description: "Add, remove, and manage partner accounts",
   },
+  {
+    id: "manage_bookings",
+    label: "Bookings",
+    description: "See, all bookings and execute deals",
+  },
+  {
+    id: "manage_bids",
+    label: "Bids",
+    description: "See, all bids and execute deals",
+  },
+  {
+    id: "manage_my_bookings",
+    label: "My Bookings",
+    description: "View and manage your personal bookings",
+  },
+  {
+    id: "manage_my_bids",
+    label: "My Bids",
+    description: "View and manage your personal bids",
+  },
+
 ];
 
 export default function Teams() {
@@ -372,8 +393,8 @@ export default function Teams() {
   }
 
   return (
-    <div className=" relative space-y-6 p-6">
-      <div className="flex items-center justify-between">
+    <div className="flex h-[calc(100vh-4.5rem)]  w-full overflow-hidden rounded-lg border-2 max-md:border-none flex-col relative gap-6 p-6 max-md:p-2">
+      <div className="flex max-md:flex-col max-md:items-start gap-5 items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Teams</h2>
           <p className="text-muted-foreground">
@@ -407,7 +428,7 @@ export default function Teams() {
       </div>
 
       {/* Search */}
-      <div className="relative flex-1">
+      <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
         <Input
           placeholder="Search team..."
@@ -419,7 +440,7 @@ export default function Teams() {
 
       {/* Table */}
       {/* Table */}
-      <div className="rounded-md border">
+      <div className="rounded-md border max-md:flex-1 overflow-auto">
         <Table>
           <TableHeader>
             <TableRow>

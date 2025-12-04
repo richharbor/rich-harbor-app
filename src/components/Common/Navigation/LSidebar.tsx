@@ -202,7 +202,7 @@ export function LSidebar(props: ComponentProps<typeof Sidebar>) {
   }
 
   return (
-    <Sidebar collapsible="icon" {...props}>
+    <Sidebar collapsible="icon" {...props} className="md:hidden">
       <SidebarHeader>
         {user && currentRole && (
           <RoleSwitcher
@@ -216,7 +216,7 @@ export function LSidebar(props: ComponentProps<typeof Sidebar>) {
       <SidebarContent>
         <NavMain items={navMain} />
       </SidebarContent>
-      <SidebarFooter>{user && <NavUser user={user} />}</SidebarFooter>
+      {/* <SidebarFooter>{user && <NavUser user={user} />}</SidebarFooter> */}
     </Sidebar>
   );
 }

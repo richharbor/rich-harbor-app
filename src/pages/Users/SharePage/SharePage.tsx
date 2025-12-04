@@ -26,6 +26,7 @@ import useAuthStore from "@/helpers/authStore";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getSellerDetails } from "@/services/Auth/selfServices";
 import { Loader2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 interface SharePageProps {
   id: string;
@@ -256,13 +257,13 @@ export default function SharePage({ id }: SharePageProps) {
   }
 
   return (
-    <div className=" h-[calc(100vh-4.7rem)] flex flex-col overflow-hidden p-6 space-y-6">
+    <div className="flex h-[calc(100vh-4.5rem)]  w-full overflow-hidden rounded-lg border-2 max-md:border-none  flex-col p-6 space-y-6 max-md:p-2">
       {/* Share Details */}
-      <div className=" flex gap-5 shadow-xs px-6 py-12">
+      <div className=" flex gap-5 shadow-xs px-6 py-12 max-md:p-3">
         <div className="flex-1">
           {/* Header */}
           <div className="flex items-center justify-between">
-            <h2 className="text-3xl font-bold tracking-tight">
+            <h2 className="text-3xl mb-3 font-bold tracking-tight">
               {share.shareName}
             </h2>
             <span className={`${!isBestDeal && 'hidden'} px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800`}
@@ -287,57 +288,8 @@ export default function SharePage({ id }: SharePageProps) {
                 {minPrice !== maxPrice ? "₹" + minPrice + " - ₹" + maxPrice : maxPrice}
               </span>
             </div>
-            {/* <div className="flex flex-col">
-              <span className="text-muted-foreground text-sm">
-                Delivery Timeline
-              </span>
-              <span className="text-lg font-semibold">
-                {share.sellers[0]?.deliveryTimeline}
-              </span>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-muted-foreground text-sm">
-                Confirm Delivery
-              </span>
-              <span className="text-lg font-semibold">
-                {share.sellers[0]?.confirmDelivery ? "Yes" : "No"}
-              </span>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-muted-foreground text-sm">
-                Pre-Share Transfer
-              </span>
-              <span className="text-lg font-semibold">
-                {share.preShareTransfer ? "Yes" : "No"}
-              </span>
-            </div> */}
           </div>
         </div>
-
-        {/* bids table */}
-        {/* <div className="w-[20vw] border rounded-md flex-col h-[250px] flex">
-          <h1 className="text-xl p-3 border-b">Bids</h1>
-          <ScrollArea className="h-full">
-            <Table className="min-w-full h-full">
-              <TableHeader>
-                <TableRow>
-
-                  <TableHead>Quantity</TableHead>
-                  <TableHead>Count</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {bids?.map((bid: Bid, index: any) => (
-                  <TableRow key={index}>
-
-                    <TableCell>{bid.quantity}</TableCell>
-                    <TableCell>{bid.count}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </ScrollArea>
-        </div> */}
 
       </div>
 
@@ -348,8 +300,8 @@ export default function SharePage({ id }: SharePageProps) {
           <CardTitle>Seller Table</CardTitle>
         </CardHeader>
         <ScrollArea className="flex-1">
-          <CardContent className="flex-1 min-h-0">
-            <Table>
+          <CardContent className="flex-1 min-h-0 max-md:p-2">
+            <Table className="hidden md:table">
               <TableHeader>
                 <TableRow>
                   <TableHead>Seller ID</TableHead>
@@ -396,6 +348,71 @@ export default function SharePage({ id }: SharePageProps) {
                 ))}
               </TableBody>
             </Table>
+            <div className="flex flex-col gap-3 md:hidden">
+              {share.sellers.map((seller: Seller, index: any) => {
+                if (userId != null && Number(userId) === Number(seller.sellerId)) {
+                  return null
+                }
+                return (
+                  <Card key={index}>
+                    <CardContent className="p-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span
+                          className="text-sm font-medium text-primary cursor-pointer hover:underline"
+                          onClick={() => handleSellerIdClick(seller.sellerId)}
+                        >
+                          Seller Id - {seller.sellerId}
+                        </span>
+                        <Badge variant={seller.fixed ? "default" : "secondary"}>{seller.fixed ? "Fixed" : "Negotiable"}</Badge>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div>
+                          <span className="text-muted-foreground">Quantity:</span>
+                          <span className="ml-1 font-medium">{seller.quantity}</span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Price:</span>
+                          <span className="ml-1 font-medium">{seller.price}</span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">MOQ:</span>
+                          <span className="ml-1 font-medium">{seller.moq}</span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Delivery:</span>
+                          <span className="ml-1 font-medium">{seller.deliveryTimeline}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-4 text-sm">
+                        <div className="flex items-center gap-1">
+                          <span className="text-muted-foreground">Confirm Delivery:</span>
+                          <span className={seller.confirmDelivery ? "text-green-600" : "text-red-600"}>
+                            {seller.confirmDelivery ? "Yes" : "No"}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span className="text-muted-foreground">Pre-Transfer:</span>
+                          <span className={seller.preShareTransfer ? "text-green-600" : "text-red-600"}>
+                            {seller.preShareTransfer ? "Yes" : "No"}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-2 pt-2">
+                        <Button onClick={() => handleBook(seller.sellId)} size="sm" variant="default" className="flex-1">
+                          Book
+                        </Button>
+                        <Button onClick={() => handleBid(seller.sellId)} size="sm" variant="outline" className="flex-1">
+                          Bid
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )
+              })}
+            </div>
 
 
           </CardContent>
@@ -446,7 +463,7 @@ export default function SharePage({ id }: SharePageProps) {
             </div>
 
           </div>
-          <DialogFooter>
+          <DialogFooter className="gap-2">
             <Button
               variant="outline"
               onClick={() => setIsBidOpen(false)}
@@ -495,7 +512,7 @@ export default function SharePage({ id }: SharePageProps) {
             </div>
 
           </div>
-          <DialogFooter>
+          <DialogFooter  className="gap-2">
             <Button
               variant="outline"
               onClick={() => setIsBookingOpen(false)}

@@ -128,7 +128,7 @@ export default function ProfilePage() {
 
     return (
 
-        <div className="h-[calc(100vh-4.7rem)] flex w-full relative overflow-hidden">
+        <div className="flex h-[calc(100vh-4.5rem)]  w-full overflow-hidden rounded-lg border-2 max-md:border-none relative ">
             <div className="flex-1 min-h-0 border-t">
                 <ScrollArea className="h-full w-full">
                     <main className="min-h-screen bg-background p-4 md:p-8">

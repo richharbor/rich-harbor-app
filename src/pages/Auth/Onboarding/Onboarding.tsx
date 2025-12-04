@@ -383,12 +383,12 @@ export default function Onboarding() {
   };
 
   const handleStep4Submit = async () => {
-    try{
+    try {
       // Upload agreement and get URL
-    const agreementUrl = "uploaded_agreement_url";
+      const agreementUrl = "uploaded_agreement_url";
 
-    await postAgreement({ agreementUrl });
-    toast.success("Agreement saved!");
+      await postAgreement({ agreementUrl });
+      toast.success("Agreement saved!");
     } catch (error: any) {
       console.error("Onboarding error:", error);
       toast.error(error.response?.data?.error || "Failed to save agreement");
@@ -595,7 +595,7 @@ export default function Onboarding() {
     if (formData.fullName.trim().length <= 2) {
       newErrors.fullName = "Full name must be at least 3 characters";
     }
-    if(formData.category.length === 0){
+    if (formData.category.length === 0) {
       newErrors.category = "Category is required";
     }
 
@@ -835,7 +835,7 @@ export default function Onboarding() {
     const stepNumber = index + 1;
     const isActive = stepNumber === currentStep;
     const isDone = stepNumber < currentStep;
-    const isClickable = stepNumber <= currentStep && !loading;
+    const isClickable = stepNumber > 1 && stepNumber <= currentStep && !loading;
 
     return (
       <button

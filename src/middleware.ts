@@ -42,6 +42,7 @@ export function middleware(request: NextRequest) {
     "/auth/onboarding",
     "/auth/verify",
     "/auth/forgot-password",
+    "/auth/signup",
   ];
 
   // Public routes

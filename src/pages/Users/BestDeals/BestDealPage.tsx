@@ -11,35 +11,36 @@ import { toast } from "sonner";
 import { BidShare } from "@/services/purchase/bidsService";
 import { getBestDealBySellId } from "@/services/BestDeals/bestDealsService";
 import { Card } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface SharePageProps {
   id: string;
 }
 
 export interface ShareItem {
-    id: number;
-    userId: number;
-    shareId: number;
-    price: string;
-    quantityAvailable: number;
-    minimumOrderQuatity: number;
-    shareInStock: boolean;
-    preShareTransfer: boolean;
-    fixedPrice: boolean;
-    confirmDelivery: boolean;
-    deliveryTimeline: string;
-    endSellerLocation: string;
-    endSellerName: string;
-    endSellerProfile: string;
-    createdAt: string; // ISO date string
-    updatedAt: string; // ISO date string
-    share: ShareDetail;
+  id: number;
+  userId: number;
+  shareId: number;
+  price: string;
+  quantityAvailable: number;
+  minimumOrderQuatity: number;
+  shareInStock: boolean;
+  preShareTransfer: boolean;
+  fixedPrice: boolean;
+  confirmDelivery: boolean;
+  deliveryTimeline: string;
+  endSellerLocation: string;
+  endSellerName: string;
+  endSellerProfile: string;
+  createdAt: string; // ISO date string
+  updatedAt: string; // ISO date string
+  share: ShareDetail;
 }
 export interface ShareDetail {
-    id: number;
-    name: string;
-    symbol: string | null;
-    price: string;
+  id: number;
+  name: string;
+  symbol: string | null;
+  price: string;
 }
 
 
@@ -61,7 +62,7 @@ interface DetailCardProps {
 
 function DetailCard({ label, value, highlight = false }: DetailCardProps) {
   return (
-    <div className="p-4 rounded-lg border border-border bg-card hover:bg-secondary/30 transition-colors">
+    <div className="p-4 max-md:py-2 rounded-lg border border-border bg-card hover:bg-secondary/30 transition-colors">
       <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">{label}</p>
       <p className={`text-lg font-bold ${highlight ? "text-primary" : "text-foreground"}`}>{value}</p>
     </div>
@@ -69,7 +70,7 @@ function DetailCard({ label, value, highlight = false }: DetailCardProps) {
 }
 
 export default function BestDealPage({ id }: SharePageProps) {
-  const [share, setShare] = useState<ShareItem|null>(null);
+  const [share, setShare] = useState<ShareItem | null>(null);
   const [loading, setLoading] = useState(true);
   const [isBidOpen, setIsBidOpen] = useState(false);
   const [isBookingOpen, setIsBookingOpen] = useState(false);
@@ -192,75 +193,83 @@ export default function BestDealPage({ id }: SharePageProps) {
   }
 
   return (
-    <div className=" h-[calc(100vh-4.7rem)] flex flex-col overflow-hidden p-6 space-y-6">
-      {/* Share Details */}
-      <Card className="p-8 shadow-lg">
-      {/* Header Section */}
-      <div className="mb-8">
-        <div className="flex items-start justify-between mb-6">
-          <div>
-            <h1 className="text-4xl font-bold text-foreground mb-2">{share.share.name}</h1>
-            <p className="text-muted-foreground">Share Listing Details</p>
-          </div>
-          {/* <div className="flex gap-2 flex-wrap justify-end">
+    <div className="flex h-[calc(100vh-4.5rem)]  w-full overflow-hidden rounded-lg border-2 max-md:border-none flex-col p-6 space-y-6 max-md:p-0 ">
+      <div className="flex-1 flex min-h-0">
+        <div className=" flex-1 overflow-y-auto">
+          {/* Share Details */}
+          <div className="p-8 max-md:p-3 h-full bg-transparent flex flex-col border-none rounded-none shadow-lg">
+            {/* Header Section */}
+            <div className="mb-8 max-md:mb-4">
+              <div className="flex items-start justify-between mb-6 max-md:mb-0">
+                <div>
+                  <h1 className="text-4xl font-bold text-foreground mb-2">{share.share.name}</h1>
+                  <p className="text-muted-foreground">Share Listing Details</p>
+                </div>
+                {/* <div className="flex gap-2 flex-wrap justify-end">
             <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
               In Stock
             </Badge>
           </div> */}
-        </div>
-      </div>
+              </div>
+            </div>
 
-      {/* Main Price Section */}
-      <div className="mb-8 p-6 bg-secondary/50 rounded-lg border border-border">
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-          <div>
-            <p className="text-sm text-muted-foreground font-medium mb-2">Current Price</p>
-            <p className="text-3xl font-bold text-foreground">₹{share.price}</p>
-          </div>
-          {/* <div>
+            {/* Main Price Section */}
+            <div className="mb-8 p-6 max-md:p-3 max-md:mb-4 bg-secondary/50 rounded-lg border border-border">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                <div>
+                  <p className="text-sm text-muted-foreground font-medium mb-2">Current Price</p>
+                  <p className="text-3xl max-md:text-xl font-bold text-foreground">₹{share.price}</p>
+                </div>
+                {/* <div>
             <p className="text-sm text-muted-foreground font-medium mb-2">Base Price</p>
             <p className="text-2xl font-semibold text-foreground">₹{share.share.price}</p>
           </div> */}
-          <div>
-            <p className="text-sm text-muted-foreground font-medium mb-2">Available Quantity</p>
-            <p className="text-2xl font-semibold text-foreground">{share.quantityAvailable.toLocaleString()} units</p>
+                <div>
+                  <p className="text-sm text-muted-foreground font-medium mb-2">Available Quantity</p>
+                  <p className="text-2xl max-md:text-xl font-semibold text-foreground">{share.quantityAvailable.toLocaleString()} units</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Details Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-md:gap-3 mb-8 max-md:mb-4">
+              <DetailCard label="Minimum Order Quantity" value={`${share.minimumOrderQuatity} units`} />
+              <DetailCard label="Delivery Timeline" value={share.deliveryTimeline} />
+              <DetailCard
+                label="Pre-Share Transfer"
+                value={share.preShareTransfer ? "Yes" : "No"}
+                highlight={share.preShareTransfer}
+              />
+              <DetailCard label="Fixed Price" value={share.fixedPrice ? "Yes" : "No"} highlight={share.fixedPrice} />
+              <DetailCard
+                label="Confirm Delivery"
+                value={share.confirmDelivery ? "Yes" : "No"}
+                highlight={share.confirmDelivery}
+              />
+              <DetailCard label="Negotiable" value={share.fixedPrice ? "No" : "Yes"} highlight={!share.fixedPrice} />
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex-1 flex items-end">
+              <div className="flex gap-4 pt-6 border-t w-full border-border">
+                <Button
+                  onClick={handleBook}
+                  size="lg"
+                  className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
+                  disabled={isSending}
+                >
+                  Book Now
+                </Button>
+                <Button disabled={isSending} onClick={handleBid} size="lg" variant="outline" className="flex-1 font-semibold">
+                  Place Bid
+                </Button>
+              </div>
+            </div>
           </div>
+
         </div>
       </div>
 
-      {/* Details Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-        <DetailCard label="Minimum Order Quantity" value={`${share.minimumOrderQuatity} units`} />
-        <DetailCard label="Delivery Timeline" value={share.deliveryTimeline} />
-        <DetailCard
-          label="Pre-Share Transfer"
-          value={share.preShareTransfer ? "Yes" : "No"}
-          highlight={share.preShareTransfer}
-        />
-        <DetailCard label="Fixed Price" value={share.fixedPrice ? "Yes" : "No"} highlight={share.fixedPrice} />
-        <DetailCard
-          label="Confirm Delivery"
-          value={share.confirmDelivery ? "Yes" : "No"}
-          highlight={share.confirmDelivery}
-        />
-        <DetailCard label="Negotiable" value={share.fixedPrice ? "No" : "Yes"} highlight={!share.fixedPrice} />
-      </div>
-
-      {/* Action Buttons */}
-      <div className="flex gap-4 pt-6 border-t border-border">
-        <Button
-          onClick={handleBook}
-          size="lg"
-          className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
-          disabled={isSending}
-        >
-          Book Now
-        </Button>
-        <Button disabled={isSending} onClick={handleBid} size="lg" variant="outline" className="flex-1 font-semibold bg-transparent">
-          Place Bid
-        </Button>
-      </div>
-    </Card>
 
       {/* Bid dialog */}
       <Dialog open={isBidOpen} onOpenChange={setIsBidOpen}>
@@ -301,7 +310,7 @@ export default function BestDealPage({ id }: SharePageProps) {
             </div>
 
           </div>
-          <DialogFooter>
+          <DialogFooter className="gap-2">
             <Button
               variant="outline"
               onClick={() => setIsBidOpen(false)}
@@ -350,7 +359,7 @@ export default function BestDealPage({ id }: SharePageProps) {
             </div>
 
           </div>
-          <DialogFooter>
+          <DialogFooter className="gap-2">
             <Button
               variant="outline"
               onClick={() => setIsBookingOpen(false)}
