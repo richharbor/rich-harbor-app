@@ -12,6 +12,7 @@ import { postLogin } from "@/services/Auth/authServices";
 import Cookies from "js-cookie";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import Link from "next/link";
 
 interface ILoginBody {
   email: string;
@@ -150,6 +151,17 @@ export default function Login({
                   "Login"
                 )}
               </Button>
+            </div>
+            <div className="mt-4 text-center">
+              <p className="text-sm text-gray-600">
+                Don’t have an account?{" "}
+                <Link
+                  href="/auth/signup?franchiseId=1"
+                  className="dark:text-white text-black font-medium hover:underline"
+                >
+                  Sign up
+                </Link>
+              </p>
             </div>
           </form>
 

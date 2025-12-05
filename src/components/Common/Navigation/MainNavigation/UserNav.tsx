@@ -34,6 +34,9 @@ export function UserNav() {
       // await postLogout();
       Cookies.remove("authToken");
       Cookies.remove("currentRole");
+      Cookies.remove("franchiseName");
+      Cookies.remove("onboardingStatus");
+      Cookies.remove("tier");
       router.push("/auth/login");
     } catch (error) {
       console.error(error);
