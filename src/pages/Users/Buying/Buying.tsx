@@ -18,6 +18,7 @@ import { putBuyQuery } from "@/services/purchase/bookingService";
 import { toast } from "sonner";
 import useAuthStore from "@/helpers/authStore";
 
+
 interface ShareItem {
   id: number;
   shareName: string;
@@ -102,7 +103,11 @@ export default function Buying() {
   })
 
   const currentRole = Cookies.get("currentRole");
+
+  // const onboardingStatus = useAuthStore((state) => state.onboardingStatus);
   const route = useRouter();
+  const onboardingRequired = useAuthStore((state) => state.onboardingRequired);
+  const onboardingStatus = Cookies.get('onboardingStatus')
 
 
   // const groupedByShareId = dummyShares.reduce((acc, item) => {
@@ -262,7 +267,24 @@ export default function Buying() {
             Manage super admin and admin users
           </p>
         </div>
-        {(tier ?? 0) > 3 && <Button onClick={() => setIsQueryOpen(true)} className="px-7 py-2 mr-10 max-md:mr-0">Put Query</Button>}
+        {(tier ?? 0) > 3 &&
+          <Button onClick={() => {
+            if (onboardingRequired && onboardingStatus === 'pending') {
+              toast.info("Wait for the admin to approve your onboarding");
+              return;
+            }
+            if (onboardingRequired && onboardingStatus !== 'approved') {
+              toast.error("Please complete onboarding to raise a query");
+              return;
+            }
+
+            setIsQueryOpen(true)
+          }
+          }
+            className="px-7 py-2 mr-10 max-md:mr-0"
+          >
+            Put Query
+          </Button>}
       </div>
 
       {/* Search */}

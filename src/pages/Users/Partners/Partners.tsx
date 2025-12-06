@@ -60,6 +60,7 @@ import {
 import useAuthStore from "@/helpers/authStore";
 import { permission } from "process";
 import Loading from "@/app/loading";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 type PartnerRow = {
   id: number;
@@ -159,6 +160,7 @@ export default function Partners() {
   );
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
+  const [tableState, setTableState] = useState("all");
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -253,7 +255,7 @@ export default function Partners() {
         id: app.user.id,
         userId: app.userId,
         name:
-          app.formData?.step2?.name ||
+          // app.formData?.step2?.name ||
           app.formData?.step1?.fullName ||
           `${app.user?.firstName || ""} ${app.user?.lastName || ""}`.trim(),
         email: app.user?.email,
@@ -448,206 +450,223 @@ export default function Partners() {
   }
 
   return (
-    <div className="flex h-[calc(100vh-4.5rem)]  w-full overflow-hidden rounded-lg border-2 max-md:border-none flex-col relative gap-6 p-6 max-md:p-3">
-      <div className="flex items-center max-md:flex-col gap-3 max-md:items-start justify-between">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">
-            Partner Management
-          </h2>
-          <p className="text-muted-foreground">
-            Manage partner registrations and approvals
-          </p>
-        </div>
-        <div className="flex items-center max-md:flex-col max-md:items-start gap-2">
-          {(isSuperAdmin || tier === 2) && (
-            <div className="flex items-center gap-2">
-              <Label className="font-medium">Select Franchise:</Label>
-              <Select
-                value={selectedFranchiseId?.toString() || ""}
-                onValueChange={(val) => {
-                  const fid = parseInt(val);
-                  setSelectedFranchiseId(fid);
-                  fetchAllRoles(fid);
-                  fetchPartners(fid);
-                }}>
-                <SelectTrigger className="w-64">
-                  <SelectValue placeholder="Select Franchise" />
+    <div className="flex h-[calc(100vh-4.5rem)]  w-full overflow-hidden rounded-lg border-2 max-md:border-none flex-col relative gap-6">
+      <div className="flex-1 min-h-0">
+        <ScrollArea className="h-full">
+          <div className="flex flex-col gap-6  p-6 max-md:p-3">
+            <div className="flex items-center max-md:flex-col gap-3 max-md:items-start justify-between">
+              <div>
+                <h2 className="text-3xl font-bold tracking-tight">
+                  Partner Management
+                </h2>
+                <p className="text-muted-foreground">
+                  Manage partner registrations and approvals
+                </p>
+              </div>
+              <div className="flex items-center max-md:flex-col max-md:items-start gap-2">
+                {(isSuperAdmin || tier === 2) && (
+                  <div className="flex items-center gap-2">
+                    <Label className="font-medium">Select Franchise:</Label>
+                    <Select
+                      value={selectedFranchiseId?.toString() || ""}
+                      onValueChange={(val) => {
+                        const fid = parseInt(val);
+                        setSelectedFranchiseId(fid);
+                        fetchAllRoles(fid);
+                        fetchPartners(fid);
+                      }}>
+                      <SelectTrigger className="w-64">
+                        <SelectValue placeholder="Select Franchise" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {franchises.map((f) => (
+                          <SelectItem key={f.id} value={f.id.toString()}>
+                            {f.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setRolesModalOpen(true)}
+                    className="flex items-center gap-2">
+                    Roles
+                    <Settings className="h-4 w-4" />
+                  </Button>
+                  <Button onClick={() => setIsInviteDialogOpen(true)}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Invite Partner
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* Stats Cards */}
+            <div className="grid gap-4 grid-cols-2 md:grid-cols-3">
+              <Card onClick={() => setTableState("all")} className={`bg-transparent ${tableState === "all" ? "bg-card" : " cursor-pointer"}`}>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 max-md:p-2">
+                  <CardTitle className="text-sm font-medium">
+                    Total Partners
+                  </CardTitle>
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent className="max-md:p-2 max-md:pt-0">
+                  <div className="text-2xl font-bold">{totalPartners}</div>
+                  <p className="text-xs text-muted-foreground">Registered partners</p>
+                </CardContent>
+              </Card>
+
+              <Card onClick={() => setTableState("approved")} className={`bg-transparent ${tableState === "approved" ? "bg-card" : " cursor-pointer"}`}>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 max-md:p-2">
+                  <CardTitle className="text-sm font-medium">
+                    Approved Partners
+                  </CardTitle>
+                  <Check className="h-4 w-4 text-green-600" />
+                </CardHeader>
+                <CardContent className="max-md:p-2 max-md:pt-0">
+                  <div className="text-2xl font-bold text-green-600">
+                    {approvedPartners}
+                  </div>
+                  <p className="text-xs text-muted-foreground">Active partners</p>
+                </CardContent>
+              </Card>
+
+              <Card onClick={() => setTableState("pending")} className={`bg-transparent ${tableState === "pending" ? "bg-card" : " cursor-pointer"}`}>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 max-md:p-2">
+                  <CardTitle className="text-sm font-medium">
+                    Pending Approvals
+                  </CardTitle>
+                  <X className="h-4 w-4 text-orange-600" />
+                </CardHeader>
+                <CardContent className="max-md:p-2 max-md:pt-0">
+                  <div className="text-2xl font-bold text-orange-600">
+                    {pendingPartners}
+                  </div>
+                  <p className="text-xs text-muted-foreground">Awaiting review</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Filters */}
+            <div className="flex items-center gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Input
+                  placeholder="Search partners..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
-                  {franchises.map((f) => (
-                    <SelectItem key={f.id} value={f.id.toString()}>
-                      {f.name}
-                    </SelectItem>
-                  ))}
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="approved">Approved</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="rejected">Rejected</SelectItem>
+                  <SelectItem value="draft">Draft</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-          )}
 
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setRolesModalOpen(true)}
-              className="flex items-center gap-2">
-              Roles
-              <Settings className="h-4 w-4" />
-            </Button>
-            <Button onClick={() => setIsInviteDialogOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Invite Partner
-            </Button>
+            {/* Table */}
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Partner Name</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>State</TableHead>
+                    <TableHead>Registration</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Requesting Role</TableHead>
+                    <TableHead>Created</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {loading ? (
+                    <TableRow>
+                      <TableCell colSpan={8} className="text-center">
+                        Loading...
+                      </TableCell>
+                    </TableRow>
+                  ) : filteredPartners.filter((partner) => {
+                    if (tableState === "all") {
+                      return true;
+                    }
+                    return partner.status === tableState;
+                  }).length > 0 ? (
+                    filteredPartners.filter((partner) => {
+                      if (tableState === "all") {
+                        return true;
+                      }
+                      return partner.status === tableState;
+                    }).map((partner) => (
+                      <TableRow key={partner.id}>
+                        <TableCell className="font-medium">{partner.name}</TableCell>
+                        <TableCell>{partner.email}</TableCell>
+                        <TableCell>{partner.state}</TableCell>
+                        <TableCell>
+                          {getStepBadge(partner.registrationStep)}
+                        </TableCell>
+                        <TableCell>{getStatusBadge(partner.status)}</TableCell>
+                        <TableCell className="capitalize">{partner.role}</TableCell>
+                        <TableCell>
+                          {new Date(partner.createdAt).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleViewDetails(partner)}>
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            {partner.status === "pending" && (
+                              <>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => approvePartner(partner.userId)}
+                                  className="text-green-600 hover:text-green-700">
+                                  <Check className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => rejectPartner(partner.userId)}
+                                  className="text-red-600 hover:text-red-700">
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={8} className="text-center">
+                        No partners found
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
           </div>
-        </div>
+        </ScrollArea>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid gap-4 grid-cols-2 md:grid-cols-3">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 max-md:p-2">
-            <CardTitle className="text-sm font-medium">
-              Total Partners
-            </CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent className="max-md:p-2 max-md:pt-0">
-            <div className="text-2xl font-bold">{totalPartners}</div>
-            <p className="text-xs text-muted-foreground">Registered partners</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 max-md:p-2">
-            <CardTitle className="text-sm font-medium">
-              Approved Partners
-            </CardTitle>
-            <Check className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent className="max-md:p-2 max-md:pt-0">
-            <div className="text-2xl font-bold text-green-600">
-              {approvedPartners}
-            </div>
-            <p className="text-xs text-muted-foreground">Active partners</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 max-md:p-2">
-            <CardTitle className="text-sm font-medium">
-              Pending Approvals
-            </CardTitle>
-            <X className="h-4 w-4 text-orange-600" />
-          </CardHeader>
-          <CardContent className="max-md:p-2 max-md:pt-0">
-            <div className="text-2xl font-bold text-orange-600">
-              {pendingPartners}
-            </div>
-            <p className="text-xs text-muted-foreground">Awaiting review</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Filters */}
-      <div className="flex items-center gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-          <Input
-            placeholder="Search partners..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-40">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="approved">Approved</SelectItem>
-            <SelectItem value="pending">Pending</SelectItem>
-            <SelectItem value="rejected">Rejected</SelectItem>
-            <SelectItem value="draft">Draft</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Table */}
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Partner Name</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>State</TableHead>
-              <TableHead>Registration</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Requesting Role</TableHead>
-              <TableHead>Created</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loading ? (
-              <TableRow>
-                <TableCell colSpan={8} className="text-center">
-                  Loading...
-                </TableCell>
-              </TableRow>
-            ) : filteredPartners.length > 0 ? (
-              filteredPartners.map((partner) => (
-                <TableRow key={partner.id}>
-                  <TableCell className="font-medium">{partner.name}</TableCell>
-                  <TableCell>{partner.email}</TableCell>
-                  <TableCell>{partner.state}</TableCell>
-                  <TableCell>
-                    {getStepBadge(partner.registrationStep)}
-                  </TableCell>
-                  <TableCell>{getStatusBadge(partner.status)}</TableCell>
-                  <TableCell className="capitalize">{partner.role}</TableCell>
-                  <TableCell>
-                    {new Date(partner.createdAt).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleViewDetails(partner)}>
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      {partner.status === "pending" && (
-                        <>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => approvePartner(partner.userId)}
-                            className="text-green-600 hover:text-green-700">
-                            <Check className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => rejectPartner(partner.userId)}
-                            className="text-red-600 hover:text-red-700">
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </>
-                      )}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={8} className="text-center">
-                  No partners found
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
 
       {/* Partner Details Drawer */}
       <PartnerDetails

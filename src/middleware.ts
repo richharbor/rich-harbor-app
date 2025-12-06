@@ -39,7 +39,7 @@ export function middleware(request: NextRequest) {
 
   const publicRoutes = [
     "/auth/login",
-    "/auth/onboarding",
+    // "/auth/onboarding",
     "/auth/verify",
     "/auth/forgot-password",
     "/auth/signup",

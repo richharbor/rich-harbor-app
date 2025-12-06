@@ -32,22 +32,53 @@ const SignupSchema = z.object({
     )
     .refine((v) => /\d/.test(v), "Must include at least 1 number")
     .refine((v) => /[A-Z]/.test(v), "Must include at least 1 uppercase letter"),
+  confirmPassword: z
+    .string()
+    .min(1, "Please confirm your password"),
   category: z
     .string()
     .trim()
     .min(1, "Category is required"),
-});
+  phoneNumber: z
+    .string()
+    .trim()
+    .min(1, "Mobile phone number is required")
+    .refine(
+      (v) => v.replace(/\D/g, "").length >= 7,
+      "Please enter a valid phone number"
+    ),
+  location: z
+    .string()
+    .trim()
+    .min(2, "Location must be at least 2 characters")
+    .regex(/^[A-Za-z\s.,'-]+$/, "Location contains invalid characters"),
+  firmName: z
+    .string()
+    .trim()
+    .min(2, "Firm name must be at least 2 characters")
+    .regex(/^[A-Za-z0-9\s&.'\-\/]+$/, "Firm name contains invalid characters"),
+}).refine(
+  (data) => data.password === data.confirmPassword,
+  {
+    message: "Passwords do not match",
+    path: ["confirmPassword"], // attach error to confirmPassword
+  }
+);;
 
 type FieldErrors = Partial<Record<keyof z.infer<typeof SignupSchema>, string>>;
 
 export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [category, setCategory] = useState("");
   const [accountType, setAccountType] = useState<string[]>([]);
+  const [location, setLocation] = useState("");
+  const [firmName, setFirmName] = useState("");
 
   const [errors, setErrors] = useState<FieldErrors>({});
   const [loading, setLoading] = useState(false);
@@ -60,6 +91,7 @@ export default function SignupPage() {
   const [accountRoles, setAccountRoles] = useState<
     { id: string; name: string }[]
   >([]);
+  const [isToken, setIsToken] = useState(false);
 
   //   // Handle OAuth callback from Google/Microsoft
   //   useEffect(() => {
@@ -89,9 +121,9 @@ export default function SignupPage() {
     const tokenFromUrl = searchParams?.get("token");
     const franchiseIdFromUrl = searchParams?.get("franchiseId");
 
-    setFranchiseId(1);
-    setAccountRoles([{ id: "partner", name: "Partner" }]);
-    setAccountType(["partner"]);
+    // setFranchiseId(1);
+    // setAccountRoles([{ id: "partner", name: "Partner" }]);
+    // setAccountType(["partner"]);
 
     // 1. Token flow
     if (tokenFromUrl) {
@@ -109,6 +141,7 @@ export default function SignupPage() {
 
           setInviterId(res.data.inviterId);
           setFranchiseId(res.data.franchiseId || null);
+          setIsToken(true);
         } catch (error: any) {
           console.error("Invalid or expired token:", error);
           toast.error("Invalid or expired invite link");
@@ -118,13 +151,12 @@ export default function SignupPage() {
 
       verifyToken();
       return;
-    }
-
-    // 2. Direct franchiseId flow
-    if (franchiseIdFromUrl) {
+    }else if (franchiseIdFromUrl) {
       setFranchiseId(Number(franchiseIdFromUrl));
       setAccountRoles([{ id: "partner", name: "Partner" }]);
       setAccountType(["partner"]);
+    }else{
+      router.push("/auth/login");
     }
   }, [searchParams, router]);
 
@@ -132,7 +164,7 @@ export default function SignupPage() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setErrors({});
-    const result = SignupSchema.safeParse({ email, password, category, fullName });
+    const result = SignupSchema.safeParse({ email, password, category, fullName, phoneNumber, firmName, location, confirmPassword });
 
     if (!result.success) {
       const fieldErrors: FieldErrors = {};
@@ -153,11 +185,19 @@ export default function SignupPage() {
         fullName: fullName,
         accountType: accountType,
         category: category,
+        mobileNumber: phoneNumber,
+        location: location,
+        firmName: firmName,
+        isToken,
         franchiseId, //  include franchiseId in payload
       });
 
       Cookies.set("authToken", response.token);
-      toast.success("Account created successfully!");
+      if(!isToken){
+        toast.success("Verify your email to complete your registration!");
+      }else{
+        toast.success("Account created successfully!");
+      }
       router.push("/auth/login");
     } catch (error: any) {
       console.error("Onboarding error:", error);
@@ -232,7 +272,7 @@ export default function SignupPage() {
   // ✅ Default signup form (when not processing callback)
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+      <div className="w-full max-w-md md:max-w-3xl">
         <div className="text-center flex justify-center mb-8">
           {/* <h1 className="text-3xl font-bold text-foreground mb-2">
             Start for free
@@ -245,7 +285,7 @@ export default function SignupPage() {
           </div>
         </div>
 
-        <form className="space-y-5" onSubmit={handleSubmit} noValidate>
+        <form className="space-y-5 md:grid md:grid-cols-2 md:gap-4" onSubmit={handleSubmit} noValidate>
           {/* Full Name */}
           <div>
             <label className="block text-sm font-medium text-foreground mb-1.5">
@@ -335,8 +375,37 @@ export default function SignupPage() {
             </div>
           </div>
 
+          {/* Confirm Password */}
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-1.5">
+              Confirm Password
+            </label>
+            <div className="relative">
+              <input
+                type={showConfirmPassword ? "text" : "password"}
+                placeholder="Set your password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className={`w-full px-4 py-3 pr-12 border rounded-lg focus:outline-none focus:ring-2 bg-input text-foreground placeholder:text-muted-foreground ${errors.confirmPassword
+                  ? "border-destructive focus:ring-destructive"
+                  : "border-border focus:ring-ring"
+                  }`}
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+              >
+                {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
+            {errors.confirmPassword && (
+              <p className="mt-1 text-sm text-destructive">{errors.confirmPassword}</p>
+            )}
+          </div>
+
           {/* Phone */}
-          {/* <div>
+          <div>
             <label className="block text-sm font-medium text-foreground mb-1.5">
               Mobile phone number
             </label>
@@ -355,7 +424,45 @@ export default function SignupPage() {
                 {errors.phoneNumber}
               </p>
             )}
-          </div> */}
+          </div>
+          {/* Location */}
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-1.5">
+              Location
+            </label>
+            <input
+              type="text"
+              placeholder="Enter your location"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 bg-input text-foreground placeholder:text-muted-foreground ${errors.location
+                ? "border-destructive focus:ring-destructive"
+                : "border-border focus:ring-ring"
+                }`}
+            />
+            {errors.location && (
+              <p className="mt-1 text-sm text-destructive">{errors.location}</p>
+            )}
+          </div>
+          {/* Firm Name */}
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-1.5">
+              Firm Name
+            </label>
+            <input
+              type="text"
+              placeholder="Enter your firm Name"
+              value={firmName}
+              onChange={(e) => setFirmName(e.target.value)}
+              className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 bg-input text-foreground placeholder:text-muted-foreground ${errors.firmName
+                ? "border-destructive focus:ring-destructive"
+                : "border-border focus:ring-ring"
+                }`}
+            />
+            {errors.firmName && (
+              <p className="mt-1 text-sm text-destructive">{errors.firmName}</p>
+            )}
+          </div>
 
           {/* Entity type */}
           <div >
@@ -407,16 +514,18 @@ export default function SignupPage() {
           </div>
 
           {/* Submit */}
-          <button
-            type="submit"
-            disabled={loading}
-            className={`w-full font-semibold py-3 rounded-lg text-primary-foreground ${loading
-              ? "bg-muted cursor-not-allowed"
-              : "bg-primary hover:bg-primary/80"
-              }`}
-          >
-            {loading ? "Signing up..." : "Sign up"}
-          </button>
+          <div className="md:col-span-2 flex justify-center">
+            <button
+              type="submit"
+              disabled={loading}
+              className={`w-md font-semibold py-3 rounded-lg text-primary-foreground ${loading
+                ? "bg-muted cursor-not-allowed"
+                : "bg-primary hover:bg-primary/80"
+                }`}
+            >
+              {loading ? "Signing up..." : "Sign up"}
+            </button>
+          </div>
           {/* 
           Social logins */}
           {/* <div className="space-y-3">
@@ -443,15 +552,7 @@ export default function SignupPage() {
           </div> */}
 
           {/* Footer */}
-          <div className="text-center text-sm pt-4 text-muted-foreground">
-            Already have an account?{" "}
-            <a
-              href="/auth/login"
-              className="text-primary font-medium hover:underline"
-            >
-              Log in
-            </a>
-          </div>
+
           {/* <div className="text-center text-xs text-muted-foreground pt-4">
             You agree to our{" "}
             <a href="https://rhinon.tech/terms-and-conditions" className="text-primary hover:underline">
@@ -463,6 +564,15 @@ export default function SignupPage() {
             </a>
           </div> */}
         </form>
+        <div className="text-center text-sm pt-4 text-muted-foreground">
+          Already have an account?{" "}
+          <a
+            href="/auth/login"
+            className="text-primary font-medium hover:underline"
+          >
+            Log in
+          </a>
+        </div>
       </div>
     </div>
   );

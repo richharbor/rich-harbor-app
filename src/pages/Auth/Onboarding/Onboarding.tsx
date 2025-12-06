@@ -30,6 +30,7 @@ import {
 } from "@/services/Auth/uploadServices";
 import StateSelect from "./StateSelect";
 import ValidationInput from "./ValidationInput";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 type DocsKey =
   | "cmlCopy"
@@ -91,7 +92,7 @@ export default function Onboarding() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const steps = DEFAULT_STEPS;
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [maxStepVisited, setMaxStepVisited] = useState<number>(1);
   const scrollRef = useRef<HTMLDivElement | null>(null);
@@ -169,14 +170,17 @@ export default function Onboarding() {
   }, []);
 
   useEffect(() => {
+    setLoading(true);
     if (scrollRef.current) {
       scrollRef.current.scrollTo({ top: 0, behavior: "smooth" });
     }
+    setLoading(false);
   }, [currentStep]);
 
   const cookieToken = Cookies.get("authToken");
 
   useEffect(() => {
+    setLoading(true);
     const tokenFromUrl = searchParams?.get("token");
     const franchiseIdFromUrl = searchParams?.get("franchiseId");
 
@@ -219,9 +223,12 @@ export default function Onboarding() {
         accountType: ["partner"], // default role
       }));
     }
+    setLoading(false);
   }, [searchParams, router]);
 
   const checkOnboardingStatus = async () => {
+    setLoading(true);
+
     const token = Cookies.get("authToken");
     if (token) {
       try {
@@ -275,6 +282,8 @@ export default function Onboarding() {
         }
       } catch (error) {
         console.log("No existing application");
+      } finally {
+        setLoading(false);
       }
     }
   };
@@ -286,7 +295,7 @@ export default function Onboarding() {
       try {
         // Call API based on current step
         if (currentStep === 1) {
-          await handleStep1Submit();
+          // await handleStep1Submit();
         } else if (currentStep === 2) {
           await handleStep2Submit();
         } else if (currentStep === 3) {
@@ -308,26 +317,26 @@ export default function Onboarding() {
     }
   };
 
-  const handleStep1Submit = async () => {
-    try {
-      const response = await postStartOnboard({
-        email: formData.email,
-        createdBy: inviterId!,
-        password: formData.password,
-        fullName: formData.fullName,
-        accountType: formData.accountType,
-        category: formData.category,
-        franchiseId, //  include franchiseId in payload
-      });
+  // const handleStep1Submit = async () => {
+  //   try {
+  //     const response = await postStartOnboard({
+  //       email: formData.email,
+  //       createdBy: inviterId!,
+  //       password: formData.password,
+  //       fullName: formData.fullName,
+  //       accountType: formData.accountType,
+  //       category: formData.category,
+  //       franchiseId, //  include franchiseId in payload
+  //     });
 
-      Cookies.set("authToken", response.token);
-      toast.success("Account created successfully!");
-    } catch (error: any) {
-      console.error("Onboarding error:", error);
-      toast.error(error.response?.data?.error || "Failed to create account");
-      throw error;
-    }
-  };
+  //     Cookies.set("authToken", response.token);
+  //     toast.success("Account created successfully!");
+  //   } catch (error: any) {
+  //     console.error("Onboarding error:", error);
+  //     toast.error(error.response?.data?.error || "Failed to create account");
+  //     throw error;
+  //   }
+  // };
 
   const handleStep2Submit = async () => {
     try {
@@ -876,7 +885,7 @@ export default function Onboarding() {
   return loading ? (
     <LoadingSpinner visible={loading} message="Please wait..." />
   ) : isCompleted ? (
-    <div className="h-screen mx-auto flex w-full max-w-md flex-col items-center justify-center px-4">
+    <div className="flex h-[calc(100vh-4.5rem)]  w-full overflow-hidden rounded-lg border-2 max-md:border-none flex-col relative bg-background items-center justify-center px-4">
       {currentStatus === "rejected" ? (
         // ❌ Rejected UI
         <div className="space-y-6 text-center">
@@ -909,27 +918,28 @@ export default function Onboarding() {
               Registration Completed!
             </h3>
             <p className="text-muted-foreground">
-              Your partner account has been created successfully. You will
-              receive a confirmation email shortly.
+              Your partner account has been created successfully.
+              {/* You will
+              receive a confirmation email shortly. */}
             </p>
           </div>
           <Button
             type="button"
-            onClick={() => window.open("https://richharbor.com/", "_blank")}>
-            Go to website
+            onClick={() => router.push("/dashboard")}>
+            Go Back to Dashboard
           </Button>
-          <Button
+          {/* <Button
             type="button"
             className="ml-5"
             onClick={handleLogout}>
             Go to Login
-          </Button>
+          </Button> */}
         </div>
       )}
     </div>
   ) : (
     //  Normal form wizard
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="flex h-[calc(100vh-4.5rem)]  w-full overflow-hidden rounded-lg border-2 max-md:border-none flex-col relative bg-background">
       <header className="sticky top-0 z-40 border-b bg-background/90 backdrop-blur-sm">
         <div className="mx-auto w-full max-w-5xl px-4 py-4">
           <div className="flex items-center justify-between">
@@ -951,61 +961,67 @@ export default function Onboarding() {
         </div>
       </header>
 
-      <div ref={scrollRef} className="flex-1 overflow-y-auto">
-        <div className="mx-auto w-full max-w-5xl px-4 py-6">
-          <Card>
-            <CardContent className="pt-6">
-              <StepView
-                step={currentStep}
-                formData={formData}
-                setFormData={setFormData}
-                handleFileUpload={handleFileUpload}
-                handleUpload={handleUpload}
-                handleDelete={handleDelete}
-                uploading={uploading}
-                currentStatus={currentStatus}
-                inviteEmail={inviteEmail}
-                accountRoles={accountRoles}
-                err={err}
-                validators={{
-                  isEmail,
-                  isIFSC,
-                  isAadhar,
-                  isPAN,
-                  isMobile,
-                  isPostalCode,
-                }}
-                setErrs={setErrs}
-              />
+      <div className="flex-1 min-h-0">
+        <ScrollArea className="h-full">
+          <div ref={scrollRef} className="flex-1 overflow-y-auto">
+            <div className="mx-auto w-full max-w-5xl px-4 py-6">
+              <Card>
+                <CardContent className="pt-6">
+                  <StepView
+                    step={currentStep}
+                    formData={formData}
+                    setFormData={setFormData}
+                    handleFileUpload={handleFileUpload}
+                    handleUpload={handleUpload}
+                    handleDelete={handleDelete}
+                    uploading={uploading}
+                    currentStatus={currentStatus}
+                    inviteEmail={inviteEmail}
+                    accountRoles={accountRoles}
+                    err={err}
+                    validators={{
+                      isEmail,
+                      isIFSC,
+                      isAadhar,
+                      isPAN,
+                      isMobile,
+                      isPostalCode,
+                    }}
+                    setErrs={setErrs}
+                  />
 
-              {currentStep < steps.length && (
-                <div className="mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex items-center gap-5">
-                    <Button
-                      variant="ghost"
-                      onClick={() => router.push("/dashboard")}
-                      disabled={loading}>
-                      Skip for now
-                    </Button>
+                  {currentStep < steps.length && (
+                    <div className="mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="flex items-center gap-5">
+                        <Button
+                          variant="ghost"
+                          onClick={() => router.push("/dashboard")}
+                          disabled={loading}>
+                          Skip for now
+                        </Button>
 
-                    <Button
-                      onClick={handleNext}
-                      disabled={loading || !canGoNext(currentStep)} // ⬅️ disable if invalid
-                    >
-                      {loading && (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      )}
-                      {currentStep === steps.length - 1
-                        ? "Complete Registration"
-                        : "Save & Continue"}
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+                        <Button
+                          onClick={handleNext}
+                          disabled={loading || !canGoNext(currentStep)} // ⬅️ disable if invalid
+                        >
+                          {loading && (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          )}
+                          {currentStep === steps.length - 1
+                            ? "Complete Registration"
+                            : "Save & Continue"}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </ScrollArea>
       </div>
+
+
     </div>
   );
 }
@@ -1998,18 +2014,19 @@ function StepView({
               Registration Completed!
             </h3>
             <p className="text-muted-foreground">
-              Your partner account has been created successfully. You will
-              receive a confirmation email shortly.
+              Your partner account has been created successfully.
+               {/* You will
+              receive a confirmation email shortly. */}
             </p>
           </div>
           <Button
             type="button"
-            onClick={() => window.open("https://richharbor.com/", "_blank")}>
-            Go to website
+            onClick={() => route.push("/dashboard")}>
+            Go to Dashboard
           </Button>
-          <Button type="button" className="ml-5" onClick={handleLogout}>
+          {/* <Button type="button" className="ml-5" onClick={handleLogout}>
             Go to Login
-          </Button>
+          </Button> */}
         </div>
       );
     }

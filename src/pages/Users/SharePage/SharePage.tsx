@@ -27,6 +27,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getSellerDetails } from "@/services/Auth/selfServices";
 import { Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import Cookies from "js-cookie";
 
 interface SharePageProps {
   id: string;
@@ -43,6 +44,7 @@ export interface Seller {
   preShareTransfer: boolean;
   moq: string;
   fixed: boolean;
+  actualPrice?: string;
 }
 
 export interface Share {
@@ -78,6 +80,7 @@ export default function SharePage({ id }: SharePageProps) {
   const [selectedSell, setSelectedSell] = useState<Seller | null>(null)
   const [isBestDeal, setIsBestDeal] = useState(false);
   const userId = useAuthStore((state) => state.user?.id);
+  const tier = useAuthStore((state) => state.user?.tier);
   const [isFetching, setIsFetching] = useState(false);
   const [sellerDetail, setSellerDetail] = useState<any>(null);
   const [openSellerDetail, setOpenSellerDetail] = useState(false);
@@ -90,6 +93,8 @@ export default function SharePage({ id }: SharePageProps) {
     sellId: 0,
     quantity: "",
   });
+  const onboardingRequired = useAuthStore((state) => state.onboardingRequired);
+  const onboardingStatus = Cookies.get('onboardingStatus')
 
 
   useEffect(() => {
@@ -113,6 +118,7 @@ export default function SharePage({ id }: SharePageProps) {
           preShareTransfer: s.preShareTransfer,
           moq: s.minimumOrderQuatity?.toString() || "-",
           fixed: s.fixedPrice,
+          actualPrice: s?.actualPrice,
         }));
 
 
@@ -172,6 +178,14 @@ export default function SharePage({ id }: SharePageProps) {
 
 
   const handleBook = (sellId: string) => {
+    if (onboardingRequired && onboardingStatus === 'pending') {
+      toast.info("Wait for the admin to approve your onboarding");
+      return;
+    }
+    if (onboardingRequired && onboardingStatus !== 'approved') {
+      toast.error("Please complete onboarding to raise a booking");
+      return;
+    }
 
     setSelectedSell(share.sellers.find((s: Seller) => s.sellId === sellId) || null);
 
@@ -216,6 +230,16 @@ export default function SharePage({ id }: SharePageProps) {
   }
 
   const handleBid = (sellId: string) => {
+    if (onboardingRequired && onboardingStatus === 'pending') {
+      toast.info("Wait for the admin to approve your onboarding");
+      return;
+    }
+    if (onboardingRequired && onboardingStatus !== 'approved') {
+      toast.error("Please complete onboarding to raise a bid");
+      return;
+    }
+
+
     setSelectedSell(share.sellers.find((s: Seller) => s.sellId === sellId) || null);
     setBidData({
       ...bidData,
@@ -301,12 +325,14 @@ export default function SharePage({ id }: SharePageProps) {
         </CardHeader>
         <ScrollArea className="flex-1">
           <CardContent className="flex-1 min-h-0 max-md:p-2">
+            {/* Desktop version table */}
             <Table className="hidden md:table">
               <TableHeader>
                 <TableRow>
                   <TableHead>Seller ID</TableHead>
                   <TableHead>Quantity</TableHead>
                   <TableHead>Price</TableHead>
+                  {(tier ?? 4) <= 3 && <TableHead>ActualPrice</TableHead>}
                   <TableHead>Deal Type</TableHead>
                   <TableHead>MOQ</TableHead>
                   <TableHead>Delivery Timeline</TableHead>
@@ -321,6 +347,7 @@ export default function SharePage({ id }: SharePageProps) {
                     <TableCell className="cursor-pointer" onClick={() => handleSellerIdClick(seller.sellerId)} >{seller.sellerId}</TableCell>
                     <TableCell>{seller.quantity}</TableCell>
                     <TableCell>{seller.price}</TableCell>
+                    {(tier ?? 4) <= 3 && <TableCell>{seller?.actualPrice}</TableCell>}
                     <TableCell>
                       {seller.fixed ? "Fixed" : "Negotiable"}
                     </TableCell>
@@ -336,10 +363,26 @@ export default function SharePage({ id }: SharePageProps) {
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-2">
-                        <Button onClick={() => handleBook(seller.sellId)} size="sm" variant="default">
+                        <Button
+                          onClick={() => {
+                            handleBook(seller.sellId)
+                          }
+                          }
+
+                          size="sm"
+                          variant="default"
+                        >
                           Book
                         </Button>
-                        <Button onClick={() => handleBid(seller.sellId)} size="sm" variant="outline">
+                        <Button
+                          onClick={() => {
+                            handleBid(seller.sellId)
+                          }
+                          }
+
+                          size="sm"
+                          variant="outline"
+                        >
                           Bid
                         </Button>
                       </div>
@@ -348,6 +391,8 @@ export default function SharePage({ id }: SharePageProps) {
                 ))}
               </TableBody>
             </Table>
+
+            {/* Mobile version table */}
             <div className="flex flex-col gap-3 md:hidden">
               {share.sellers.map((seller: Seller, index: any) => {
                 if (userId != null && Number(userId) === Number(seller.sellerId)) {
@@ -401,7 +446,11 @@ export default function SharePage({ id }: SharePageProps) {
                       </div>
 
                       <div className="flex gap-2 pt-2">
-                        <Button onClick={() => handleBook(seller.sellId)} size="sm" variant="default" className="flex-1">
+                        <Button 
+                        onClick={() => handleBook(seller.sellId)} 
+                        size="sm" 
+                        variant="default" 
+                        className="flex-1">
                           Book
                         </Button>
                         <Button onClick={() => handleBid(seller.sellId)} size="sm" variant="outline" className="flex-1">
@@ -512,7 +561,7 @@ export default function SharePage({ id }: SharePageProps) {
             </div>
 
           </div>
-          <DialogFooter  className="gap-2">
+          <DialogFooter className="gap-2">
             <Button
               variant="outline"
               onClick={() => setIsBookingOpen(false)}
@@ -582,6 +631,6 @@ export default function SharePage({ id }: SharePageProps) {
         </DialogContent>
       </Dialog>
 
-    </div>
+    </div >
   );
 }

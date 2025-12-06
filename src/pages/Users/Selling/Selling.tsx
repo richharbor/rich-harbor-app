@@ -37,6 +37,7 @@ import {
 import Loading from "@/app/loading";
 import { getTieredPath } from "@/helpers/getTieredPath";
 import { toast } from "sonner";
+import useAuthStore from "@/helpers/authStore";
 
 export interface ShareDetail {
   id: number;
@@ -90,6 +91,9 @@ export default function Selling() {
   const [discardId, setDiscardId] = useState<number>(0);
   const [openDiscard, setOpenDiscard] = useState(false);
   const [isSending, setIsSending] = useState(false);
+
+  const onboardingRequired = useAuthStore((state) => state.onboardingRequired);
+  const onboardingStatus = Cookies.get('onboardingStatus')
 
   const [updatedData, setUpdatedData] = useState<{
     quantityAvailable: string;
@@ -200,6 +204,14 @@ export default function Selling() {
         <div className="flex items-center gap-2">
           <Button
             onClick={() => {
+              if (onboardingRequired && onboardingStatus === 'pending') {
+                toast.info("Wait for the admin to approve your onboarding");
+                return;
+              }
+              if (onboardingRequired && onboardingStatus !== 'approved') {
+                toast.error("Please complete onboarding to sell any share");
+                return;
+              }
               const base = getTieredPath();
               route.push(`/${base}/sell/add`);
             }}>
@@ -470,6 +482,15 @@ export default function Selling() {
                           key={t.name}
                           className="cursor-pointer"
                           onClick={() => {
+                            if (onboardingRequired && onboardingStatus === 'pending') {
+                              toast.info("Wait for the admin to approve your onboarding");
+                              return;
+                            }
+                            if (onboardingRequired && onboardingStatus !== 'approved') {
+                              toast.error("Please complete onboarding to sell any share");
+                              return;
+                            }
+
                             const base = getTieredPath();
                             route.push(
                               `/${base}/sell/add/${t.id}`

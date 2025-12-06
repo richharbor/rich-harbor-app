@@ -27,6 +27,8 @@ import { AnimatePresence, motion } from "framer-motion"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { getOnboardingStatus } from "@/services/Auth/authServices"
+import { getTieredPath } from "@/helpers/getTieredPath"
+import Cookies from "js-cookie"
 
 
 
@@ -128,6 +130,10 @@ export default function Dashboard() {
       //  store status in state
       // console.log(response.status);
       // setCurrentStatus(response.status);
+      setOnboardingStatus({
+        required: false,
+        status: response.status
+      })
 
       if (response.currentStep && response.currentStep != 6) {
         // setCurrentStep(response.currentStep + 1);
@@ -153,6 +159,8 @@ export default function Dashboard() {
         })
       }
 
+
+
       // if (response.completedSteps) {
       //   // store in state
       //   // setCompletedSteps(response.completedSteps);
@@ -167,14 +175,25 @@ export default function Dashboard() {
 
   const totalSteps = 5;
   useEffect(() => {
-    if (!onboardingStatus) {
-      checkOnboardingStatus();
+    checkOnboardingStatus();
 
-    }
+
+  }, [])
+
+  useEffect(() => {
+
     console.log("onboardingStatus", onboardingStatus)
     if (onboardingStatus?.completedSteps) {
-      setCompletedSteps(onboardingStatus?.completedSteps.length - 1);
+
+      setCompletedSteps(onboardingStatus?.completedSteps.length);
+      if (onboardingStatus?.completedSteps.length === 6) {
+        setCompletedSteps(5);
+      }
       setProgress((stepsCompleted / totalSteps) * 100);
+
+    }
+    if (onboardingStatus?.status) {
+      Cookies.set("onboardingStatus", onboardingStatus?.status);
     }
 
   }, [onboardingStatus])
@@ -425,14 +444,77 @@ export default function Dashboard() {
             </div> */}
 
 
+
+
+            {/* Transaction Table for desktop */}
+            <TransactionTable transactions={dashboardInfo?.transactions!} />
+
+            {/* Transaction Table for mobile */}
+            <div className="space-y-3 md:hidden">
+              <h2 className="text-xl font-semibold">Transaction History</h2>
+              <div className={(dashboardInfo?.transactions?.length ?? 0) > 0 ? `h-[350px] overflow-hidden transition-height duration-300 ease-in-out ${showMore && "h-fit"}` : ""}>
+
+                <div className="grid grid-cols-1 gap-2 py-3">
+                  {dashboardInfo?.transactions?.map((tx) => {
+                    const isBuy = tx.buyerId === userId;
+                    return (
+                      <div
+                        key={tx.id}
+                        className="p-4 rounded-xl border bg-card shadow-sm flex flex-col gap-1"
+                      >
+                        {/* BUY / SELL tag */}
+                        <span
+                          className={cn(
+                            "text-xs font-medium w-fit px-2 py-0.5 rounded-full",
+                            isBuy
+                              ? "bg-green-100 text-green-700"
+                              : "bg-red-100 text-red-700"
+                          )}
+                        >
+                          {isBuy ? "Bought" : "Sold"}
+                        </span>
+
+                        {/* Share name */}
+                        <div className="flex justify-between">
+                          <div className="text-base font-semibold">
+                            {tx.shareName}
+                          </div>
+                          <span className="text-sm text-muted-foreground">{new Date(tx.createdAt).toLocaleDateString("en-IN")}</span>
+                        </div>
+
+                        {/* Essential details */}
+                        <div className="flex justify-between text-sm text-muted-foreground">
+                          <span>Qty: {tx.quantity}</span>
+                          <span>Price: {tx.price}</span>
+                        </div>
+
+                      </div>
+                    );
+                  })}
+                  {dashboardInfo?.transactions?.length === 0 && (
+                    <div className="py-20 text-center text-muted-foreground">
+                      No transactions available.
+                    </div>
+                  )}
+                </div>
+
+              </div>
+              {(dashboardInfo?.transactions?.length ?? 0) > 3 && (
+                <div className="w-full flex justify-end">
+                  <span onClick={() => setShowMore(!showMore)} className="text-sm font-medium cursor-pointer flex items-center text-primary group">{showMore ? "Show less" : "Show more"} <ArrowDown className={`h-4 w-4 duration-300 transition-transform ease-in-out ${showMore ? "rotate-180" : ""}`} /></span>
+                </div>
+              )}
+            </div>
+
+
             {/* onboardig steps */}
             {onboardingStatus &&
 
-              <div className={`lg:col-span-2 space-y-6 ${onboardingStatus?.status !== 'draft' && 'hidden'}`}>
+              <div className={`lg:col-span-2 space-y-6 ${onboardingStatus?.status === 'approved' && 'hidden'}`}>
                 <Card
                   // ref={setupGuideRef}
                   className="bg-card border border-border shadow-sm py-0">
-                  <CardContent className="p-8">
+                  <CardContent className="p-8 max-md:p-2">
                     {/* Header with progress */}
                     <div className="flex items-center justify-between mb-8">
                       <div className="flex items-center gap-3">
@@ -488,7 +570,7 @@ export default function Dashboard() {
                         //     installationGuide.customizeChatbot) ||
                         //   (step.id === 3 && chatbotInstalled) ||
                         //   (step.id === 4 && installationGuide.addTeamMember);
-                        const isCompleted = true;
+                        const isCompleted = (onboardingStatus?.completedSteps ?? []).includes(step.id);
 
                         return (
                           <motion.div
@@ -614,7 +696,10 @@ export default function Dashboard() {
                     </motion.div>
                     <div className="w-full pt-5 flex justify-end">
                       <Button
-                        onClick={() => router.push("/auth/onboarding")}
+                        onClick={() => {
+                          const base = getTieredPath();
+                          router.push(`/${base}/onboarding`);
+                        }}
                       >
 
                         Complete Steps
@@ -624,66 +709,6 @@ export default function Dashboard() {
                 </Card>
               </div>
             }
-
-            {/* Transaction Table for desktop */}
-            <TransactionTable transactions={dashboardInfo?.transactions!} />
-
-            {/* Transaction Table for mobile */}
-            <div className="space-y-3 md:hidden">
-              <h2 className="text-xl font-semibold">Transaction History</h2>
-              <div className={(dashboardInfo?.transactions?.length ?? 0) > 0 ? `h-[350px] overflow-hidden transition-height duration-300 ease-in-out ${showMore && "h-fit"}` : ""}>
-
-                <div className="grid grid-cols-1 gap-2 py-3">
-                  {dashboardInfo?.transactions?.map((tx) => {
-                    const isBuy = tx.buyerId === userId;
-                    return (
-                      <div
-                        key={tx.id}
-                        className="p-4 rounded-xl border bg-card shadow-sm flex flex-col gap-1"
-                      >
-                        {/* BUY / SELL tag */}
-                        <span
-                          className={cn(
-                            "text-xs font-medium w-fit px-2 py-0.5 rounded-full",
-                            isBuy
-                              ? "bg-green-100 text-green-700"
-                              : "bg-red-100 text-red-700"
-                          )}
-                        >
-                          {isBuy ? "Bought" : "Sold"}
-                        </span>
-
-                        {/* Share name */}
-                        <div className="flex justify-between">
-                          <div className="text-base font-semibold">
-                            {tx.shareName}
-                          </div>
-                          <span className="text-sm text-muted-foreground">{new Date(tx.createdAt).toLocaleDateString("en-IN")}</span>
-                        </div>
-
-                        {/* Essential details */}
-                        <div className="flex justify-between text-sm text-muted-foreground">
-                          <span>Qty: {tx.quantity}</span>
-                          <span>Price: {tx.price}</span>
-                        </div>
-
-                      </div>
-                    );
-                  })}
-                  {dashboardInfo?.transactions?.length === 0 && (
-                    <div className="py-20 text-center text-muted-foreground">
-                      No transactions available.
-                    </div>
-                  )}
-                </div>
-
-              </div>
-              {(dashboardInfo?.transactions?.length ?? 0) > 3 && (
-                <div className="w-full flex justify-end">
-                  <span onClick={() => setShowMore(!showMore)} className="text-sm font-medium cursor-pointer flex items-center text-primary group">{showMore ? "Show less" : "Show more"} <ArrowDown className={`h-4 w-4 duration-300 transition-transform ease-in-out ${showMore ? "rotate-180" : ""}`} /></span>
-                </div>
-              )}
-            </div>
 
 
 

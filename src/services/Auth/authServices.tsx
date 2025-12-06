@@ -12,8 +12,12 @@ interface IRegisterBody {
   password: string;
   fullName: string;
   accountType: string[];
-  category:string;
+  category: string;
   franchiseId: number | null;
+  mobileNumber: string;
+  location: string;
+  firmName: string;
+  isToken?: boolean;
 }
 
 interface IAccountInfoBody {
@@ -247,6 +251,21 @@ export const verifyEmailAndSetNewPassword = async (requestBody: {
     return response.data;
   } catch (error) {
     console.error("Some Error occured", error);
+    throw error;
+  }
+};
+
+//verify partner
+
+export const verifyPartner = async (requestBody: { token: string }) => {
+  try {
+    const response = await axios.post(
+      `${API_URL}/auth/verify-parnter-email`,
+      requestBody
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Login failed", error);
     throw error;
   }
 };

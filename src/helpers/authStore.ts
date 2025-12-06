@@ -37,6 +37,7 @@ interface AuthState {
   allRoles: Role[];
   currentRole: Role | null;
   onboardingStatus: OnboardingStatus | null;
+  onboardingRequired: boolean;
 
   setAuth: (user: User, token: string, roles: Role[]) => void;
   setCurrentRole: (roleId: number) => void;
@@ -60,6 +61,7 @@ const useAuthStore = create<AuthState>()(
       allRoles: [],
       currentRole: null,
       onboardingStatus: null,
+      onboardingRequired: false,
 
       setAuth: (user, token, roles) => {
         const primaryRole = roles.find((r) => r.isPrimary) || roles[0] || null;
