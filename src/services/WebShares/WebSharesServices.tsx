@@ -3,12 +3,12 @@ import axios from "axios";
 import Cookies from "js-cookie";
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-export const createWebShare = async (data: { name: string; price: number; sector: string, symbol: string }) => {
+export const createWebShare = async (data: { name: string; price: number; sector: string, symbol: string; label?: string }) => {
     const response = await PrivateAxios.post(`${API_URL}/web-shares/create`, data);
     return response.data;
 };
 
-export const updateWebShare = async (data: { id: string; name: string; price: number; sector: string, symbol: string }) => {
+export const updateWebShare = async (data: { id: string; name: string; price: number; sector: string, symbol: string; label?: string }) => {
     const response = await PrivateAxios.put(`${API_URL}/web-shares/update`, data);
     return response.data;
 };

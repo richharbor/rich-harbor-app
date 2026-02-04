@@ -41,6 +41,13 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { symbol } from "zod/v3";
 
 interface Share {
@@ -49,7 +56,7 @@ interface Share {
     name: string;
     price: number;
     sector: string;
-    label: "Hot Selling" | "Promising";
+    label?: string;
     status: "Listed" | "Unlisted";
     action?: string;
 }
@@ -97,6 +104,7 @@ export default function WebShares() {
     const [formName, setFormName] = useState("");
     const [formPrice, setFormPrice] = useState("");
     const [formSector, setFormSector] = useState("");
+    const [formLabel, setFormLabel] = useState("");
     const [formLogo, setFormLogo] = useState("");
     const [inputType, setInputType] = useState<"url" | "upload">("url");
 
@@ -117,7 +125,10 @@ export default function WebShares() {
         setCurrentId(null);
         setFormName("");
         setFormPrice("");
+        setFormName("");
+        setFormPrice("");
         setFormSector("");
+        setFormLabel("none");
         setFormLogo("");
         setDialogOpen(true);
     };
@@ -129,6 +140,7 @@ export default function WebShares() {
         setFormName(share.name);
         setFormPrice(share.price.toString());
         setFormSector(share.sector);
+        setFormLabel(share.label || "none");
         setFormLogo(share.symbol);
 
         // Timeout to prevent pointer-events issues with Radix Dialog + Dropdown
@@ -178,6 +190,7 @@ export default function WebShares() {
                     price: parseFloat(formPrice) || 0,
                     sector: formSector,
                     symbol: uploadedUrl,
+                    label: formLabel
                 });
                 setShares((prev) => prev.map((s) => (s.id === updatedShare?.data.id ? updatedShare?.data : s)));
                 toast.success("Share updated successfully");
@@ -193,7 +206,8 @@ export default function WebShares() {
                     name: formName,
                     price: parseFloat(formPrice) || 0,
                     sector: formSector,
-                    symbol: uploadedUrl
+                    symbol: uploadedUrl,
+                    label: formLabel
                 });
 
                 setShares((prev) => [newShare?.data, ...prev]);
@@ -260,6 +274,7 @@ export default function WebShares() {
                                         <TableHead>Name</TableHead>
                                         <TableHead>Price</TableHead>
                                         <TableHead>Sector</TableHead>
+                                        <TableHead>Label</TableHead>
                                         <TableHead>Actions</TableHead>
                                     </TableRow>
                                 </TableHeader>
@@ -301,6 +316,15 @@ export default function WebShares() {
                                                         <span className="h-2 w-2 rounded-full bg-blue-500"></span>
                                                         <span className="text-muted-foreground">{share?.sector}</span>
                                                     </div>
+                                                </TableCell>
+                                                <TableCell>
+                                                    {share.label && share.label !== 'none' ? (
+                                                        <Badge variant="outline" className="border-orange-500 text-orange-600 bg-orange-50 dark:bg-orange-950/20">
+                                                            {share.label}
+                                                        </Badge>
+                                                    ) : (
+                                                        <span className="text-muted-foreground text-sm">None</span>
+                                                    )}
                                                 </TableCell>
                                                 {/* <TableCell>
                                                     <Badge variant="secondary" className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 hover:bg-blue-200">
@@ -473,6 +497,18 @@ export default function WebShares() {
                                     />
                                 </div>
                             </div>
+                            <div className="space-y-1">
+                                <Label className="text-xs font-medium text-muted-foreground ml-1">Label</Label>
+                                <Select value={formLabel} onValueChange={setFormLabel}>
+                                    <SelectTrigger className="bg-muted/30 border-border h-10">
+                                        <SelectValue placeholder="Select Label" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="Hot Selling">Hot Selling</SelectItem>
+                                        <SelectItem value="none">None</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
                         </div>
                     </div>
 
@@ -547,6 +583,6 @@ export default function WebShares() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-        </div>
+        </div >
     );
 }
